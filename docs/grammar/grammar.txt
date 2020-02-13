@@ -92,7 +92,7 @@
 
 <caseStmt>                  ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>
 
-<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <caseStmt> | ε
+<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt> | ε
 
 <value>                     ->      NUM | TRUE | FALSE
 

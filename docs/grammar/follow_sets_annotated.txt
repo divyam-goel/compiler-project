@@ -31,52 +31,72 @@
 <statements>                    {END, BREAK}
 
 <statement>                     {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                First(<statements>) + Follow(<statements>)
 
 <ioStmt>                        {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<statement>)
 
 <extended_var>                  {BC}
 
 <var>                           {MUL, DIV, SEMICOL, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                Follow(<sub_factor>)  :TODO:
 
 <whichId>                       {MUL, DIV, SEMICOL, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                Follow(<var>)
 
 <simpleStmt>                    {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<statement>)
 
 <assignmentStmt>                {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<simpleStmt>)
 
 <whichStmt>                     {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<assignmentStmt>)
 
 <lvalueIDStmt>                  {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<whichStmt>)
 
 <lvalueARRStmt>                 {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<whichStmt>)
 
 <index>                         {SQBC, RANGEOP}
+                                {SQBC, RANGEOP} + Follow(<dynamic_range>)
 
 <moduleReuseStmt>               {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<simpleStmt>)
 
 <optional>                      {USE}
 
 <idList>                        {SQBC, SEMICOL, COLON}
 
 <sub_idList>                    {SQBC, SEMICOL, COLON}
+                                Follow(sub_idList)
 
 <expression>                    {SEMICOL}
 
 <arithmeticExpr>                {SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                Follow(<expression>) + {BC} + First(<logicalOp>) + Follow(<sub_booleanExpr>)
 
 <sub_arithmeticExpr>            {BO, ID, NUM, RNUM}
+                                First(<term>)
 
 <term>                          {PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                Follow(<arithmeticExpr>) + First(<Op1>)
 
 <sub_term>                      {BO, ID, NUM, RNUM, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                First(<factor>)
 
 <factor>                        {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                First(<Op2>) + Follow(<term>)
 
 <sub_factor>                    {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                Follow(<factor>)
 
 <op1>                           {BO, ID, NUM, RNUM}
+                                First(<sub_factor>) + First(<sub_arithmeticExpr>)
 
 <op2>                           {BO, ID, NUM, RNUM, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+                                First(<sub_term>) + Follow(<sub_term>)
 
 <booleanExpr>                   {SEMICOL, BC}
 
@@ -87,8 +107,10 @@
 <relationalOp>                  {BO, ID, NUM, RNUM}
 
 <declareStmt>                   {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<statement>)
 
 <conditionalStmt>               {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<statement>)
 
 <caseStmt>                      {DEFAULT, END}
 
@@ -99,6 +121,7 @@
 <default>                       {END}
 
 <iterativeStmt>                 {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
+                                Follow(<statement>)
 
 <range>                         {BC}
 
