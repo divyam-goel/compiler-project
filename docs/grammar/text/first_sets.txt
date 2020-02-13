@@ -1,4 +1,4 @@
-<program>                       {DECLARE, DEF}
+<program>                       {DECLARE, DEF, DRIVERDEF}
 
 <moduleDeclarations>            {DECLARE, ε}
 
@@ -34,9 +34,9 @@
 
 <ioStmt>                        {GET_VALUE, PRINT}
 
-<var>                           {ID, NUM, RNUM}
+<extended_var>                  {ID, NUM, RNUM, TRUE, FALSE}
 
-<extended_var>                  {TRUE, FALSE, ID, NUM, RNUM}
+<var>                           {ID, NUM, RNUM}
 
 <whichId>                       {SQBO, ε}
 
@@ -60,25 +60,29 @@
 
 <sub_idList>                    {COMMA, ε}
 
-<expression>                    {BO, ID, NUM, RNUM}
+<new_expression>				{PLUS, MINUS, BO, ID, NUM, RNUM}
+
+<u>								{PLUS, MINUS}
+
+<sub_u>							{BO, ID, NUM, RNUM}
+
+<expression>                    {BO, ID, NUM, RNUM, TRUE, FALSE}
 
 <arithmeticExpr>                {BO, ID, NUM, RNUM}
 
-<sub_arithmeticExpr>            {BO, ID, NUM, RNUM, ε}
+<sub_arithmeticExpr>            {PLUS, MINUS, ε}
 
 <term>                          {BO, ID, NUM, RNUM}
 
-<sub_term>                      {BO, ID, NUM, RNUM, ε}
+<sub_term>                      {MUL, DIV, ε}
 
-<factor>                        {PLUS, MINUS, BO, ID, NUM, RNUM}
-
-<sub_factor>                    {BO, ID, NUM, RNUM}
+<factor>                        {BO, ID, NUM, RNUM}
 
 <op1>                           {PLUS, MINUS}
 
 <op2>                           {MUL, DIV}
 
-<booleanExpr>                   {BO, ID, NUM, RNUM}
+<booleanExpr>                   {BO, ID, NUM, RNUM, TRUE, FALSE}
 
 <sub_booleanExpr>               {BO, ID, NUM, RNUM, TRUE, FALSE}
 

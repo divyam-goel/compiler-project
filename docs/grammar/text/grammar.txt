@@ -46,9 +46,9 @@
 
 <whichStmt>                 ->      <lvalueIDStmt> | <lvalueARRStmt>
 
-<lvalueIDStmt>              ->      ASSIGNOP <expression> SEMICOL
+<lvalueIDStmt>              ->      ASSIGNOP <new_expression> SEMICOL
 
-<lvalueARRStmt>             ->      SQBO <index> SQBC ASSIGNOP <expression> SEMICOL
+<lvalueARRStmt>             ->      SQBO <index> SQBC ASSIGNOP <new_expression> SEMICOL
 
 <index>                     ->      NUM | ID
 
@@ -60,19 +60,23 @@
 
 <sub_idList>                ->      COMMA ID <sub_idList> | ε
 
+<new_expression>			->		<u> | <expression>
+
+<u>							->		PLUS <sub_u> | MINUS <sub_u>
+
+<sub_u>						->		BO <arithmeticExpression> BC | <var>
+
 <expression>                ->      <arithmeticExpr> | <booleanExpr>
 
-<arithmeticExpr>            ->      <sub_arithmeticExpr> <term>
+<arithmeticExpr>            ->      <term> <sub_arithmeticExpr>
 
-<sub_arithmeticExpr>        ->      <term> <op1> <sub_arithmeticExpr> | ε
+<sub_arithmeticExpr>        ->      <op1> <term> <sub_arithmeticExpr> | ε
 
-<term>                      ->      <sub_term> <factor>
+<term>                      ->      <factor> <sub_term>
 
-<sub_term>                  ->      <factor> <op2> <sub_term> | ε
+<sub_term>                  ->      <op2> <factor> <sub_term> | ε
 
-<factor>                    ->      <op1> <sub_factor> | <sub_factor>
-
-<sub_factor>                ->      BO <arithmeticExpr> BC | <var>
+<factor>                    ->      BO <arithmeticExpr> BC | <var>
 
 <op1>                       ->      PLUS | MINUS
 
@@ -92,7 +96,7 @@
 
 <caseStmt>                  ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>
 
-<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt> | ε
+<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <caseStmt> | ε
 
 <value>                     ->      NUM | TRUE | FALSE
 
@@ -101,4 +105,3 @@
 <iterativeStmt>             ->      FOR BO ID IN <range> BC START <statements> END | WHILE BO <booleanExpr> BC START <statements> END
 
 <range>                     ->      NUM RANGEOP NUM
-

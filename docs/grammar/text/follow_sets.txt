@@ -36,9 +36,9 @@
 
 <extended_var>                  {BC}
 
-<var>                           {MUL, DIV, SEMICOL, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+<var>                           {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
-<whichId>                       {MUL, DIV, SEMICOL, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+<whichId>                       {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
 <simpleStmt>                    {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, END, BREAK}
 
@@ -60,29 +60,33 @@
 
 <sub_idList>                    {SQBC, SEMICOL, COLON}
 
+<new_expression>				{SEMICOL}
+
+<u>								{SEMICOL}
+
+<sub_u>							{SEMICOL}
+
 <expression>                    {SEMICOL}
 
 <arithmeticExpr>                {SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
-<sub_arithmeticExpr>            {BO, ID, NUM, RNUM}
+<sub_arithmeticExpr>            {SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
 <term>                          {PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
-<sub_term>                      {BO, ID, NUM, RNUM, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+<sub_term>                      {PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
 <factor>                        {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
 
-<sub_factor>                    {MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
-
 <op1>                           {BO, ID, NUM, RNUM}
 
-<op2>                           {BO, ID, NUM, RNUM, MUL, DIV, PLUS, MINUS, SEMICOL, BC, AND, OR, LT, LE, GT, GE, EQ, NE}
+<op2>                           {BO, ID, NUM, RNUM}
 
 <booleanExpr>                   {SEMICOL, BC}
 
 <sub_booleanExpr>               {SEMICOL, BC, AND, OR}
 
-<logicalOp>                     {BO, ID, NUM, RNUM}
+<logicalOp>                     {BO, ID, NUM, RNUM, TRUE, FALSE}
 
 <relationalOp>                  {BO, ID, NUM, RNUM}
 
