@@ -1,10 +1,10 @@
-<program>                   ->      <moduleDeclarations><otherModules><driverModule><otherModules>
+<program>                   ->      <moduleDeclarations> <otherModules> <driverModule> <otherModules>
 
-<moduleDeclarations>        ->      <moduleDeclaration><moduleDeclarations> | ε
+<moduleDeclarations>        ->      <moduleDeclaration> <moduleDeclarations> | ε
 
 <moduleDeclaration>         ->      DECLARE MODULE ID SEMICOL
 
-<otherModules>              ->      <module><otherModules>| ε
+<otherModules>              ->      <module> <otherModules>| ε
 
 <driverModule>              ->      DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
 
@@ -30,7 +30,7 @@
 
 <statements>                ->      <statement> <statements> | ε
 
-<statement>                 ->      <ioStmt>|<simpleStmt>|<declareStmt>|<conditionalStmt>|<iterativeStmt>
+<statement>                 ->      <ioStmt> | <simpleStmt> | <declareStmt> | <conditionalStmt> | <iterativeStmt>
 
 <ioStmt>                    ->      GET_VALUE BO ID BC SEMICOL | PRINT BO <extended_var> BC SEMICOL
 
