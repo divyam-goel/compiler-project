@@ -11,12 +11,14 @@ from collections import OrderedDict
 GRAMMAR_FILE = "text/grammar.txt"
 EPSILON = "\u03b5"
 
+grammar_t = Dict[str, List[List[str]]]
+ff_set_t = Dict[str, List[str]]
 
-def pretty_print(target):
+def pretty_print(target: Dict[str, Any]) -> None:
     print(json.dumps(target, indent=4))
 
 
-def get_dependant_rules(nt, grammar):
+def get_dependant_rules(nt: str, grammar: grammar_t) -> List[Tuple[str, int]]:
     dependant_rules = []
     for lhs, rule in grammar.items():
         for idx, sub_rule in enumerate(rule):
@@ -25,9 +27,9 @@ def get_dependant_rules(nt, grammar):
     return dependant_rules
 
 
-def obtain_grammar(filename):
+def obtain_grammar(filename: str) -> grammar_t:
     raw_grammar = None
-    refined_grammar = {}
+    refined_grammar = {}  # type: grammar_t
     with open(filename, "r") as f:
         raw_grammar = f.readlines()
     for rule in raw_grammar:
@@ -40,8 +42,8 @@ def obtain_grammar(filename):
     return refined_grammar
 
 
-def get_first_sets(grammar):
-    first_sets = OrderedDict()
+def get_first_sets(grammar: grammar_t) -> ff_set_t:
+    first_sets = OrderedDict()  # type: ff_set_t
 
     def get_first_set(nt):
         first_set = []
@@ -81,15 +83,12 @@ def get_first_sets(grammar):
     return first_sets
 
 
-def get_follow_sets(grammar, first_sets=None):
-    follow_sets = OrderedDict()
+def get_follow_sets(grammar: grammar_t, first_sets: ff_set_t) -> ff_set_t:
+    follow_sets = OrderedDict()  # type: ff_set_t
 
     start_symbol = list(grammar.keys())[0]  # grammar is an OrderedDict
     print("Using {} as the start symbol.".format(start_symbol))
     follow_sets[start_symbol] = ["$"]
-
-    if first_sets == None:
-        first_sets = get_first_sets(grammar)
 
     def get_follow_set(nt):
         follow_set = []
