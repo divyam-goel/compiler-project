@@ -14,8 +14,13 @@ EPSILON = "\u03b5"
 grammar_t = Dict[str, List[List[str]]]
 ff_set_t = Dict[str, List[str]]
 
-def pretty_print(target: Dict[str, Any]) -> None:
-    print(json.dumps(target, indent=4))
+def pretty_print(target: Dict[str, Any], filename: Optional[str]=None) -> None:
+    data = json.dumps(target, indent=4)
+    if filename:
+        with open(filename, "w+") as outp:
+            outp.write(data)
+    else:
+        print(data)
 
 
 def get_dependant_rules(nt: str, grammar: grammar_t) -> List[Tuple[str, int]]:
@@ -60,19 +65,16 @@ def get_first_sets(grammar: grammar_t) -> ff_set_t:
                 if term == nt:
                     break
 
-                _first_set = get_first_set(term)
-                # There seems to be potential for DP here, but when I tried implementing
-                # it I ended up with a few issues (namely missing epsilons). So if anyone
-                # else wants to add it, feel free to (I don't have the time right now).
-                if EPSILON in _first_set:
+                ext_first_set = get_first_set(term)
+                if EPSILON in ext_first_set:
                     if index < len(rule) - 1:
-                        _first_set.remove(EPSILON)
-                    first_set += _first_set
+                        ext_first_set.remove(EPSILON)
+                    first_set += ext_first_set
                     # Now if this term was not the last then go for
                     # another iteration and look at the next term.
                 else:
                     # This non-terminal definitely derives its own first symbol.
-                    first_set = list(set(first_set).union(set(_first_set)))
+                    first_set = list(set(first_set).union(set(ext_first_set)))
                     break
 
         return first_set
@@ -87,7 +89,6 @@ def get_follow_sets(grammar: grammar_t, first_sets: ff_set_t) -> ff_set_t:
     follow_sets = OrderedDict()  # type: ff_set_t
 
     start_symbol = list(grammar.keys())[0]  # grammar is an OrderedDict
-    print("Using {} as the start symbol.".format(start_symbol))
     follow_sets[start_symbol] = ["$"]
 
     def get_follow_set(nt):
@@ -139,6 +140,7 @@ def get_follow_sets(grammar: grammar_t, first_sets: ff_set_t) -> ff_set_t:
 if __name__ == "__main__":
     grammar = obtain_grammar(GRAMMAR_FILE)
     first_sets = get_first_sets(grammar)
+    pretty_print(first_sets, "first_sets.txt")
     follow_sets = get_follow_sets(grammar, first_sets)
-    pretty_print(follow_sets)
+    pretty_print(follow_sets, "follow_sets.txt")
 
