@@ -1,3 +1,8 @@
 __pycache__/
 .mypy_cache/
+build/
+lib/
+test_result_*
 *.swp
+*.o
+*.out
