@@ -1,7 +1,12 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include  "utils.h"
+
+#ifndef LEXER_H
+#define LEXER_H
+
+#define BUFFER_SIZE 512
 #define CHAR_BUFFER_SIZE 100
+
+void removeComments(char *testcaseFile, char *cleanFile);
 
 // structure to store the two buffers
 struct twin_buffer{
@@ -14,3 +19,5 @@ struct twin_buffer{
 }; 
 
 FILE *getStream(FILE *fp);
+
+#endif
