@@ -106,42 +106,29 @@ struct twin_buffer buff = {"",0,"",0,1};
 // 1) fills in the buffer twin_buffer
 // 2) returns the fp to user
 FILE *getStream(FILE *fp){
-
-
-	// transfer everytjing from buffer 2 to buffer 1
-	for(int i=0;i<CHAR_BUFFER_SIZE;i++){
-		buff.buffer1[i]=buff.buffer2[i];
-	}	
+	
+    memcpy(buff.buffer1,buff.buffer2,CHAR_BUFFER_SIZE);
 	memset(buff.buffer2,'$',CHAR_BUFFER_SIZE);
 	// filling in buffer 2
-	for(int index = 0; index < CHAR_BUFFER_SIZE;index++){
-		buff.buffer2[index]= fgetc(fp);
-		//  if end of file, get out of loop and return 
-		if(feof(fp)){
-			buff.bytes_written_2=index+1;
-			return fp;			
-		}
-	}
-	buff.bytes_written_2=CHAR_BUFFER_SIZE;
-
+    buff.bytes_written_2 = fread(buff.buffer2,sizeof(char),CHAR_BUFFER_SIZE, fp);
 	// now, the respectuve buffers to be filled have been filled in, and we return the file pointer fp
 	return fp;
 
 }
 
 // test code 
-// int main(){
+int main(){
 
-// 	FILE *fp= fopen("utils.c","r");
-// 	printf("File opened:\n");
-// 	while(!feof(fp)){
-// 		fp=getStream(fp);
-// 		// printf("KK");
-// 		for(int i=0;i<buff.bytes_written_2;i++){
-// 			printf("%c",buff.buffer2[i]);
-// 		}
+	FILE *fp= fopen("utils.c","r");
+	printf("File opened:\n");
+	while(!feof(fp)){
+		fp=getStream(fp);
+		// printf("KK");
+		for(int i=0;i<buff.bytes_written_2;i++){
+			printf("%c",buff.buffer2[i]);
+		}
 
-// 	}
+	}
 
-// 	return 0;
-// }
+	return 0;
+}
