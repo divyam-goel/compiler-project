@@ -1,6 +1,9 @@
 utils: src/utils.h src/utils.c
 	gcc src/utils.c -c -o lib/utils.o
 
+hashmap: src/hashMap.h src/hashMap.c
+	gcc src/hashMap.c -c -o lib/hashMap.o
+
 lexer: utils src/lexer.h src/lexer.c
 	gcc src/lexer.c -L lib/utils.o -c -o lib/lexer.o
 
@@ -12,5 +15,6 @@ test: build-test
 
 clean:
 	find . -type f -name '*.o' -delete
+	find . -type f -name '*.out' -delete
 	find . -type f -name 'test_result_*' -delete
 
