@@ -29,3 +29,20 @@ FILE *getStream(FILE *fp){
 	return fp;
 
 }
+
+// test code 
+// int main(){
+
+// 	FILE *fp= fopen("utils.c","r");
+// 	printf("File opened:\n");
+// 	while(!feof(fp)){
+// 		fp=getStream(fp);
+// 		// printf("KK");
+// 		for(int i=0;i<buff.bytes_written_2;i++){
+// 			printf("%c",buff.buffer2[i]);
+// 		}
+
+// 	}
+
+// 	return 0;
+// }
