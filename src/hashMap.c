@@ -129,7 +129,7 @@ int main(int argc, char const *argv[])
 	initialiseHashList();
 
 	// getting values of keywords and corresponding tokens
-	getFromFile("keywords.txt","tokens.txt");
+	getFromFile("../docs/keywords/keywords.txt","../docs/keywords/tokens.txt");
 	printf("Token for keyword (%s) is %s\n", keyword, findKeywordAndToken(keyword,hash_list));
 
 	// print all pairs of keyword-token
