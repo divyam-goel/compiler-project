@@ -100,23 +100,22 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 }
 
 // initialising buffer - this has to be done in the driver function- for now, done in this file for simplicity
-struct twin_buffer buff = {"",0,"",0,1};
+struct twin_buffer buff = {"", 0, "", 0, 1};
 
 // getStream function takes in file pointer fp and :
 // 1) fills in the buffer twin_buffer
 // 2) returns the fp to user
 FILE *getStream(FILE *fp){
-	
+
     memcpy(buff.buffer1,buff.buffer2,CHAR_BUFFER_SIZE);
 	memset(buff.buffer2,'$',CHAR_BUFFER_SIZE);
 	// filling in buffer 2
     buff.bytes_written_2 = fread(buff.buffer2,sizeof(char),CHAR_BUFFER_SIZE, fp);
 	// now, the respectuve buffers to be filled have been filled in, and we return the file pointer fp
 	return fp;
-
 }
 
-// test code 
+// test code
 int main(){
 
 	FILE *fp= fopen("utils.c","r");

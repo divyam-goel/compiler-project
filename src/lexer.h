@@ -12,11 +12,12 @@ void removeComments(char *testcaseFile, char *cleanFile);
 struct twin_buffer{
 	char buffer1[CHAR_BUFFER_SIZE];
 	int bytes_written_1;
+
 	char buffer2[CHAR_BUFFER_SIZE];
 	int bytes_written_2;
-	int empty;
 
-}; 
+	int empty;
+};
 
 FILE *getStream(FILE *fp);
 
