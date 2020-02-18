@@ -1,4 +1,4 @@
-#include "hashMap.h"
+#include "hashMap_str_array.h"
 
 // global hashMap list: for now
 struct hashNode **hash_list;
@@ -13,7 +13,9 @@ void initialiseHashList(){
 
 		hash_list[i]= (struct hashNode *)malloc(sizeof(struct hashNode));
 		strcpy(hash_list[i]->key,"");
-		strcpy(hash_list[i]->value,"");
+		hash_list[i]->num_elements = 0;
+
+		// strcpy(hash_list[i]->value,"");
 		hash_list[i]->next = NULL;
 	}
 
@@ -29,9 +31,8 @@ int hashFunction(char *key){
 	}
 	return sum % MAX_HASH_NODES;
 }
-
 // function to add a key to hash list
-void putIntoHashMap(char *key,char *value, struct hashNode **hash_list){
+void putIntoHashMap(char *key,char *value[MAX_TOKEN_SIZE], int num_elements, struct hashNode **hash_list){
 
 	// find index to place the key value in
 	int index= hashFunction(key);
@@ -40,9 +41,20 @@ void putIntoHashMap(char *key,char *value, struct hashNode **hash_list){
 	new_keyword= (struct hashNode *)malloc(sizeof(struct hashNode));
 	new_keyword->next=NULL;
 	strcpy(new_keyword->key,key);
-	strcpy(new_keyword->value,value);
-	
+	new_keyword->num_elements = num_elements;
+	// copying value array to new_keyword's array
+	new_keyword->token_set = (char **)malloc(num_elements * sizeof(char *));
+	for(int i=0;i<num_elements;i++){
+
+		new_keyword->token_set[i] = (char *)malloc( MAX_TOKEN_SIZE * sizeof(char));
+		strcpy(new_keyword->token_set[i], value[i]);
+	}
+	// for(int i=0;i<num_elements;i++){
+	// 	printf("%s ", new_keyword->token_set[i]);
+	// }
+
 	struct hashNode *head= hash_list[index];
+
 	// now,adding this to the end of head
 	while(head->next!=NULL){
 		// check if the next node contains the key we are trying to add
@@ -55,16 +67,17 @@ void putIntoHashMap(char *key,char *value, struct hashNode **hash_list){
 			// now that its been added, we exit
 			return;
 		}
+		// if not, we continue iterating through list
 		head=head->next;
 	}
-	// at the end, we have the last node
+	// at the end, we have the last node- key hasn't been found- so we add at the end
 	head->next= new_keyword;
 }
 
-// function to find key and corresponding value in hash_list - it returns "$" if not in hash  
-char * getFromHashMap(char *key, struct hashNode **hash_list){
+// function to find key and returns the structure in hash_list - it returns NULL if not in hash  
+struct hashNode *getFromHashMap(char *key, struct hashNode **hash_list){
 
-	char value[30];
+	struct hashNode *value;
 	// hash index of key
 	int index= hashFunction(key);
 	int found=0;
@@ -75,25 +88,21 @@ char * getFromHashMap(char *key, struct hashNode **hash_list){
 		// comparing the our key with the ones stored in the hash index
 		if(strcmp(head->key,key)==0){
 			found =1;
-			strcpy(value,head->value);
-			break;
+			return head;
 		}
 		head=head->next;
 	}
 	// checking for the last one
 	if(strcmp(head->key,key)==0){
 			found =1;
-			strcpy(value,head->value);
+			return head;
+
 	}
-	char *r= (char *) malloc(sizeof(char) * strlen(value));
-	strcpy(r, value);
 	// if not found, return "$" sign that signifies not found in hash list
 	if(found==0){
-		return "$";
+		return NULL;
 	}
-	else{
-		return r;
-	}
+
 }
 
 void print_all_pairs(struct hashNode **hash_list){
@@ -107,44 +116,44 @@ void print_all_pairs(struct hashNode **hash_list){
 		}
 		while(head->next!=NULL){
 			// print the values of key-value
-			printf("%s -- %s\n",head->key,head->value);
+			printf("%s -- {",head->key);
+			for(int i=0;i < head->num_elements; i++){
+				printf("%s," , head->token_set[i]);
+			}
+			printf("} \n");
 			head=head->next;
 		}
 		// print for the last one
-		printf("%s -- %s\n",head->key,head->value);
+		printf("%s -- {",head->key);
+		for(int i=0;i < head->num_elements; i++){
+			printf("%s," , head->token_set[i]);
+		}
+		printf("} \n");
 
 	}
-}
-
-// this takes in keywords and tokens and stores in hash list
-void getFromFile(char *keyword_file,char *token_file){
-	FILE *token_fp= fopen(token_file,"r");
-	FILE *keyword_fp= fopen(keyword_file,"r");
-
-	while(!feof(keyword_fp)){
-		char key[MAX_TOKEN_SIZE];
-		char value[MAX_TOKEN_SIZE];
-		fscanf(token_fp,"%s\n",value);
-		fscanf(keyword_fp,"%s\n",key);
-		// adding to the hash list
-		putIntoHashMap(key,value,hash_list);
-	}
-	fclose(token_fp);
-	fclose(keyword_fp);
 }
 
 // test code
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]){
 	char *key= "end";
-	char *value = "A_symbol";
+	char *value[30] = {"A_symbol","Wheeee"};
+	char *key2="end1";
+	char *value2[30] = {"A_symefeffffol","Wheeeffdfde"};
 	initialiseHashList();
 
-	// getting values of keywords and corresponding tokens
-	getFromFile("../docs/keywords/keywords.txt","../docs/keywords/tokens.txt");
-	printf("value for key (%s) is %s\n", key, getFromHashMap(key,hash_list));
+	// // getting values of keywords and corresponding tokens
+	// getFromFile("../docs/keywords/keywords.txt","../docs/keywords/tokens.txt");
+	// printf("value for key (%s) is %s\n", key, getFromHashMap(key,hash_list));
 
-	putIntoHashMap("default","FLUFFF",hash_list);
+	putIntoHashMap(key,value,2,hash_list);
+	putIntoHashMap(key2,value2,2,hash_list);
+
+	// struct hashNode *temp= getFromHashMap(key2,hash_list);
+	// for(int i=0;i<temp->num_elements;i++){
+	// 	printf("%s ", temp->token_set[i]);
+	// }
 	// print all pairs of key-value
 	print_all_pairs(hash_list);
+	
 }
+
