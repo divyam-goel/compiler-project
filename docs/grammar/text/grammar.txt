@@ -34,7 +34,9 @@
 
 <ioStmt>                    ->      GET_VALUE BO ID BC SEMICOL | PRINT BO <extended_var> BC SEMICOL
 
-<extended_var>              ->      <var> | TRUE | FALSE
+<boolConstt>                ->      TRUE | FALSE
+
+<extended_var>              ->      <var> | <boolConstt>
 
 <var>                       ->      ID <whichId> | NUM | RNUM
 
@@ -60,13 +62,19 @@
 
 <sub_idList>                ->      COMMA ID <sub_idList> | ε
 
-<new_expression>			->		<u> | <expression>
+<new_expression>	    ->	    <u> | <expression>
 
-<u>							->		PLUS <sub_u> | MINUS <sub_u>
+<u>			    ->	    PLUS <sub_u> | MINUS <sub_u>
 
-<sub_u>						->		BO <arithmeticExpression> BC | <var>
+<sub_u>			    ->      BO <arithmeticExpr> BC | <var>
 
-<expression>                ->      <arithmeticExpr> | <booleanExpr>
+<expression>                ->      <AnyTerm> <N7>
+
+<N7>                        ->      <logicalOp> <AnyTerm> <N7> | ε
+
+<AnyTerm>                   ->      <arithmeticExpr> <N8> | <boolConstt> <N8>
+
+<N8>                        ->      <relationalOp> <arithmeticExpr> <N8> | ε
 
 <arithmeticExpr>            ->      <term> <sub_arithmeticExpr>
 
@@ -81,10 +89,6 @@
 <op1>                       ->      PLUS | MINUS
 
 <op2>                       ->      MUL | DIV
-
-<booleanExpr>               ->      <sub_booleanExpr> <logicalOp> <booleanExpr> | <sub_booleanExpr>
-
-<sub_booleanExpr>           ->      <arithmeticExpr> <relationalOp> <arithmeticExpr> | BO <booleanExpr> BC | TRUE | FALSE
 
 <logicalOp>                 ->      AND | OR
 
@@ -102,6 +106,6 @@
 
 <default>                   ->      DEFAULT COLON <statements> BREAK SEMICOL | ε
 
-<iterativeStmt>             ->      FOR BO ID IN <range> BC START <statements> END | WHILE BO <booleanExpr> BC START <statements> END
+<iterativeStmt>             ->      FOR BO ID IN <range> BC START <statements> END | WHILE BO <expression> BC START <statements> END
 
 <range>                     ->      NUM RANGEOP NUM
