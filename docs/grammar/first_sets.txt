@@ -1,0 +1,107 @@
+<program>                       {DECLARE, DEF, DRIVERDEF}
+
+<moduleDeclarations>            {DECLARE, ε}
+
+<moduleDeclaration>             {DECLARE}
+
+<otherModules>                  {DEF, ε}
+
+<driverModule>                  {DRIVERDEF}
+
+<module>                        {DEF}
+
+<ret>                           {RETURNS, ε}
+
+<input_plist>                   {ID}
+
+<sub_input_plist>               {COMMA, ε}
+
+<output_plist>                  {ID}
+
+<sub_output_plist>              {COMMA, ε}
+
+<dataType>                      {INTEGER, REAL, BOOLEAN, ARRAY}
+
+<dynamicRange>                  {NUM, ID}
+
+<type>                          {INTEGER, REAL, BOOLEAN}
+
+<moduleDef>                     {START}
+
+<statements>                    {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, ε}
+
+<statement>                     {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE}
+
+<ioStmt>                        {GET_VALUE, PRINT}
+
+<extended_var>                  {ID, NUM, RNUM, TRUE, FALSE}
+
+<var>                           {ID, NUM, RNUM}
+
+<whichId>                       {SQBO, ε}
+
+<simpleStmt>                    {ID, SQBO, USE}
+
+<assignmentStmt>                {ID}
+
+<whichStmt>                     {ASSIGNOP, SQBO}
+
+<lvalueIDStmt>                  {ASSIGNOP}
+
+<lvalueARRStmt>                 {SQBO}
+
+<index>                         {NUM, ID}
+
+<moduleReuseStmt>               {SQBO, USE}
+
+<optional>                      {SQBO, ε}
+
+<idList>                        {ID}
+
+<sub_idList>                    {COMMA, ε}
+
+<new_expression>				{PLUS, MINUS, BO, ID, NUM, RNUM}
+
+<u>								{PLUS, MINUS}
+
+<sub_u>							{BO, ID, NUM, RNUM}
+
+<expression>                    {BO, ID, NUM, RNUM, TRUE, FALSE}
+
+<arithmeticExpr>                {BO, ID, NUM, RNUM}
+
+<sub_arithmeticExpr>            {PLUS, MINUS, ε}
+
+<term>                          {BO, ID, NUM, RNUM}
+
+<sub_term>                      {MUL, DIV, ε}
+
+<factor>                        {BO, ID, NUM, RNUM}
+
+<op1>                           {PLUS, MINUS}
+
+<op2>                           {MUL, DIV}
+
+<booleanExpr>                   {BO, ID, NUM, RNUM, TRUE, FALSE}
+
+<sub_booleanExpr>               {BO, ID, NUM, RNUM, TRUE, FALSE}
+
+<logicalOp>                     {AND, OR}
+
+<relationalOp>                  {LT, LE, GT, GE, EQ, NE}
+
+<declareStmt>                   {DECLARE}
+
+<conditionalStmt>               {SWITCH}
+
+<caseStmt>                      {CASE}
+
+<nullableCaseStmt>              {CASE, ε}
+
+<value>                         {NUM, TRUE, FALSE}
+
+<default>                       {DEFAULT, ε}
+
+<iterativeStmt>                 {FOR, WHILE}
+
+<range>                         {NUM}
