@@ -99,9 +99,8 @@ void removeComments(char *testcaseFile, char *cleanFile) {
     return;
 }
 
-// initialising buffer - this has to be done in the driver function- for now, done in this file for simplicity
-// struct twinBuffer buffer = {"", "", 0, -1};
 struct twinBuffer buffer;
+int line_no = 1;
 
 /* START - buffer helper code */
 
@@ -165,8 +164,22 @@ bool isBufferEnd() {
 	return false;
 }
 
-
 /* END - buffer helper code */
+
+/* START -  struct symbol helper coder */
+
+void populateSymbol(struct symbol * symbol, int token, char *str) {
+	symbol->token = token;
+	symbol->line_no = line_no;
+	if(token == IDENTIFIER)
+		strcpy(symbol->lexeme.str, str);
+	else if (token == NUM)
+		symbol->lexeme.num = atoi(str);
+	else if (token == RNUM)
+		symbol->lexeme.rnum = atof(str);
+}
+
+/* END -  struct symbol helper coder */
 
 void getStream(FILE *fp){
 	/*	getStream function takes in file pointer fp and :
@@ -195,208 +208,313 @@ void getStream(FILE *fp){
 	}
 }
 
-int getNextToken(FILE * fp) {
-	char ch = '\0';
+struct symbol getNextToken(FILE * fp) {
+	struct symbol symbol;
+	
 	int state = 1; // starting state
-
-	// fix initializatin for start_position
-	// int start_ptr = buffer.read_ptr;
+	char str[40];
+	int num = 0;
+	char ch;
 
 	while(true) {
-		ch = getNextChar(fp);
-		// printf("%c %d\n", ch, ch);
+		ch = getNextChar(fp);		
+		// printf("%c %d %d\n", ch, state, line_no);
 		
 		switch(state) {
 			// start state
 			case 1:
-				// whitespace
-				if (ch == ' ' || ch == '\n' || ch == '\t') {
-					state = 100;
+				// identifiers and keywords
+				if (ch == ' ' || ch == '\t')
+					break;
+
+				else if (ch == '\n') {
+					line_no += 1;
 					break;
 				}
 
-				// identifiers and keywords
-				if (isalpha(ch)) {
+				else if (isalpha(ch)) {
 					state = 2;
-					break;
+					str[num] = ch;
+					num += 1;
 				}
 
 				// numbers
-				if (isdigit(ch)) {
+				else if (isdigit(ch)) {
 					state = 3;
-					break;
+					str[num++] = ch;
 				}
 
 				// arithmetic
-				if (ch == '+')
-					return PLUS;
-				if (ch == '-')
+				else if (ch == '+') {
+					symbol.token = PLUS;
+					populateSymbol(&symbol, PLUS, NULL);
+					return symbol;
+				}
+				else if (ch == '-') 
 					state = 9;
-				if (ch == '*')
-					return MUL;
-				if (ch == '/')
-					return DIV;
+				else if (ch == '*') {
+					state = 18;
+					// populateSymbol(&symbol, MUL, NULL);
+					// return symbol;
+				}
+				else if (ch == '/') {
+					symbol.token = DIV;
+					populateSymbol(&symbol, DIV, NULL);
+					return symbol;
+				}
 
 				// relational
-				if (ch == '<')
+				else if (ch == '<')
 					state = 10;
-				if (ch == '>')
+				else if (ch == '>')
 					state = 12;
-				if (ch == '=')
+				else if (ch == '=')
 					state = 14;
-				if (ch == '!')
+				else if (ch == '!')
 					state = 15;
 
 				// brackets
-				if (ch == '[')
-					return SQBO;
-				if (ch == ']')
-					return SQBC;
-				if (ch == '(')
-					return BO;
-				if (ch == ')')
-					return BC;
+				else if (ch == '[') {
+					populateSymbol(&symbol, SQBO, NULL);
+					return symbol;
+				}
+				else if (ch == ']') {
+					populateSymbol(&symbol, SQBC, NULL);
+					return symbol;
+				}
+				else if (ch == '(') {
+					populateSymbol(&symbol, BO, NULL);
+					return symbol;
+				}
+				else if (ch == ')') {
+					populateSymbol(&symbol, BC, NULL);
+					return symbol;
+				}
 
 				// others
-				if (ch == '.')
+				else if (ch == '.') {
 					state = 16;
-				if (ch == ':')
+					// printf("DOT DETECTED\n");
+				}
+				else if (ch == ':')
 					state = 17;
-				if (ch == ';')
-					return SEMICOL;
-				if (ch == ',')
-					return COMMA;
+				else if (ch == ';') {
+					populateSymbol(&symbol, SEMICOL, NULL);
+					return symbol;
+				}
+				else if (ch == ',') {
+					populateSymbol(&symbol, COMMA, NULL);
+					return symbol;
+				}
 
 				break;
 
 			case 2: // recognize identifier & keywords
 				// fix the identifier length condition
-				if ((isalnum(ch) == 0 && ch != '_')) { //|| ((buffer.read_ptr - start_ptr) > 20)) {
+				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
 					retractRead(1); // retract
-					return IDENTIFIER;
+					str[num] = '\0';
+					populateSymbol(&symbol, IDENTIFIER, str);
+					return symbol;
 				}
+				str[num++] = ch;
 				break;
 
 			case 3:
-				if (isdigit(ch))
+				if (isdigit(ch)) {
+					str[num++] = ch;
 					break;
+				}
 				if (ch == '.') {
 					state = 4; // check decimal
+					str[num++] = ch;
 					break;
 				}
 				retractRead(1); // retract
-				return NUM;
+				str[num] = '\0';
+				populateSymbol(&symbol, NUM, str);
+				return symbol;
 
 			case 4:
 				if (isdigit(ch)) {
 					state = 5; // decimal should have atleast one digit after '.'
+					str[num++] = ch;
 					break;
 				}
 				retractRead(2); // double retraction
-				return NUM;
+				str[--num] = '\0';
+				populateSymbol(&symbol, NUM, str);
+				return symbol;
 
 			case 5:
-				if (isdigit(ch))
-					break;
-				if (ch == 'e' || ch == 'E') {
-					state = 6;
+				if (isdigit(ch)) {
+					str[num++] = ch;
 					break;
 				}
-				retractRead(1);
-				return RNUM;
+				if (ch == 'e' || ch == 'E') {
+					state = 6;
+					str[num++] = ch;
+					break;
+				}
+				retractRead(1); // retract
+				str[num] = '\0';
+				populateSymbol(&symbol, RNUM, str);
+				return symbol;
 
 			case 6:
 				if (isdigit(ch)) {
 					state = 8;
+					str[num++] = ch;
 					break;
 				}
 				if (ch == '+' || ch == '-') {
 					state = 7;
+					str[num++] = ch;
 					break;
 				}
 				retractRead(2); // double retract
-				return RNUM;
+				str[--num] = '\0';
+				populateSymbol(&symbol, RNUM, str);
+				return symbol;
 
 			case 7:
 				if (isdigit(ch)) {
 					state = 8;
+					str[num++] = ch;
 					break;
 				}
 				retractRead(3); // triple retract
-				return RNUM;
+				num -= 2;
+				str[num] = '\0';
+				populateSymbol(&symbol, RNUM, str);
+				return symbol;
 
 			case 8:
 				if (isdigit(ch))
+					str[num++] = ch;
 					break;
 				retractRead(1); // retract
-				return RNUM;
+				str[--num] = '\0';
+				populateSymbol(&symbol, RNUM, str);
+				return symbol;
 
 			case 9:
 				if (isdigit(ch)) {
+					str[num++] = ch;
 					state = 3;
 					break;
 				}
 				retractRead(1); // retract
-				return MINUS;
+				populateSymbol(&symbol, MINUS, NULL);
+				return symbol;
 
 			case 10:
-				if (ch == '<')
+				if (ch == '<') {
 					state = 11;
+					break;
+				}
 				if (ch == '=')
-					return LE;
-				retractRead(1); // retract
-				return LT;
+					populateSymbol(&symbol, LE, NULL);
+				else {
+					retractRead(1); // retract
+					populateSymbol(&symbol, LT, NULL);
+				}
+				return symbol;
 
 			case 11:
 				if (ch == '<')
-					return DRIVERDEF;
-				retractRead(1); // retract
-				return DEF;
+					populateSymbol(&symbol, DRIVERDEF, NULL);
+				else {
+					retractRead(1); // retract
+					populateSymbol(&symbol, DEF, NULL);
+				}
+				return symbol;
 
 			case 12:
-				if (ch == '>')
+				if (ch == '>') {
 					state = 13;
+					break;
+				}
 				if (ch == '=')
-					return GE;
-				retractRead(1); // retract
-				return GT;
+					populateSymbol(&symbol, GE, NULL);
+				else {
+					retractRead(1); // retract
+					populateSymbol(&symbol, GT, NULL);
+				}
+				return symbol;
 
 			case 13:
 				if (ch == '>')
-					return DRIVERENDDEF;
-				retractRead(1); // retract
-				return ENDDEF;
+					populateSymbol(&symbol, DRIVERENDDEF, NULL);
+				else {
+					retractRead(1); // retract
+					populateSymbol(&symbol, ENDDEF, NULL);
+				}
+				return symbol;
 
 			case 14:
-				if (ch == '=')
-					return EQ;
+				if (ch == '=') {
+					populateSymbol(&symbol, EQ, NULL);
+					return symbol;
+				}
 				retractRead(1); // retract
 				// ERROR
 
 			case 15:
-				if (ch == '=')
-					return NE;
+				if (ch == '=') {
+					populateSymbol(&symbol, NE, NULL);
+					return symbol;
+				}
 				retractRead(1); // retract
 				// ERROR
 
 			case 16:
-				if (ch == '.')
-					return RANGEOP;
+				if (ch == '.') {
+					populateSymbol(&symbol, RANGEOP, NULL);
+					return symbol;
+				}
 				retractRead(1); // retract
 				// ERROR
 
 			case 17:
 				if (ch == '=')
-					return ASSIGNOP;
-				retractRead(1);
-				return COLON;
+					populateSymbol(&symbol, ASSIGNOP, NULL);
+				else {
+					retractRead(1);
+					populateSymbol(&symbol, COLON, NULL);
+				}
+				return symbol;
+
+			case 18:
+				if (ch == '*') {
+					state = 19;
+					break;
+				}
+				populateSymbol(&symbol, MUL, NULL);
+				return symbol;
+
+			case 19:
+				if (ch == '*')
+					state = 20;
+				else if (ch == '\n')
+					line_no += 1;
+				break;
+
+			case 20:
+				if (ch == '*')
+					state = 1;
+				else {
+					if (ch == '\n')
+						line_no += 1;
+					state = 19;
+				}
+				break;
+
+			default:
+				printf("%c %d\n", ch, ch);
+				symbol.token = -1;
+				return symbol;
+
 		}
-
-		if (state == 1)
-			return -1;
-
-		if (state == 100)
-			state = 1;
-
 	}
 }
