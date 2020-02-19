@@ -28,7 +28,7 @@ void define_buffer() {
 }
 
 void test_getStream() {
-    FILE * fp = fopen("src/read.txt", "r");
+    FILE * fp = fopen("test/fixtures/test_case_1.txt", "r");
 
     if(fp == NULL) {
         printf("Error in opening the file!\n");
@@ -45,7 +45,7 @@ void test_getStream() {
 }
 
 void test_getNextToken() {
-    FILE * fp = fopen("src/read.txt", "r");
+    FILE * fp = fopen("test/fixtures/test_case_3.txt", "r");
 
     if(fp == NULL) {
         printf("Error in opening the file!\n");
@@ -54,10 +54,17 @@ void test_getNextToken() {
 
     define_buffer();
     
-    int token_value;
+    struct symbol token;
     while (!feof(fp)) {
-        token_value = getNextToken(fp);
-        printf("Token value: %d\n", token_value);
+        token = getNextToken(fp);
+        if (token.token == 0)
+            printf("Token value: %d %s %d\n", token.token, token.lexeme.str, token.line_no);
+        else if (token.token == 1)
+            printf("Token value: %d %d %d\n", token.token, token.lexeme.num, token.line_no);
+        else if (token.token == 2)
+            printf("Token value: %d %f %d\n", token.token, token.lexeme.rnum, token.line_no);
+        else
+            printf("Token value: %d %d\n", token.token, token.line_no);
     }
 }
 
@@ -146,8 +153,28 @@ void test_strl() {
     llog("Success!!!\n");
 }
 
-int main(int argc, char* argv[], char* envp[]) {
-    test_removeComments();
-    test_strl();
+void test_structSymbol() {
+    struct symbol s1;
+    s1.token = 10;
+
+    s1.lexeme.num = 3;
+    printf("%d %d\n", s1.token, s1.lexeme.num);
+
+    s1.lexeme.rnum = 3.4;
+    printf("%d %f\n", s1.token, s1.lexeme.rnum);
+
+    strcpy(s1.lexeme.str, "Hello, world!");
+    printf("%d %s\n", s1.token, s1.lexeme.str);
+}
+
+int main() {
+    printf("\n");
+
+    //test_removeComments();
+    // test_getStream();
+    test_getNextToken();
+    // test_structSymbol();
+    // test_removeComments();
+    // test_strl();
     return 0;
 }
