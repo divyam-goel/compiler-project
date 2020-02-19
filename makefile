@@ -28,5 +28,4 @@ hashMap_str_enum.o: src/data_structures/hashMap_str_enum.c src/data_structures/h
 clean:
 	find . -type f -name '*.o' -delete
 	find . -type f -name '*.out' -delete
-	find . -type f -name 'test_result_*' -delete
 	rm build/*
