@@ -7,17 +7,19 @@ utils: src/utils.h src/utils.c
 hashmap: src/hashMap.h src/hashMap.c
 	gcc src/hashMap.c -c -g -o lib/hashMap.o
 
-lexer: utils src/lexer.h src/lexer.c
-	gcc src/lexer.c -L lib/utils.o -c -g -o lib/lexer.o
+lexer: utils hashmap-str-enum src/lexer.h src/lexer.c
+	gcc src/lexer.c -L lib/hashMap_str_enum.o -L lib/utils.o -c -g -o lib/lexer.o
 
 strl: utils src/str_list.h src/str_list.c
 	gcc src/str_list.c -L lib/utils.o -c -g -o lib/str_list.o
 
+hashmap-str-enum: utils src/hashMap_str_enum.h src/hashMap_str_enum.c
+	gcc src/hashMap_str_enum.c -L lib/utils.o -c -g -o lib/hashMap_str_enum.o
+
 build-test: lexer test/test_lexer.c
-	gcc lib/lexer.o lib/utils.o lib/str_list.o test/test_lexer.c -g -o build/test
+	gcc lib/lexer.o lib/utils.o lib/str_list.o lib/hashMap_str_enum.o test/test_lexer.c -g -o build/test
 
 clean:
 	find . -type f -name '*.o' -delete
 	find . -type f -name '*.out' -delete
 	find . -type f -name 'test_result_*' -delete
-

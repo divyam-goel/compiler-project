@@ -102,6 +102,8 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 struct twinBuffer buffer;
 int line_no = 1;
 
+struct hashNode **hash_map;
+
 /* START - buffer helper code */
 
 int getNumBytes() {
@@ -314,7 +316,8 @@ struct symbol getNextToken(FILE * fp) {
 				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
 					retractRead(1); // retract
 					str[num] = '\0';
-					populateSymbol(&symbol, IDENTIFIER, str);
+					enum terminal token = getFromHashMap(str, hash_map);
+					populateSymbol(&symbol, token, str);
 					return symbol;
 				}
 				str[num++] = ch;

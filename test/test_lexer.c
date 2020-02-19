@@ -2,6 +2,7 @@
 #include "../src/lexer.h"
 #include "../src/str_list.h"
 #include "../src/utils.h"
+// #include "../src/hashMap_str_enum.h"
 
 void test_removeComments() {
     /*
@@ -17,7 +18,7 @@ void test_removeComments() {
     llog("Success!!!\n");
 }
 
-void define_buffer() {
+void defineBuffer() {
     extern struct twinBuffer buffer;
     buffer.num_bytes_1 = 0;
     buffer.num_bytes_2 = 0;
@@ -25,6 +26,12 @@ void define_buffer() {
     buffer.read_ptr_2 = -1;
     buffer.buffer_ptr = 2;
     buffer.flag_retract = false;
+}
+
+void defineHashMap() {
+    extern struct hashNode **hash_map;
+    hash_map = initialiseHashList();
+    add_keywords(hash_map);
 }
 
 void test_getStream() {
@@ -35,7 +42,7 @@ void test_getStream() {
         return;
     }
 
-    define_buffer();
+    defineBuffer();
     
     getStream(fp);
     while(!feof(fp)) {
@@ -52,7 +59,8 @@ void test_getNextToken() {
         return;
     }
 
-    define_buffer();
+    defineBuffer();
+    defineHashMap();
     
     struct symbol token;
     while (!feof(fp)) {

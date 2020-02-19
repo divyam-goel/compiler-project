@@ -132,21 +132,21 @@ void add_keywords(struct hashNode **hash_list){
 }
 
 // test code
-int main(int argc, char const *argv[]){
-	char *key= "end";
-	enum terminal value= IDENTIFIER;
-	char *key2="end1";
-	enum terminal value2= DEFAULT;
-	struct hashNode **hash_list=initialiseHashList();
+// int main(int argc, char const *argv[]){
+// 	char *key= "end";
+// 	enum terminal value= IDENTIFIER;
+// 	char *key2="end1";
+// 	enum terminal value2= DEFAULT;
+// 	struct hashNode **hash_list=initialiseHashList();
 
-	// // getting values of keywords and corresponding terminal
-	// putIntoHashMap(key,value,hash_list);
-	// putIntoHashMap(key2,value2,hash_list);
-	add_keywords(hash_list);
-	// enum terminal temp= getFromHashMap(key2,hash_list);
-	// printf("%d\n", temp);
-	// print all pairs of key-value
-	print_all_pairs(hash_list);
+// 	// // getting values of keywords and corresponding terminal
+// 	// putIntoHashMap(key,value,hash_list);
+// 	// putIntoHashMap(key2,value2,hash_list);
+// 	add_keywords(hash_list);
+// 	// enum terminal temp= getFromHashMap(key2,hash_list);
+// 	// printf("%d\n", temp);
+// 	// print all pairs of key-value
+// 	print_all_pairs(hash_list);
 	
-}
+// }
 

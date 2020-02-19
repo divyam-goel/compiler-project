@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <ctype.h>
+#include "hashMap_str_enum.h"
 
 #ifndef LEXER_H
 #define LEXER_H
@@ -19,55 +20,6 @@ struct twinBuffer {
 
 	int buffer_ptr;
 	bool flag_retract;
-};
-
-enum terminal {
-	IDENTIFIER, // 1
-	NUM, RNUM, // numbers // 2
-	PLUS, MINUS, MUL, DIV, // arithmetic // 4
-	LT, LE, GE, GT, EQ, NE, // relational // 6
-	DEF, DRIVERDEF, ENDDEF, DRIVERENDDEF, //  module // 4
-	SQBO, SQBC, BO, BC, // brackets // 4
-	// others
-	RANGEOP, // index - 21
-	COLON,
-	ASSIGNOP,
-	SEMICOL,
-	COMMA,
-	// list of keywords
-	INTEGER, //26
-	REAL,
-	BOOLEAN_,
-	OF,
-	ARRAY,
-	START,
-	END,
-	DECLARE,
-	MODULE,
-	DRIVER,
-	PROGRAM,
-	RECORD,
-	TAGGED,
-	UNION,
-	GET_VALUE,
-	PRINT,
-	USE,
-	WITH,
-	PARAMETERS,
-	TRUE_,
-	FALSE_,
-	TAKES,
-	INPUT,
-	RETURNS,
-	AND,
-	OR,
-	FOR,
-	IN,
-	SWITCH,
-	CASE,
-	BREAK,
-	DEFAULT,
-	WHILE
 };
 
 
