@@ -13,9 +13,6 @@ lexer: utils src/lexer.h src/lexer.c
 strl: utils src/str_list.h src/str_list.c
 	gcc src/str_list.c -L lib/utils.o -c -g -o lib/str_list.o
 
-build-test: utils lexer test/test_lexer.c
-	gcc lib/lexer.o lib/utils.o test/test_lexer.c -o build/test
-
 build-test: lexer test/test_lexer.c
 	gcc lib/lexer.o lib/utils.o lib/str_list.o test/test_lexer.c -g -o build/test
 
