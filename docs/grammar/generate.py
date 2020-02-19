@@ -137,10 +137,29 @@ def get_follow_sets(grammar: grammar_t, first_sets: ff_set_t) -> ff_set_t:
 
     return follow_sets
 
+def get_counts(grammar: grammar_t) -> None:
+    terminals = set()
+    non_terminals = set()
+    num_of_rules = 0
+    for nt, rules in grammar.items():
+        for rule in rules:
+            num_of_rules += 1
+            for term in rule:
+                if not term.startswith("<"):
+                    terminals.add(term)
+        non_terminals.add(nt)
+    print("Number of rules: {}".format(num_of_rules))
+    print("Number of terminals: {}\nNumber of non-terminals: {}\n".format(len(terminals), len(non_terminals)))
+    print("Terminals:\n\t{}\n".format(terminals))
+    print("Non-Terminals:\n\t{}".format(non_terminals))
+    exit(0)
+
+
 if __name__ == "__main__":
     grammar = obtain_grammar(GRAMMAR_FILE)
-    first_sets = get_first_sets(grammar)
-    pretty_print(first_sets, "first_sets.txt")
-    follow_sets = get_follow_sets(grammar, first_sets)
-    pretty_print(follow_sets, "follow_sets.txt")
+    get_counts(grammar)
+    # first_sets = get_first_sets(grammar)
+    # pretty_print(first_sets, "auto/first_sets.txt")
+    # follow_sets = get_follow_sets(grammar, first_sets)
+    # pretty_print(follow_sets, "auto/follow_sets.txt")
 
