@@ -16,8 +16,11 @@ strl: utils src/str_list.h src/str_list.c
 hashmap-str-enum: utils src/hashMap_str_enum.h src/hashMap_str_enum.c
 	gcc src/hashMap_str_enum.c -L lib/utils.o -c -g -o lib/hashMap_str_enum.o
 
-build-test: lexer test/test_lexer.c
-	gcc lib/lexer.o lib/utils.o lib/str_list.o lib/hashMap_str_enum.o test/test_lexer.c -g -o build/test
+parser: utils lexer strl src/parser.h src/parser.c
+	gcc src/parser.c -L lib/utils.o -L lib/lexer.o -L lib/str_list.o -c -g -o lib/parser.o
+
+build-test: lexer test/tests.c
+	gcc lib/lexer.o lib/utils.o lib/str_list.o lib/hashMap_str_enum.o test/tests.c -g -o build/test
 
 clean:
 	find . -type f -name '*.o' -delete
