@@ -33,7 +33,41 @@ enum terminal {
 	COLON,
 	ASSIGNOP,
 	SEMICOL,
-	COMMA
+	COMMA,
+	// list of keywords
+	INTEGER, //26
+	REAL,
+	BOOLEAN_,
+	OF,
+	ARRAY,
+	START,
+	END,
+	DECLARE,
+	MODULE,
+	DRIVER,
+	PROGRAM,
+	RECORD,
+	TAGGED,
+	UNION,
+	GET_VALUE,
+	PRINT,
+	USE,
+	WITH,
+	PARAMETERS,
+	TRUE_,
+	FALSE_,
+	TAKES,
+	INPUT,
+	RETURNS,
+	AND,
+	OR,
+	FOR,
+	IN,
+	SWITCH,
+	CASE,
+	BREAK,
+	DEFAULT,
+	WHILE
 };
 
 

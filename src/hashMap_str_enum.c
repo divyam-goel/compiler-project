@@ -10,8 +10,6 @@ struct hashNode **initialiseHashList(){
 		hash_list[i]= (struct hashNode *)malloc(sizeof(struct hashNode));
 		strcpy(hash_list[i]->key,"");
 		hash_list[i]->keyword_token = IDENTIFIER;
-
-		// strcpy(hash_list[i]->value,"");
 		hash_list[i]->next = NULL;
 	}
 
@@ -31,7 +29,7 @@ int hashFunction(char *key){
 	return sum % MAX_HASH_NODES;
 }
 // function to add a key to hash list
-void putIntoHashMap(char *key,enum TOKENS token, struct hashNode **hash_list){
+void putIntoHashMap(char *key,enum terminal token, struct hashNode **hash_list){
 
 	// find index to place the key value in
 	int index= hashFunction(key);
@@ -65,9 +63,9 @@ void putIntoHashMap(char *key,enum TOKENS token, struct hashNode **hash_list){
 }
 
 // function to find key and returns the structure in hash_list - it returns NULL if not in hash  
-enum TOKENS getFromHashMap(char *key, struct hashNode **hash_list){
+enum terminal getFromHashMap(char *key, struct hashNode **hash_list){
 
-	enum TOKENS value;
+	enum terminal value;
 	// hash index of key
 	int index= hashFunction(key);
 	int found=0;
@@ -116,25 +114,37 @@ void print_all_pairs(struct hashNode **hash_list){
 	}
 }
 
+void add_keywords(struct hashNode **hash_list){
+
+	// manually add the number of keywords
+	int num_keywords=33;
+	char *list[100] = {"integer","real","boolean","of","array","start","end","declare","module","driver",
+								  "program","record","tagged","union","get_value","print","use","with","parameters",
+								  "true","false","takes","input","returns","AND","OR","for","in","switch",
+								  "case","break","default","while"};
+	enum terminal token_list[100]= {INTEGER,REAL,BOOLEAN_,OF,ARRAY,START,END,DECLARE,MODULE,
+							   	DRIVER,PROGRAM,RECORD,TAGGED,UNION,GET_VALUE,PRINT,USE,WITH,PARAMETERS,TRUE_,FALSE_,
+							   	TAKES,INPUT,RETURNS,AND,OR,FOR,IN,SWITCH,CASE,BREAK,DEFAULT,WHILE};
+	
+	for(int i=0;i<num_keywords;i++){
+		putIntoHashMap(list[i],token_list[i],hash_list);
+	}
+}
+
 // test code
 int main(int argc, char const *argv[]){
 	char *key= "end";
-	enum TOKENS value= IDENTIFIER;
+	enum terminal value= IDENTIFIER;
 	char *key2="end1";
-	enum TOKENS value2= DEFAULT;
+	enum terminal value2= DEFAULT;
 	struct hashNode **hash_list=initialiseHashList();
 
-	// // getting values of keywords and corresponding tokens
-	// getFromFile("../docs/keywords/keywords.txt","../docs/keywords/tokens.txt");
-	// printf("value for key (%s) is %s\n", key, getFromHashMap(key,hash_list));
-
-	putIntoHashMap(key,value,hash_list);
-	putIntoHashMap(key2,value2,hash_list);
-
-	// struct hashNode *temp= getFromHashMap(key2,hash_list);
-	// for(int i=0;i<temp->num_elements;i++){
-	// 	printf("%s ", temp->token_set[i]);
-	// }
+	// // getting values of keywords and corresponding terminal
+	// putIntoHashMap(key,value,hash_list);
+	// putIntoHashMap(key2,value2,hash_list);
+	add_keywords(hash_list);
+	// enum terminal temp= getFromHashMap(key2,hash_list);
+	// printf("%d\n", temp);
 	// print all pairs of key-value
 	print_all_pairs(hash_list);
 	

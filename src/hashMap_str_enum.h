@@ -11,7 +11,7 @@
 struct hashNode{
 
 	char key[MAX_TOKEN_SIZE];
-	enum TOKENS keyword_token; 
+	enum terminal keyword_token; 
 	struct hashNode *next;
 
 };
@@ -21,10 +21,12 @@ struct hashNode **initialiseHashList();
 // function to get hash mapping of key to its resulting index in the array
 int hashFunction(char *key);
 // function to add a key to hash list
-void putIntoHashMap(char *key,enum TOKENS keyword_token, struct hashNode **hash_list);
+void putIntoHashMap(char *key,enum terminal keyword_token, struct hashNode **hash_list);
 // function to get back the full structure in hash_list
-enum TOKENS getFromHashMap(char *key, struct hashNode **hash_list);
-// function to get keywords and tokens from a file
+enum terminal getFromHashMap(char *key, struct hashNode **hash_list);
+// function to get keywords and terminal from a file
 void getFromFile(char *keyword_file,char *token_file);
 // function to print all the key-value pairs present in hash map
 void print_all_pairs(struct hashNode **hash_list);
+// function to populate the hash list with keyword- token pairings
+void add_keywords(struct hashNode **hash_list);
