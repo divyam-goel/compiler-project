@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "../utils.h"
 
 #define MAX_HASH_NODES 19
 #define MAX_TOKEN_SIZE 30

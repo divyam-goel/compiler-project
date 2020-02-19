@@ -14,7 +14,7 @@ void removeComments(char *testcaseFile, char *cleanFile) {
     }
 
     unsigned short int state = 1;
-    ssize_t rd = 0, wr = 0;
+    ssize_t rd = 0;
     int rd_idx = 0, wr_idx = 0;
     char rd_buf[BUFFER_SIZE], wr_buf[BUFFER_SIZE];
     memset(rd_buf, 0, BUFFER_SIZE);
@@ -195,8 +195,9 @@ void getStream(FILE *fp){
 		    buffer.read_ptr_2 = -1;
 		    if (!buffer.flag_retract)
 		    	buffer.num_bytes_2 = fread(buffer.buffer_2, sizeof(char), CHAR_BUFFER_SIZE, fp);
-		    else
+		    else {
 		    	buffer.flag_retract = false;
+			}
 			break;
 
 		case 2:
@@ -204,8 +205,9 @@ void getStream(FILE *fp){
 		    buffer.read_ptr_1 = -1;
 		    if (!buffer.flag_retract)
 		    	buffer.num_bytes_1 = fread(buffer.buffer_1, sizeof(char), CHAR_BUFFER_SIZE, fp);
-		    else
+		    else {
 		    	buffer.flag_retract = false;
+			}
 			break;
 	}
 }
@@ -393,9 +395,10 @@ struct symbol getNextToken(FILE * fp) {
 				return symbol;
 
 			case 8:
-				if (isdigit(ch))
+				if (isdigit(ch)) {
 					str[num++] = ch;
 					break;
+				}
 				retractRead(1); // retract
 				str[--num] = '\0';
 				populateSymbol(&symbol, RNUM, str);

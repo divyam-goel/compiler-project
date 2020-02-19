@@ -65,7 +65,6 @@ void putIntoHashMap(char *key,enum terminal token, struct hashNode **hash_list){
 // function to find key and returns the structure in hash_list - it returns NULL if not in hash  
 enum terminal getFromHashMap(char *key, struct hashNode **hash_list){
 
-	enum terminal value;
 	// hash index of key
 	int index= hashFunction(key);
 	int found=0;
@@ -90,6 +89,7 @@ enum terminal getFromHashMap(char *key, struct hashNode **hash_list){
 		return IDENTIFIER;
 	}
 
+	return IDENTIFIER;  // Control should NEVER reach this part.
 }
 
 void print_all_pairs(struct hashNode **hash_list){
