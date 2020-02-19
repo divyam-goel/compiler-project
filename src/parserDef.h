@@ -27,33 +27,49 @@ enum nonTerminals {
 	_VALUE, _OP2, _IOSTMT, _U
 };
 
+union terminalOrNonTerminal {
+	enum nonTerminals non_terminal;
+	enum terminal terminal;
+};
+
+enum typeOfSymbol {
+	TERMINAL,
+	NON_TERMINAL
+};
+
+struct rhsNode {
+	union terminalOrNonTerminal symbol;
+	enum typeOfSymbol flag;
+	struct rhsNode *next;
+};
+
 struct rule {
-	char non_terminal[MAX_LEN_NON_TERMINAL + 1];
-	struct rule *next;
+	enum nonTerminals non_terminal;
+	struct rhsNode *head;
 };
 
 typedef struct rule grammar[NUM_RULES];
 
 struct firstAndFollow {
-	char first[NUM_NON_TERMINALS][NUM_TERMINALS];
+	int first[NUM_NON_TERMINALS][NUM_TERMINALS];
 	char follow[NUM_NON_TERMINALS][NUM_TERMINALS];
 };
 
 typedef int table[NUM_NON_TERMINALS][NUM_TERMINALS];
 
-union terminalOrNonTerminal {
-	struct symbol terminal;
-	enum nonTerminals non_terminal;
-};
+// union terminalOrNonTerminal {
+// 	struct symbol terminal;
+// 	enum nonTerminals non_terminal;
+// };
 
-struct node {
-	union terminalOrNonTerminal symbol;
-	struct node *child;
-	struct node *next;
-};
+// struct node {
+// 	union terminalOrNonTerminal symbol;
+// 	struct node *child;
+// 	struct node *next;
+// };
 
-struct parseTree {
-	struct node *head;
-};
+// struct parseTree {
+// 	struct node *head;
+// };
 
 #endif
