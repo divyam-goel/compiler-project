@@ -1,4 +1,4 @@
-#include "hashMap_str_array.h"
+#include "hashMap_str_enum.h"
 
 // initialization of hashlist
 struct hashNode **initialiseHashList(){
@@ -9,7 +9,7 @@ struct hashNode **initialiseHashList(){
 
 		hash_list[i]= (struct hashNode *)malloc(sizeof(struct hashNode));
 		strcpy(hash_list[i]->key,"");
-		hash_list[i]->num_elements = 0;
+		hash_list[i]->keyword_token = IDENTIFIER;
 
 		// strcpy(hash_list[i]->value,"");
 		hash_list[i]->next = NULL;
@@ -31,7 +31,7 @@ int hashFunction(char *key){
 	return sum % MAX_HASH_NODES;
 }
 // function to add a key to hash list
-void putIntoHashMap(char *key,char *value[MAX_TOKEN_SIZE], int num_elements, struct hashNode **hash_list){
+void putIntoHashMap(char *key,enum TOKENS token, struct hashNode **hash_list){
 
 	// find index to place the key value in
 	int index= hashFunction(key);
@@ -40,17 +40,8 @@ void putIntoHashMap(char *key,char *value[MAX_TOKEN_SIZE], int num_elements, str
 	new_keyword= (struct hashNode *)malloc(sizeof(struct hashNode));
 	new_keyword->next=NULL;
 	strcpy(new_keyword->key,key);
-	new_keyword->num_elements = num_elements;
 	// copying value array to new_keyword's array
-	new_keyword->token_set = (char **)malloc(num_elements * sizeof(char *));
-	for(int i=0;i<num_elements;i++){
-
-		new_keyword->token_set[i] = (char *)malloc( MAX_TOKEN_SIZE * sizeof(char));
-		strcpy(new_keyword->token_set[i], value[i]);
-	}
-	// for(int i=0;i<num_elements;i++){
-	// 	printf("%s ", new_keyword->token_set[i]);
-	// }
+	new_keyword->keyword_token = token;
 
 	struct hashNode *head= hash_list[index];
 
@@ -74,9 +65,9 @@ void putIntoHashMap(char *key,char *value[MAX_TOKEN_SIZE], int num_elements, str
 }
 
 // function to find key and returns the structure in hash_list - it returns NULL if not in hash  
-struct hashNode *getFromHashMap(char *key, struct hashNode **hash_list){
+enum TOKENS getFromHashMap(char *key, struct hashNode **hash_list){
 
-	struct hashNode *value;
+	enum TOKENS value;
 	// hash index of key
 	int index= hashFunction(key);
 	int found=0;
@@ -87,18 +78,18 @@ struct hashNode *getFromHashMap(char *key, struct hashNode **hash_list){
 		// comparing the our key with the ones stored in the hash index
 		if(strcmp(head->key,key)==0){
 			found =1;
-			return head;
+			return head->keyword_token;
 		}
 		head=head->next;
 	}
 	// checking for the last one
 	if(strcmp(head->key,key)==0){
 			found =1;
-			return head;
+			return head->keyword_token;
 	}
 	// if not found, return "$" sign that signifies not found in hash list
 	if(found==0){
-		return NULL;
+		return IDENTIFIER;
 	}
 
 }
@@ -114,19 +105,13 @@ void print_all_pairs(struct hashNode **hash_list){
 		}
 		while(head->next!=NULL){
 			// print the values of key-value
-			printf("%s -- {",head->key);
-			for(int i=0;i < head->num_elements; i++){
-				printf("%s," , head->token_set[i]);
-			}
-			printf("} \n");
+			printf("%s -- ",head->key);
+			printf("%d\n", head->keyword_token);
 			head=head->next;
 		}
 		// print for the last one
-		printf("%s -- {",head->key);
-		for(int i=0;i < head->num_elements; i++){
-			printf("%s," , head->token_set[i]);
-		}
-		printf("} \n");
+		printf("%s -- ",head->key);
+		printf("%d\n", head->keyword_token);
 
 	}
 }
@@ -134,17 +119,17 @@ void print_all_pairs(struct hashNode **hash_list){
 // test code
 int main(int argc, char const *argv[]){
 	char *key= "end";
-	char *value[30] = {"A_symbol","Wheeee"};
+	enum TOKENS value= IDENTIFIER;
 	char *key2="end1";
-	char *value2[30] = {"A_symefeffffol","Wheeeffdfde"};
+	enum TOKENS value2= DEFAULT;
 	struct hashNode **hash_list=initialiseHashList();
 
 	// // getting values of keywords and corresponding tokens
 	// getFromFile("../docs/keywords/keywords.txt","../docs/keywords/tokens.txt");
 	// printf("value for key (%s) is %s\n", key, getFromHashMap(key,hash_list));
 
-	putIntoHashMap(key,value,2,hash_list);
-	putIntoHashMap(key2,value2,2,hash_list);
+	putIntoHashMap(key,value,hash_list);
+	putIntoHashMap(key2,value2,hash_list);
 
 	// struct hashNode *temp= getFromHashMap(key2,hash_list);
 	// for(int i=0;i<temp->num_elements;i++){
