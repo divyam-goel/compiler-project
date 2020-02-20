@@ -5,6 +5,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
+struct hashMap *getTerminalMap();
+struct hashMap *getNonTerminalMap();
 void computeFirstAndFollow();
 void computeParseTable();
 

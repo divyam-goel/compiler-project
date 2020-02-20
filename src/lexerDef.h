@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "grammar.h"
 #include "data_structures/hashMap_str_int.h"
 
 #ifndef LEXERDEF_H
@@ -6,54 +7,6 @@
 
 #define BUFFER_SIZE 512
 #define CHAR_BUFFER_SIZE 10
-
-enum terminal {
-	IDENTIFIER, // 1
-	NUM, RNUM, // numbers // 2
-	PLUS, MINUS, MUL, DIV, // arithmetic // 4
-	LT, LE, GE, GT, EQ, NE, // relational // 6
-	DEF, DRIVERDEF, ENDDEF, DRIVERENDDEF, //  module // 4
-	SQBO, SQBC, BO, BC, // brackets // 4
-	// others
-	RANGEOP, // index - 21
-	COLON,
-	ASSIGNOP,
-	SEMICOL,
-	COMMA,
-	// list of keywords
-	INTEGER, // index - 26
-	REAL,
-	BOOLEAN_,
-	OF,
-	ARRAY,
-	START,
-	END,
-	DECLARE,
-	MODULE,
-	DRIVER,
-	PROGRAM, // index - 36
-	GET_VALUE,
-	PRINT,
-	USE,
-	WITH,
-	PARAMETERS,
-	TRUE_,
-	FALSE_,
-	TAKES,
-	INPUT,
-	RETURNS,
-	AND,
-	OR,
-	FOR,
-	IN,
-	SWITCH,
-	CASE,
-	BREAK,
-	DEFAULT,
-	WHILE,
-	EPSILON
-};
-
 
 struct twinBuffer {
 	char buffer_1[CHAR_BUFFER_SIZE];

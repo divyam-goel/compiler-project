@@ -88,8 +88,8 @@ void test_structSymbol() {
 }
 
 struct rhsNode *newRule(
-    enum nonTerminals non_terminal,
-    enum terminals terminal,
+    enum nonTerminal non_terminal,
+    enum terminal terminal,
     enum typeOfSymbol flag) {
     
     struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
@@ -102,42 +102,42 @@ struct rhsNode *newRule(
     return ptr;
 }
 
-void populateGrammar() {
-    extern grammar G;
-
-    // E -> TE'
-    G[0].non_terminal = E;
-    G[0].head = newRule(T, EPS_, NON_TERMINAL);
-    G[0].head->next = newRule(E_, EPS_, NON_TERMINAL);
-    // E' -> +TE'
-    G[1].non_terminal = E_;
-    G[1].head = newRule(E, PLUS_, TERMINAL);
-    G[1].head->next = newRule(T, EPS_, NON_TERMINAL);
-    G[1].head->next->next = newRule(E_, EPS_, NON_TERMINAL);
-    // E' -> eps
-    G[2].non_terminal = E_;
-    G[2].head = newRule(E, EPS_, TERMINAL);
-    // T -> FT'
-    G[3].non_terminal = T;
-    G[3].head = newRule(F_, EPS_, NON_TERMINAL);
-    G[3].head->next = newRule(T_, EPS_, NON_TERMINAL);
-    // T' -> *FT'
-    G[4].non_terminal = T_;
-    G[4].head = newRule(E, MUL_, TERMINAL);
-    G[4].head->next = newRule(F_, EPS_, NON_TERMINAL);
-    G[4].head->next->next = newRule(T_, EPS_, NON_TERMINAL);
-    // T' -> eps
-    G[5].non_terminal = T_;
-    G[5].head = newRule(E, EPS_, TERMINAL);
-    // F -> id
-    G[6].non_terminal = F_;
-    G[6].head = newRule(E, ID_, TERMINAL);
-    // F -> (E)
-    G[7].non_terminal = F_;
-    G[7].head = newRule(E, BO_, TERMINAL);
-    G[7].head->next = newRule(E, EPS_, NON_TERMINAL);
-    G[7].head->next->next = newRule(E, BC_, TERMINAL);
-}
+// void populateGrammar() {
+//     extern grammar G;
+// 
+//     // E -> TE'
+//     G[0].non_terminal = E;
+//     G[0].head = newRule(T, EPS_, NON_TERMINAL);
+//     G[0].head->next = newRule(E_, EPS_, NON_TERMINAL);
+//     // E' -> +TE'
+//     G[1].non_terminal = E_;
+//     G[1].head = newRule(E, PLUS_, TERMINAL);
+//     G[1].head->next = newRule(T, EPS_, NON_TERMINAL);
+//     G[1].head->next->next = newRule(E_, EPS_, NON_TERMINAL);
+//     // E' -> eps
+//     G[2].non_terminal = E_;
+//     G[2].head = newRule(E, EPS_, TERMINAL);
+//     // T -> FT'
+//     G[3].non_terminal = T;
+//     G[3].head = newRule(F_, EPS_, NON_TERMINAL);
+//     G[3].head->next = newRule(T_, EPS_, NON_TERMINAL);
+//     // T' -> *FT'
+//     G[4].non_terminal = T_;
+//     G[4].head = newRule(E, MUL_, TERMINAL);
+//     G[4].head->next = newRule(F_, EPS_, NON_TERMINAL);
+//     G[4].head->next->next = newRule(T_, EPS_, NON_TERMINAL);
+//     // T' -> eps
+//     G[5].non_terminal = T_;
+//     G[5].head = newRule(E, EPS_, TERMINAL);
+//     // F -> id
+//     G[6].non_terminal = F_;
+//     G[6].head = newRule(E, ID_, TERMINAL);
+//     // F -> (E)
+//     G[7].non_terminal = F_;
+//     G[7].head = newRule(E, BO_, TERMINAL);
+//     G[7].head->next = newRule(E, EPS_, NON_TERMINAL);
+//     G[7].head->next->next = newRule(E, BC_, TERMINAL);
+// }
 
 void initializeFirstAndFollow() {
     extern struct firstAndFollow F;
@@ -326,7 +326,7 @@ int main() {
     puts("Running tests... ");
     // test_strl();
     // test_hashMap();
-    test_computeFirstAndFollow();
+    // test_computeFirstAndFollow();
     printf("\nTests complete!!!\n");
     return 0;
 }
