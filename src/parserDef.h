@@ -67,19 +67,20 @@ struct firstAndFollow {
 
 typedef int table[NUM_NON_TERMINALS][NUM_TERMINALS];
 
-// union terminalOrNonTerminal {
-// 	struct symbol terminal;
-// 	enum nonTerminals non_terminal;
-// };
+union nodeValue {
+	struct symbol terminal;
+	enum nonTerminals non_terminal;
+};
 
-// struct node {
-// 	union terminalOrNonTerminal symbol;
-// 	struct node *child;
-// 	struct node *next;
-// };
+struct node {
+	union nodeValue symbol;
+	enum typeOfSymbol flag;
+	struct node *child;
+	struct node *next;
+};
 
-// struct parseTree {
-// 	struct node *head;
-// };
+struct parseTree {
+	struct node *head;
+};
 
 #endif

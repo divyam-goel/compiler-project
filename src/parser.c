@@ -3,84 +3,64 @@
 grammar G;
 struct firstAndFollow F;
 table parseTable;
-
-void add_To_Follow(int fromFirst, enum nonTerminals from, enum nonTerminals to){
-	if (fromFirst) {
-		for (int i = 0; i < NUM_TERMINALS; i++) {
-			if (F.first[from][i] != -1){
-				if(i == EPS_)
-					continue;
-				F.follow[to][i] = '1';
-			}
-		}
-	}
-
-	else {
-		for (int i = 0; i < NUM_TERMINALS; i++) {
-			if (F.follow[from][i] == '1'){
-				if(i == EPS_)
-					continue;
-				F.follow[to][i] = '1';
-			}
-		}
-	}
-
-}
-
+struct parseTree PT;
 
 void computeFollow(){
-
-	printf("\n\nCalculating follow...\n");
 	F.follow[G[0].non_terminal][DOLLAR_] = '1';
 
-	// outer loop required if update occurs
-	for(int i=0;i<2;i++){
-
-		printf("Iteration %d\n", i+1);
+	struct rhsNode *ptr;
+	struct rhsNode *iter;
+	
+	for(int i = 0; i < 2; i++) {
 		for(int i = 0; i < NUM_RULES; i++) {
 
 			enum nonTerminals non_terminal = G[i].non_terminal;
-			printf("Checking for rule of non_terminal %d\n", non_terminal);
-			struct rhsNode *head = G[i].head;
+			ptr = G[i].head;
 
-			while(head != NULL){
-				
-				if(head->flag == TERMINAL){
-
-					head = head->next;
+			while(ptr != NULL){				
+				if(ptr->flag == TERMINAL) {
+					ptr = ptr->next;
 					continue;
 				}
-				struct rhsNode *M = head;
-				printf("Adding follow elements for non terminal %d\n", head->symbol.non_terminal);
-				while(1){
+				
+				iter = ptr;
 
-					M = M->next;
-					if(M == NULL){
-						add_To_Follow(0, non_terminal, head->symbol.non_terminal);
+				while (true) {
+					iter = iter->next;
+					
+					if(iter == NULL) {
+						for (int i = 0; i < NUM_TERMINALS; i++) {
+							if (F.first[non_terminal][i] != -1) {
+								if(i == EPS_)
+									continue;
+								F.follow[ptr->symbol.non_terminal][i] = '1';
+							}
+						}
 						break;
 					}
 
-					else if(M->flag == TERMINAL){
-						F.follow[head->symbol.non_terminal][M->symbol.terminal] = '1';
+					else if(iter->flag == TERMINAL) {
+						F.follow[ptr->symbol.non_terminal][iter->symbol.terminal] = '1';
 						break;
 					}
 
-					else{
-						add_To_Follow(1, M->symbol.non_terminal, head->symbol.non_terminal);
+					else {
+						for (int i = 0; i < NUM_TERMINALS; i++) {
+							if (F.follow[iter->symbol.non_terminal][i] == '1') {
+								if(i == EPS_)
+									continue;
+								F.follow[ptr->symbol.non_terminal][i] = '1';
+							}
+						}
 
-						if(F.first[M->symbol.non_terminal][EPS_] == -1){
+						if(F.first[iter->symbol.non_terminal][EPS_] == -1){
 							break;
 						}
 	 				}
-
 				}
-
-				// free(M);
-				head = head->next;
-
+				
+				ptr = ptr->next;
 			}
-
-			// free(head);
 		}
 	}
 
@@ -88,7 +68,7 @@ void computeFollow(){
 }
 
 
-void computeFirstAndFollow() {
+void computeFirstAndFollowSets() {
 	int dirty_bit_non_terminals[NUM_NON_TERMINALS];
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
 		dirty_bit_non_terminals[i] = 0;
@@ -106,7 +86,7 @@ void computeFirstAndFollow() {
 	enum nonTerminals non_terminal;
 
 	while (rules_used_count != NUM_RULES) {
-		printf("Rules used count: %d\n", rules_used_count);
+		// printf("Rules used count: %d\n", rules_used_count);
 		
 		for (int i = 0; i < NUM_RULES; i++) {
 			
@@ -119,7 +99,7 @@ void computeFirstAndFollow() {
 			
 			while (ptr_node != NULL) {
 				if (ptr_node->flag == TERMINAL) {
-					printf("Rule %d: case 1\n", i);
+					// printf("Rule %d: case 1\n", i);
 					F.first[non_terminal][ptr_node->symbol.terminal] = i;
 					dirty_bit_rules[i] = 0;
 					rules_used_count += 1;
@@ -128,12 +108,12 @@ void computeFirstAndFollow() {
 				}
 				
 				else if (dirty_bit_non_terminals[ptr_node->symbol.non_terminal] != 0) {
-					printf("Rule %d: case 2\n", i);
+					// printf("Rule %d: case 2\n", i);
 					break;
 				}
 				
 				else {
-					printf("Rule %d: case 3\n", i);
+					// printf("Rule %d: case 3\n", i);
 					for (int j = 0; j < NUM_TERMINALS; j++) {
 						if (F.first[ptr_node->symbol.non_terminal][j] != -1 && j != EPS_) {
 							// F.first[non_terminal][j] = F.first[ptr_node->symbol.non_terminal][j];
@@ -142,7 +122,7 @@ void computeFirstAndFollow() {
 					}
 
 					if (F.first[ptr_node->symbol.non_terminal][EPS_] == -1) {
-						printf("Rule %d: case 3-1\n", i);
+						// printf("Rule %d: case 3-1\n", i);
 						dirty_bit_rules[i] = 0;
 						rules_used_count += 1;
 						dirty_bit_non_terminals[G[i].non_terminal] -= 1;
@@ -150,7 +130,7 @@ void computeFirstAndFollow() {
 					}
 
 					if (ptr_node->next == NULL) {
-						printf("Rule %d: case 3-2\n", i);
+						// printf("Rule %d: case 3-2\n", i);
 						F.first[non_terminal][EPS_] = i;
 						dirty_bit_rules[i] = 0;
 						rules_used_count += 1;
@@ -167,21 +147,14 @@ void computeFirstAndFollow() {
 }
 
 
-void computeParseTable() {
-	// initialising T
+void createParseTable() {
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
 		for (int j = 0; j < NUM_TERMINALS; j++) {
-			parseTable[i][j] = -1;
-		}
-	}
-	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-		for (int j = 0; j < NUM_TERMINALS; j++) {
-			if (F.first[i][j] != -1){
-				if(j != EPS_)
+			if (F.first[i][j] != -1 && j != EPS_) {
 					parseTable[i][j] = F.first[i][j];
-
 			}
 		}
+		
 		if (F.first[i][EPS_] != -1) {
 			for (int j = 0; j < NUM_TERMINALS; j++) {
 				if (F.follow[i][j] == '1') {
@@ -190,5 +163,37 @@ void computeParseTable() {
 			}
 		}
 	}
+}
 
+
+// parseInputSourceCode(char *testcaseFile, table T) {
+// 	//
+// }
+
+
+// char *writeNode(struct node *ptr) {
+
+// }
+
+
+void recursivePrint(struct node *ptr, FILE *fp) {
+	if (ptr == NULL)
+		return;
+	recursivePrint(ptr->child, fp);
+	char *str = "%s\t%d\t%s\t%d";
+	// fwrite(fp, )
+}
+
+
+void printParseTree(parseTree PT, char *outfile) {
+    FILE * fp = fopen(outfile, "w");
+
+    if(fp == NULL) {
+        printf("Error in opening the file!\n");
+        return;
+    }
+
+	struct node *ptr = PT.head;
+
+	recursivePrint(ptr, fp);
 }

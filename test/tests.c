@@ -102,12 +102,9 @@ struct rhsNode *newRule(
     return ptr;
 }
 
-void test_computeFirstAndFollow() {
+void populateGrammar() {
     extern grammar G;
-    extern struct firstAndFollow F;
-    extern table parseTable;
 
-    printf("Populating grammar\n");
     // E -> TE'
     G[0].non_terminal = E;
     G[0].head = newRule(T, EPS_, NON_TERMINAL);
@@ -140,20 +137,45 @@ void test_computeFirstAndFollow() {
     G[7].head = newRule(E, BO_, TERMINAL);
     G[7].head->next = newRule(E, EPS_, NON_TERMINAL);
     G[7].head->next->next = newRule(E, BC_, TERMINAL);
+}
 
-    printf("Intializing first and follow\n");
+void initializeFirstAndFollow() {
+    extern struct firstAndFollow F;
+    
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             F.first[i][j] = -1;
             F.follow[i][j] = '0';
         }
+    }    
+}
+
+void intializeParseTable() {
+    extern table parseTable;
+    
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            parseTable[i][j] = -1;
+        }
     }
+}
+
+void test_computeFirstAndFollow() {
+    extern grammar G;
+    extern struct firstAndFollow F;
+    extern table parseTable;
+
+    printf("Populating grammar\n");
+    populateGrammar();
+
+    printf("Intializing first and follow\n");
+    initializeFirstAndFollow();
 
     printf("Computing first and follow ...\n");
-    computeFirstAndFollow();
+    computeFirstAndFollowSets();
 
     printf("Printing first and follow ...\n");
-    printf("\nFirst:\n\n");
+    printf("\nFirst:\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             printf("%d\t", F.first[i][j]);
@@ -161,7 +183,7 @@ void test_computeFirstAndFollow() {
         printf("\n");
     }
 
-    printf("\nFollow:\n\n");
+    printf("\nFollow:\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             printf("%c\t", F.follow[i][j]);
@@ -169,13 +191,17 @@ void test_computeFirstAndFollow() {
         printf("\n");
     }
 
-    printf("Making parse table....\n");
-    computeParseTable();
+    printf("\nIntializing parse table ...\n");
+    intializeParseTable();
+
+    printf("\nCreating parse table....\n");
+    createParseTable();
+    
     // code to print out table
-    printf("Printing parse table...\n");
+    printf("\nParse table:\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
-            printf("%c\t", parseTable[i][j]);
+            printf("%d\t", parseTable[i][j]);
         }
         printf("\n");
     }
@@ -298,8 +324,9 @@ void test_hashMap() {
 
 int main() {
     puts("Running tests... ");
-    test_strl();
-    test_hashMap();
-    puts("Tests complete!!!");
+    // test_strl();
+    // test_hashMap();
+    test_computeFirstAndFollow();
+    printf("\nTests complete!!!\n");
     return 0;
 }
