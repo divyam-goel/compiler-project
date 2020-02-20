@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "../src/lexer.h"
+#include "../src/parser.h"
 
 void test_removeComments() {
     /*
@@ -87,8 +88,81 @@ void test_structSymbol() {
     printf("%d %s\n", s1.token, s1.lexeme.str);
 }
 
+struct rhsNode *newRule(
+    enum nonTerminals non_terminal,
+    enum terminals terminal,
+    enum typeOfSymbol flag) {
+    
+    struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
+    ptr->flag = flag;
+    if (flag == TERMINAL)
+        ptr->symbol.terminal = terminal;
+    else
+        ptr->symbol.non_terminal = non_terminal;
+    ptr->next = NULL;
+    return ptr;
+}
+
+void test_computeFirstAndFollow() {
+    extern grammar G;
+    extern struct firstAndFollow F;
+
+    printf("Populating grammar\n");
+    // E -> TE'
+    G[0].non_terminal = E;
+    G[0].head = newRule(T, EPS_, NON_TERMINAL);
+    G[0].head->next = newRule(E_, EPS_, NON_TERMINAL);
+    // E' -> +TE'
+    G[1].non_terminal = E_;
+    G[1].head = newRule(E, PLUS_, TERMINAL);
+    G[1].head->next = newRule(T, EPS_, NON_TERMINAL);
+    G[1].head->next->next = newRule(E_, EPS_, NON_TERMINAL);
+    // E' -> eps
+    G[2].non_terminal = E_;
+    G[2].head = newRule(E, EPS_, TERMINAL);
+    // T -> FT'
+    G[3].non_terminal = T;
+    G[3].head = newRule(F_, EPS_, NON_TERMINAL);
+    G[3].head->next = newRule(T_, EPS_, NON_TERMINAL);
+    // T' -> *FT'
+    G[4].non_terminal = T_;
+    G[4].head = newRule(E, MUL_, TERMINAL);
+    G[4].head->next = newRule(F_, EPS_, NON_TERMINAL);
+    G[4].head->next->next = newRule(T_, EPS_, NON_TERMINAL);
+    // T' -> eps
+    G[5].non_terminal = T_;
+    G[5].head = newRule(E, EPS_, TERMINAL);
+    // F -> id
+    G[6].non_terminal = F_;
+    G[6].head = newRule(E, ID_, TERMINAL);
+    // F -> (E)
+    G[7].non_terminal = F_;
+    G[7].head = newRule(E, BO_, TERMINAL);
+    G[7].head->next = newRule(E, EPS_, NON_TERMINAL);
+    G[7].head->next->next = newRule(E, BC_, NON_TERMINAL);
+
+    printf("Intializing first and follow\n");
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            F.first[i][j] = -1;
+        }
+    }
+
+    printf("Computing first and follow ...\n");
+    computeFirstAndFollow();
+
+    printf("Printing first and follow ...\n");
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            printf("%d\t", F.first[i][j]);
+        }
+        printf("\n");
+    }
+}
+
 int main() {
     puts("Running tests... ");
     puts("Tests complete... ");
+    test_computeFirstAndFollow();
     return 0;
 }
