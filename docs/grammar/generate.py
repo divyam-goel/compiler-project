@@ -9,7 +9,7 @@ from typing import *
 from collections import OrderedDict
 
 GRAMMAR_FILE = "text/grammar.txt"
-EPSILON = "\u03b5"
+EPSILON = "EPSILON"
 
 grammar_t = Dict[str, List[List[str]]]
 ff_set_t = Dict[str, List[str]]

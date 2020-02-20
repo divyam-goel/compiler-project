@@ -53,7 +53,8 @@ enum terminal {
 	CASE,
 	BREAK,
 	DEFAULT,
-	WHILE
+	WHILE,
+	EPSILON
 };
 
 

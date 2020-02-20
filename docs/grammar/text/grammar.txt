@@ -1,24 +1,24 @@
 <program>                   ->      <moduleDeclarations> <otherModules> <driverModule> <otherModules>
 
-<moduleDeclarations>        ->      <moduleDeclaration> <moduleDeclarations> | ε
+<moduleDeclarations>        ->      <moduleDeclaration> <moduleDeclarations> | EPSILON
 
 <moduleDeclaration>         ->      DECLARE MODULE ID SEMICOL
 
-<otherModules>              ->      <module> <otherModules>| ε
+<otherModules>              ->      <module> <otherModules> | EPSILON
 
 <driverModule>              ->      DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
 
 <module>                    ->      DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
 
-<ret>                       ->      RETURNS SQBO <output_plist> SQBC SEMICOL | ε
+<ret>                       ->      RETURNS SQBO <output_plist> SQBC SEMICOL | EPSILON
 
 <input_plist>               ->      ID COLON <dataType> <sub_input_plist>
 
-<sub_input_plist>           ->      COMMA ID COLON <dataType> <sub_input_plist> | ε
+<sub_input_plist>           ->      COMMA ID COLON <dataType> <sub_input_plist> | EPSILON
 
 <output_plist>              ->      ID COLON <type> <sub_output_plist>
 
-<sub_output_plist>          ->      COMMA ID COLON <type> <sub_output_plist> | ε
+<sub_output_plist>          ->      COMMA ID COLON <type> <sub_output_plist> | EPSILON
 
 <dataType>                  ->      INTEGER | REAL | BOOLEAN | ARRAY SQBO <dynamic_range> SQBC OF <type>
 
@@ -28,7 +28,7 @@
 
 <moduleDef>                 ->      START <statements> END
 
-<statements>                ->      <statement> <statements> | ε
+<statements>                ->      <statement> <statements> | EPSILON
 
 <statement>                 ->      <ioStmt> | <simpleStmt> | <declareStmt> | <conditionalStmt> | <iterativeStmt>
 
@@ -40,7 +40,7 @@
 
 <var>                       ->      ID <whichId> | NUM | RNUM
 
-<whichId>                   ->      SQBO <index> SQBC | ε
+<whichId>                   ->      SQBO <index> SQBC | EPSILON
 
 <simpleStmt>                ->      <assignmentStmt> | <moduleReuseStmt>
 
@@ -56,33 +56,33 @@
 
 <moduleReuseStmt>           ->      <optional> USE MODULE ID WITH PARAMETERS <idList> SEMICOL
 
-<optional>                  ->      SQBO <idList> SQBC ASSIGNOP | ε
+<optional>                  ->      SQBO <idList> SQBC ASSIGNOP | EPSILON
 
 <idList>                    ->      ID <sub_idList>
 
-<sub_idList>                ->      COMMA ID <sub_idList> | ε
+<sub_idList>                ->      COMMA ID <sub_idList> | EPSILON
 
-<new_expression>	    ->	    <u> | <expression>
+<new_expression>            ->      <u> | <expression>
 
-<u>			    ->	    PLUS <sub_u> | MINUS <sub_u>
+<u>                         ->      PLUS <sub_u> | MINUS <sub_u>
 
-<sub_u>			    ->      BO <arithmeticExpr> BC | <var>
+<sub_u>                     ->     BO <arithmeticExpr> BC | <var>
 
 <expression>                ->      <AnyTerm> <N7>
 
-<N7>                        ->      <logicalOp> <AnyTerm> <N7> | ε
+<N7>                        ->      <logicalOp> <AnyTerm> <N7> | EPSILON
 
 <AnyTerm>                   ->      <arithmeticExpr> <N8> | <boolConstt> <N8>
 
-<N8>                        ->      <relationalOp> <arithmeticExpr> <N8> | ε
+<N8>                        ->      <relationalOp> <arithmeticExpr> <N8> | EPSILON
 
 <arithmeticExpr>            ->      <term> <sub_arithmeticExpr>
 
-<sub_arithmeticExpr>        ->      <op1> <term> <sub_arithmeticExpr> | ε
+<sub_arithmeticExpr>        ->      <op1> <term> <sub_arithmeticExpr> | EPSILON
 
 <term>                      ->      <factor> <sub_term>
 
-<sub_term>                  ->      <op2> <factor> <sub_term> | ε
+<sub_term>                  ->      <op2> <factor> <sub_term> | EPSILON
 
 <factor>                    ->      BO <arithmeticExpr> BC | <var>
 
@@ -100,11 +100,11 @@
 
 <caseStmt>                  ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>
 
-<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt> | ε
+<nullableCaseStmt>          ->      CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt> | EPSILON
 
 <value>                     ->      NUM | TRUE | FALSE
 
-<default>                   ->      DEFAULT COLON <statements> BREAK SEMICOL | ε
+<default>                   ->      DEFAULT COLON <statements> BREAK SEMICOL | EPSILON
 
 <iterativeStmt>             ->      FOR BO ID IN <range> BC START <statements> END | WHILE BO <expression> BC START <statements> END
 

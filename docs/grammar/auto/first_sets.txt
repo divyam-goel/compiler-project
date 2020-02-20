@@ -1,24 +1,24 @@
 <program>                       {DECLARE, DEF, DRIVERDEF}
 
-<moduleDeclarations>            {DECLARE, ε}
+<moduleDeclarations>            {DECLARE, EPSILON}
 
 <moduleDeclaration>             {DECLARE}
 
-<otherModules>                  {DEF, ε}
+<otherModules>                  {DEF, EPSILON}
 
 <driverModule>                  {DRIVERDEF}
 
 <module>                        {DEF}
 
-<ret>                           {RETURNS, ε}
+<ret>                           {RETURNS, EPSILON}
 
 <input_plist>                   {ID}
 
-<sub_input_plist>               {COMMA, ε}
+<sub_input_plist>               {COMMA, EPSILON}
 
 <output_plist>                  {ID}
 
-<sub_output_plist>              {COMMA, ε}
+<sub_output_plist>              {COMMA, EPSILON}
 
 <dataType>                      {INTEGER, REAL, BOOLEAN, ARRAY}
 
@@ -28,7 +28,7 @@
 
 <moduleDef>                     {START}
 
-<statements>                    {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, ε}
+<statements>                    {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE, EPSILON}
 
 <statement>                     {GET_VALUE, PRINT, ID, SQBO, USE, DECLARE, SWITCH, FOR, WHILE}
 
@@ -38,7 +38,7 @@
 
 <var>                           {ID, NUM, RNUM}
 
-<whichId>                       {SQBO, ε}
+<whichId>                       {SQBO, EPSILON}
 
 <simpleStmt>                    {ID, SQBO, USE}
 
@@ -54,11 +54,11 @@
 
 <moduleReuseStmt>               {SQBO, USE}
 
-<optional>                      {SQBO, ε}
+<optional>                      {SQBO, EPSILON}
 
 <idList>                        {ID}
 
-<sub_idList>                    {COMMA, ε}
+<sub_idList>                    {COMMA, EPSILON}
 
 <new_expression>				{PLUS, MINUS, BO, ID, NUM, RNUM}
 
@@ -70,11 +70,11 @@
 
 <arithmeticExpr>                {BO, ID, NUM, RNUM}
 
-<sub_arithmeticExpr>            {PLUS, MINUS, ε}
+<sub_arithmeticExpr>            {PLUS, MINUS, EPSILON}
 
 <term>                          {BO, ID, NUM, RNUM}
 
-<sub_term>                      {MUL, DIV, ε}
+<sub_term>                      {MUL, DIV, EPSILON}
 
 <factor>                        {BO, ID, NUM, RNUM}
 
@@ -96,11 +96,11 @@
 
 <caseStmt>                      {CASE}
 
-<nullableCaseStmt>              {CASE, ε}
+<nullableCaseStmt>              {CASE, EPSILON}
 
 <value>                         {NUM, TRUE, FALSE}
 
-<default>                       {DEFAULT, ε}
+<default>                       {DEFAULT, EPSILON}
 
 <iterativeStmt>                 {FOR, WHILE}
 
