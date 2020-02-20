@@ -1,13 +1,14 @@
 #include <assert.h>
 #include "../src/lexer.h"
 #include "../src/parser.h"
+#include "../src/data_structures/str_list.h"
 
 void test_removeComments() {
     /*
     *  Test the removeComments function against a manually generated expected file
     *  to ensure that the function indeed works as expected.
     */
-    llog("Running test_getOutputFileName... ");
+    llog("\t+ Running test_getOutputFileName... ");
     char *cleanFile = "./test/fixtures/test_result_program_without_comments.erplag";
     char *testcaseFile = "./test/fixtures/program_with_comments.erplag";
     char *expectedFile = "./test/fixtures/expected_program_without_comments.erplag";
@@ -170,9 +171,94 @@ void test_computeFirstAndFollow() {
     }
 }
 
+void test_strl() {
+    llog("\t+ Running test_strl... ");
+    char* str;
+    struct str_list* strl = strl_allocate();
+    
+    strl_append(strl, "hello");
+    str = strl_get(strl, 0);
+    assert(strcmp(str, "hello") == 0);
+    assert(strl_len(strl) == 1);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    str = strl_get(strl, 1);
+    assert(str == NULL);
+
+    strl_append(strl, "the");
+    str = strl_get(strl, 1);
+    assert(strcmp(str, "the") == 0);
+    assert(strl_len(strl) == 2);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "quick");
+    str = strl_get(strl, 2);
+    assert(strcmp(str, "quick") == 0);
+    assert(strl_len(strl) == 3);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "brown");
+    str = strl_get(strl, 3);
+    assert(strcmp(str, "brown") == 0);
+    assert(strl_len(strl) == 4);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "fox");
+    str = strl_get(strl, 4);
+    assert(strcmp(str, "fox") == 0);
+    assert(strl_len(strl) == 5);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "jumps");
+    str = strl_get(strl, 5);
+    assert(strcmp(str, "jumps") == 0);
+    assert(strl_len(strl) == 6);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "over");
+    str = strl_get(strl, 6);
+    assert(strcmp(str, "over") == 0);
+    assert(strl_len(strl) == 7);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "the");
+    str = strl_get(strl, 7);
+    assert(strcmp(str, "the") == 0);
+    assert(strl_len(strl) == 8);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "lazy");
+    str = strl_get(strl, 8);
+    assert(strcmp(str, "lazy") == 0);
+    assert(strl_len(strl) == 9);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    strl_append(strl, "dog");
+    str = strl_get(strl, 9);
+    assert(strcmp(str, "dog") == 0);
+    assert(strl_len(strl) == 10);
+    assert(strl->capacity == INITIAL_STRL_LENGTH);
+
+    // Doubling of capacity should happen now.
+    strl_append(strl, "last straw");
+    str = strl_get(strl, 10);
+    assert(strcmp(str, "last straw") == 0);
+    assert(strl_len(strl) == 11);
+    assert(strl->capacity == INITIAL_STRL_LENGTH * 2 + 1);
+
+    strl_append(strl, "and then some");
+    str = strl_get(strl, 11);
+    assert(strcmp(str, "and then some") == 0);
+    assert(strl_len(strl) == 12);
+    assert(strl->capacity == INITIAL_STRL_LENGTH * 2 + 1);
+
+    strl_deallocate(strl);
+    llog("Success!!!\n");
+}
+
 int main() {
     puts("Running tests... ");
-    puts("Tests complete... ");
-    test_computeFirstAndFollow();
+    test_strl();
+    puts("Tests complete!!!");
     return 0;
 }
