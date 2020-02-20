@@ -33,6 +33,8 @@ struct firstAndFollow {
 
 typedef int table[NUM_NON_TERMINALS][NUM_TERMINALS];
 
+struct rhsNode *createRhsNode(const char *val);
+
 union nodeValue {
 	struct symbol terminal;
 	enum nonTerminals non_terminal;

@@ -322,11 +322,14 @@ void test_hashMap() {
     llog("Success!!!\n");
 }
 
+void test_loadGrammar() {
+    loadGrammar("./docs/grammar/text/grammar.txt");
+    printGrammar();
+}
+
 int main() {
     puts("Running tests... ");
-    // test_strl();
-    // test_hashMap();
-    // test_computeFirstAndFollow();
-    printf("\nTests complete!!!\n");
+    test_loadGrammar();
+    puts("Tests complete!!!");
     return 0;
 }

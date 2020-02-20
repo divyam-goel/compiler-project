@@ -7,6 +7,9 @@
 
 struct hashMap *getTerminalMap();
 struct hashMap *getNonTerminalMap();
+int extractRules(char *line, int ruleNumber);
+void loadGrammar(const char* filename);
+void printGrammar();
 void computeFirstAndFollow();
 void computeParseTable();
 
