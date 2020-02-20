@@ -145,6 +145,7 @@ void test_computeFirstAndFollow() {
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             F.first[i][j] = -1;
+            F.follow[i][j] = '0';
         }
     }
 
@@ -152,9 +153,18 @@ void test_computeFirstAndFollow() {
     computeFirstAndFollow();
 
     printf("Printing first and follow ...\n");
+    printf("\nFirst:\n\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             printf("%d\t", F.first[i][j]);
+        }
+        printf("\n");
+    }
+
+    printf("\nFollow:\n\n");
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            printf("%c\t", F.follow[i][j]);
         }
         printf("\n");
     }

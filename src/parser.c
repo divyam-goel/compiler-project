@@ -4,6 +4,77 @@ grammar G;
 struct firstAndFollow F;
 // table T;
 
+void add_To_Follow(int fromFirst, enum nonTerminals from, enum nonTerminals to){
+	if (fromFirst) {
+		for (int i = 0; i < NUM_TERMINALS; i++) {
+			if (F.first[from][i] != -1){
+				F.follow[to][i] = '1';
+			}
+		}
+	}
+
+	else {
+		for (int i = 0; i < NUM_TERMINALS; i++) {
+			if (F.follow[from][i] == '1'){
+				F.follow[to][i] = '1';
+			}
+		}
+	}
+
+}
+
+
+void computeFollow(){
+
+	F.follow[G[0].non_terminal][DOLLAR_] = '1';
+
+	for(int i = 0; i < NUM_RULES; i++) {
+
+		enum nonTerminals non_terminal = G[i].non_terminal;
+		struct rhsNode *head = G[i].head;
+
+		while(head != NULL){
+			
+			if(head->flag == TERMINAL){
+				head = head->next;
+				continue;
+			}
+
+			struct rhsNode *M = head;
+			while(1){
+
+				M = M->next;
+				if(M == NULL){
+					add_To_Follow(0, non_terminal, head->symbol.non_terminal);
+					break;
+				}
+
+				else if(M->flag == TERMINAL){
+					F.follow[head->symbol.non_terminal][M->symbol.terminal] = '1';
+					break;
+				}
+
+				else{
+					add_To_Follow(1, M->symbol.non_terminal, head->symbol.non_terminal);
+
+					if(F.first[M->symbol.non_terminal][NUM_TERMINALS] != 1){
+						break;
+					}
+ 				}
+
+			}
+
+			// free(M);
+			head = head->next;
+
+		}
+
+		// free(head);
+	}
+
+	return;
+}
+
 
 void computeFirstAndFollow() {
 	int dirty_bit_non_terminals[NUM_NON_TERMINALS];
@@ -78,6 +149,8 @@ void computeFirstAndFollow() {
 			}
 		}
 	}
+
+	computeFollow();
 }
 
 
