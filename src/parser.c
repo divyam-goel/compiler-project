@@ -2,12 +2,14 @@
 
 grammar G;
 struct firstAndFollow F;
-// table T;
+table parseTable;
 
 void add_To_Follow(int fromFirst, enum nonTerminals from, enum nonTerminals to){
 	if (fromFirst) {
 		for (int i = 0; i < NUM_TERMINALS; i++) {
 			if (F.first[from][i] != -1){
+				if(i == EPS_)
+					continue;
 				F.follow[to][i] = '1';
 			}
 		}
@@ -16,6 +18,8 @@ void add_To_Follow(int fromFirst, enum nonTerminals from, enum nonTerminals to){
 	else {
 		for (int i = 0; i < NUM_TERMINALS; i++) {
 			if (F.follow[from][i] == '1'){
+				if(i == EPS_)
+					continue;
 				F.follow[to][i] = '1';
 			}
 		}
@@ -26,50 +30,58 @@ void add_To_Follow(int fromFirst, enum nonTerminals from, enum nonTerminals to){
 
 void computeFollow(){
 
+	printf("\n\nCalculating follow...\n");
 	F.follow[G[0].non_terminal][DOLLAR_] = '1';
 
-	for(int i = 0; i < NUM_RULES; i++) {
+	// outer loop required if update occurs
+	for(int i=0;i<2;i++){
 
-		enum nonTerminals non_terminal = G[i].non_terminal;
-		struct rhsNode *head = G[i].head;
+		printf("Iteration %d\n", i+1);
+		for(int i = 0; i < NUM_RULES; i++) {
 
-		while(head != NULL){
-			
-			if(head->flag == TERMINAL){
-				head = head->next;
-				continue;
-			}
+			enum nonTerminals non_terminal = G[i].non_terminal;
+			printf("Checking for rule of non_terminal %d\n", non_terminal);
+			struct rhsNode *head = G[i].head;
 
-			struct rhsNode *M = head;
-			while(1){
+			while(head != NULL){
+				
+				if(head->flag == TERMINAL){
 
-				M = M->next;
-				if(M == NULL){
-					add_To_Follow(0, non_terminal, head->symbol.non_terminal);
-					break;
+					head = head->next;
+					continue;
 				}
+				struct rhsNode *M = head;
+				printf("Adding follow elements for non terminal %d\n", head->symbol.non_terminal);
+				while(1){
 
-				else if(M->flag == TERMINAL){
-					F.follow[head->symbol.non_terminal][M->symbol.terminal] = '1';
-					break;
-				}
-
-				else{
-					add_To_Follow(1, M->symbol.non_terminal, head->symbol.non_terminal);
-
-					if(F.first[M->symbol.non_terminal][NUM_TERMINALS] != 1){
+					M = M->next;
+					if(M == NULL){
+						add_To_Follow(0, non_terminal, head->symbol.non_terminal);
 						break;
 					}
- 				}
+
+					else if(M->flag == TERMINAL){
+						F.follow[head->symbol.non_terminal][M->symbol.terminal] = '1';
+						break;
+					}
+
+					else{
+						add_To_Follow(1, M->symbol.non_terminal, head->symbol.non_terminal);
+
+						if(F.first[M->symbol.non_terminal][EPS_] == -1){
+							break;
+						}
+	 				}
+
+				}
+
+				// free(M);
+				head = head->next;
 
 			}
 
-			// free(M);
-			head = head->next;
-
+			// free(head);
 		}
-
-		// free(head);
 	}
 
 	return;
@@ -124,7 +136,8 @@ void computeFirstAndFollow() {
 					printf("Rule %d: case 3\n", i);
 					for (int j = 0; j < NUM_TERMINALS; j++) {
 						if (F.first[ptr_node->symbol.non_terminal][j] != -1 && j != EPS_) {
-							F.first[non_terminal][j] = F.first[ptr_node->symbol.non_terminal][j];
+							// F.first[non_terminal][j] = F.first[ptr_node->symbol.non_terminal][j];
+							F.first[non_terminal][j] = i;
 						}
 					}
 
@@ -154,18 +167,28 @@ void computeFirstAndFollow() {
 }
 
 
-// void computeParseTable(struct firstAndFollow F, table T) {
-// 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-// 		for (int j = 0; j < NUM_TERMINALS; j++) {
-// 			if (F.first[i][j] != -1)
-// 				T[i][j] = F.first[i][j];
-// 		}
-// 		if (F.first[i][EPSELON] != -1) {
-// 			for (int j = 0; j < NUM_TERMINALS; j++) {
-// 				if (F.follow[i][j] == '1') {
-// 					T[i][j] = NUM_TERMINALS;
-// 				}
-// 			}
-// 		}
-// 	}
-// }
+void computeParseTable() {
+	// initialising T
+	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+		for (int j = 0; j < NUM_TERMINALS; j++) {
+			parseTable[i][j] = -1;
+		}
+	}
+	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+		for (int j = 0; j < NUM_TERMINALS; j++) {
+			if (F.first[i][j] != -1){
+				if(j != EPS_)
+					parseTable[i][j] = F.first[i][j];
+
+			}
+		}
+		if (F.first[i][EPS_] != -1) {
+			for (int j = 0; j < NUM_TERMINALS; j++) {
+				if (F.follow[i][j] == '1') {
+					parseTable[i][j] = F.first[i][EPS_];
+				}
+			}
+		}
+	}
+
+}

@@ -2,7 +2,7 @@
 #include "../src/lexer.h"
 #include "../src/parser.h"
 
-void test_removeComments() {
+void test_removeComments(){
     /*
     *  Test the removeComments function against a manually generated expected file
     *  to ensure that the function indeed works as expected.
@@ -105,6 +105,7 @@ struct rhsNode *newRule(
 void test_computeFirstAndFollow() {
     extern grammar G;
     extern struct firstAndFollow F;
+    extern table parseTable;
 
     printf("Populating grammar\n");
     // E -> TE'
@@ -138,7 +139,7 @@ void test_computeFirstAndFollow() {
     G[7].non_terminal = F_;
     G[7].head = newRule(E, BO_, TERMINAL);
     G[7].head->next = newRule(E, EPS_, NON_TERMINAL);
-    G[7].head->next->next = newRule(E, BC_, NON_TERMINAL);
+    G[7].head->next->next = newRule(E, BC_, TERMINAL);
 
     printf("Intializing first and follow\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
@@ -167,6 +168,18 @@ void test_computeFirstAndFollow() {
         }
         printf("\n");
     }
+
+    printf("Making parse table....\n");
+    computeParseTable();
+    // code to print out table
+    printf("Printing parse table...\n");
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            printf("%c\t", parseTable[i][j]);
+        }
+        printf("\n");
+    }
+    
 }
 
 void test_strl() {
