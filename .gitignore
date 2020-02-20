@@ -6,3 +6,4 @@ test_result_*
 *.swp
 *.o
 *.out
+src/.*
