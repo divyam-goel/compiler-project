@@ -32,9 +32,6 @@ enum terminal {
 	MODULE,
 	DRIVER,
 	PROGRAM, // index - 36
-	RECORD,
-	TAGGED,
-	UNION,
 	GET_VALUE,
 	PRINT,
 	USE,

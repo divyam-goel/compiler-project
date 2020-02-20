@@ -1,14 +1,13 @@
 #include "lexer.h"
 
 void getTerminalsHashMap(struct hashMap *hash_map) {
-	int num_keywords = 33;
+	int num_keywords = 30;
 	char *list[100] = {"integer", "real", "boolean", "of", "array", "start", "end", "declare", "module", "driver",
-					   "program", "record", "tagged", "union", "get_value", "print", "use", "with", "parameters",
-					   "true", "false", "takes", "input", "returns", "AND", "OR", "for", "in", "switch", "case",
-					   "break", "default", "while"};
+					   "program", "get_value", "print", "use", "with", "parameters", "true", "false", "takes",
+					   "input", "returns", "AND", "OR", "for", "in", "switch", "case", "break", "default", "while"};
 	enum terminal token_list[100]= {INTEGER, REAL, BOOLEAN_, OF, ARRAY, START, END, DECLARE, MODULE, DRIVER, PROGRAM,
-									RECORD, TAGGED, UNION, GET_VALUE, PRINT, USE, WITH, PARAMETERS, TRUE_, FALSE_,
-							   		TAKES, INPUT, RETURNS, AND, OR, FOR, IN, SWITCH, CASE, BREAK, DEFAULT, WHILE};
+									GET_VALUE, PRINT, USE, WITH, PARAMETERS, TRUE_, FALSE_, TAKES, INPUT, RETURNS,
+									AND, OR, FOR, IN, SWITCH, CASE, BREAK, DEFAULT, WHILE};
 
 	hash_map = initialiseHashMap();
 	for (int i = 0; i < num_keywords; ++i){
