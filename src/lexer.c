@@ -1,5 +1,21 @@
 #include "lexer.h"
 
+void getTerminalsHashMap(struct hashMap *hash_map) {
+	int num_keywords = 33;
+	char *list[100] = {"integer", "real", "boolean", "of", "array", "start", "end", "declare", "module", "driver",
+					   "program", "record", "tagged", "union", "get_value", "print", "use", "with", "parameters",
+					   "true", "false", "takes", "input", "returns", "AND", "OR", "for", "in", "switch", "case",
+					   "break", "default", "while"};
+	enum terminal token_list[100]= {INTEGER, REAL, BOOLEAN_, OF, ARRAY, START, END, DECLARE, MODULE, DRIVER, PROGRAM,
+									RECORD, TAGGED, UNION, GET_VALUE, PRINT, USE, WITH, PARAMETERS, TRUE_, FALSE_,
+							   		TAKES, INPUT, RETURNS, AND, OR, FOR, IN, SWITCH, CASE, BREAK, DEFAULT, WHILE};
+
+	hash_map = initialiseHashMap();
+	for (int i = 0; i < num_keywords; ++i){
+		hashMapPut(list[i], token_list[i], hash_map);
+	}
+}
+
 void removeComments(char *testcaseFile, char *cleanFile) {
     int inp_fd;
     inp_fd = open(testcaseFile, O_RDONLY);
@@ -102,7 +118,7 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 struct twinBuffer buffer;
 int line_no = 1;
 
-struct hashNode **hash_map;
+struct hashMap *hash_map;
 
 /* START - buffer helper code */
 
@@ -318,7 +334,7 @@ struct symbol getNextToken(FILE * fp) {
 				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
 					retractRead(1); // retract
 					str[num] = '\0';
-					enum terminal token = getFromHashMap(str, hash_map);
+					enum terminal token = (enum terminal) hashMapGet(str, hash_map);
 					populateSymbol(&symbol, token, str);
 					return symbol;
 				}

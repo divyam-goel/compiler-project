@@ -1,7 +1,6 @@
 #include <assert.h>
 #include "../src/lexer.h"
 #include "../src/parser.h"
-#include "../src/data_structures/str_list.h"
 
 void test_removeComments() {
     /*
@@ -28,9 +27,8 @@ void defineBuffer() {
 }
 
 void defineHashMap() {
-    extern struct hashNode **hash_map;
-    hash_map = initialiseHashList();
-    add_keywords(hash_map);
+    extern struct hashMap *hash_map;
+    getTerminalsHashMap(hash_map);
 }
 
 void test_getStream() {
@@ -256,9 +254,39 @@ void test_strl() {
     llog("Success!!!\n");
 }
 
+void test_hashMap() {
+    llog("\t+ Running test_hashMap... ");
+    struct hashMap *hash_map = initialiseHashMap();
+
+    int count = 10;
+    char *keys[] = {"hello", "olleh", "the", "quick", "brown",
+                    "fox", "jumps", "over", "the", "lazy dog"};
+    int vals[] = {9392, 9204, 8809, 8384, 8840,
+                  9458, 9647, 9668, 9835, 8460};
+
+    for (int i = 0; i < count; ++i) {
+        hashMapPut(keys[i], vals[i], hash_map);
+    }
+
+    assert(hashMapGet("hello", hash_map) == 9392);
+    assert(hashMapGet("olleh", hash_map) == 9204);
+    assert(hashMapGet("quick", hash_map) == 8384);
+    assert(hashMapGet("brown", hash_map) == 8840);
+    assert(hashMapGet("fox", hash_map) == 9458);
+    assert(hashMapGet("jumps", hash_map) == 9647);
+    assert(hashMapGet("over", hash_map) == 9668);
+    assert(hashMapGet("the", hash_map) == 9835);  // Overwrite the previous value.
+    assert(hashMapGet("lazy dog", hash_map) == 8460);
+
+    deallocateHashMap(hash_map);
+
+    llog("Success!!!\n");
+}
+
 int main() {
     puts("Running tests... ");
     test_strl();
+    test_hashMap();
     puts("Tests complete!!!");
     return 0;
 }
