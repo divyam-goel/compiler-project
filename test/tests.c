@@ -27,11 +27,6 @@ void defineBuffer() {
     buffer.flag_retract = false;
 }
 
-// void defineHashMap() {
-//     extern struct hashMap *hash_map;
-//     populateTerminalsHashMap();
-// }
-
 void test_getStream() {
     // FILE * fp = fopen("test/fixtures/test_case_1.txt", "r");
     FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
@@ -61,8 +56,8 @@ void test_getNextToken() {
     }
 
     defineBuffer();
-    // defineHashMap();
-    populateTerminalsHashMap();
+    extern struct hashMap *hash_map;
+    hash_map = getTerminalMap();
 
     struct symbol token;
     while (!feof(fp)) {
