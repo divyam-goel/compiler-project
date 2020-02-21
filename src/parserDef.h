@@ -37,7 +37,7 @@ struct rhsNode *createRhsNode(const char *val);
 
 union nodeValue {
 	struct symbol terminal;
-	enum nonTerminals non_terminal;
+	enum nonTerminal non_terminal;
 };
 
 struct node {

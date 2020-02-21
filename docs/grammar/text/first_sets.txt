@@ -60,11 +60,11 @@
 
 <sub_idList>                    {COMMA, EPSILON}
 
-<new_expression>				{PLUS, MINUS, BO, ID, NUM, RNUM}
+<new_expression>		        		{PLUS, MINUS, BO, ID, NUM, RNUM}
 
-<u>								{PLUS, MINUS}
+<u>						               		{PLUS, MINUS}
 
-<sub_u>							{BO, ID, NUM, RNUM}
+<sub_u>			            				{BO, ID, NUM, RNUM}
 
 <expression>                    {BO, ID, NUM, RNUM, TRUE, FALSE}
 

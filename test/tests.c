@@ -108,7 +108,7 @@ struct rhsNode *newRule(
 
 // void populateGrammar() {
 //     extern grammar G;
-//
+
 //     // E -> TE'
 //     G[0].non_terminal = E;
 //     G[0].head = newRule(T, EPS_, NON_TERMINAL);
@@ -165,12 +165,14 @@ void intializeParseTable() {
 }
 
 void test_computeFirstAndFollow() {
-    extern grammar G;
     extern struct firstAndFollow F;
     extern table parseTable;
 
+    FILE *fp = fopen("test/test_result_first.txt","w+");
+
     printf("Populating grammar\n");
-    populateGrammar();
+    // populateGrammar();
+    loadGrammar("./docs/grammar/text/grammar.txt");
 
     printf("Intializing first and follow\n");
     initializeFirstAndFollow();
@@ -178,37 +180,44 @@ void test_computeFirstAndFollow() {
     printf("Computing first and follow ...\n");
     computeFirstAndFollowSets();
 
-    printf("Printing first and follow ...\n");
-    printf("\nFirst:\n");
+    fprintf(fp, "Printing first and follow ...\n");
+    fprintf(fp, "\nFirst:\n");
+
+    for (int j = 0; j < NUM_TERMINALS; ++j) {
+        fprintf(fp, "%5.3d ", j);
+    }
+    fprintf(fp, "\n");
+
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        fprintf(fp, "%.3d ", i);
         for (int j = 0; j < NUM_TERMINALS; j++) {
-            printf("%d\t", F.first[i][j]);
+            fprintf(fp, "%5d ", F.first[i][j]);
         }
-        printf("\n");
+        fprintf(fp, "\n");
     }
 
-    printf("\nFollow:\n");
-    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-        for (int j = 0; j < NUM_TERMINALS; j++) {
-            printf("%c\t", F.follow[i][j]);
-        }
-        printf("\n");
-    }
+    // printf("\nFollow:\n");
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         printf("%c\t", F.follow[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 
-    printf("\nIntializing parse table ...\n");
-    intializeParseTable();
+    // printf("\nIntializing parse table ...\n");
+    // intializeParseTable();
 
-    printf("\nCreating parse table....\n");
-    createParseTable();
+    // printf("\nCreating parse table....\n");
+    // createParseTable();
 
-    // code to print out table
-    printf("\nParse table:\n");
-    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-        for (int j = 0; j < NUM_TERMINALS; j++) {
-            printf("%d\t", parseTable[i][j]);
-        }
-        printf("\n");
-    }
+    // // code to print out table
+    // printf("\nParse table:\n");
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         printf("%d\t", parseTable[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 
 }
 
@@ -336,8 +345,9 @@ int main() {
     // test_strl();
     // test_hashMap();
     // test_getStream();
-    test_getNextToken();
-    // test_computeFirstAndFollow();
+    // test_getNextToken();
+    test_computeFirstAndFollow();
+    // test_loadGrammar();
     printf("\nTests complete!!!\n");
     return 0;
 }
