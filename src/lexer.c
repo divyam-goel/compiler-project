@@ -1,13 +1,16 @@
 #include "lexer.h"
 
-void getTerminalsHashMap(struct hashMap *hash_map) {
-	int num_keywords = 30;
-	char *list[100] = {"integer", "real", "boolean", "of", "array", "start", "end", "declare", "module", "driver",
-					   "program", "get_value", "print", "use", "with", "parameters", "true", "false", "takes",
-					   "input", "returns", "AND", "OR", "for", "in", "switch", "case", "break", "default", "while"};
-	enum terminal token_list[100]= {INTEGER, REAL, BOOLEAN_, OF, ARRAY, START, END, DECLARE, MODULE, DRIVER, PROGRAM,
-									GET_VALUE, PRINT, USE, WITH, PARAMETERS, TRUE_, FALSE_, TAKES, INPUT, RETURNS,
-									AND, OR, FOR, IN, SWITCH, CASE, BREAK, DEFAULT, WHILE};
+struct hashMap *hash_map;
+
+void populateTerminalsHashMap() {
+	int num_keywords = 33;
+	char list[33][16] = {"integer", "real", "boolean", "of", "array", "start", "end", "declare", "module", "driver",
+		     			 "program", "record", "tagged", "union", "get_value", "print", "use", "with", "parameters",
+					     "true", "false", "takes", "input", "returns", "AND", "OR", "for", "in", "switch", "case",
+					     "break", "default", "while"};
+	enum terminal token_list[33]= {INTEGER, REAL, BOOLEAN_, OF, ARRAY, START, END, DECLARE, MODULE, DRIVER, PROGRAM,
+								   RECORD, TAGGED, UNION, GET_VALUE, PRINT, USE, WITH, PARAMETERS, TRUE_, FALSE_,
+							   	   TAKES, INPUT, RETURNS, AND, OR, FOR, IN, SWITCH, CASE, BREAK, DEFAULT, WHILE};
 
 	hash_map = initialiseHashMap();
 	for (int i = 0; i < num_keywords; ++i){
@@ -117,7 +120,6 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 struct twinBuffer buffer;
 int line_no = 1;
 
-struct hashMap *hash_map;
 
 /* START - buffer helper code */
 
@@ -134,14 +136,15 @@ char getChar(int index) {
 }
 
 char getNextChar(FILE *fp) {
-	if (isBufferEnd())
+	if (isBufferEnd()) {
 		getStream(fp);
+	}
 
 	if (buffer.buffer_ptr == 1) {
 		buffer.read_ptr_1 += 1;
 		return buffer.buffer_1[buffer.read_ptr_1];
 	}
-	
+
 	else {
 		buffer.read_ptr_2 += 1;
 		return buffer.buffer_2[buffer.read_ptr_2];
@@ -154,18 +157,18 @@ void retractRead(int val) {
 		buffer.read_ptr_2 = CHAR_BUFFER_SIZE + buffer.read_ptr_1 - val;
 		buffer.flag_retract = true;
 	}
-	
+
 	else if (buffer.buffer_ptr == 2 && (buffer.read_ptr_2 - val) < -1) {
 		buffer.buffer_ptr = 1;
 		buffer.read_ptr_1 = CHAR_BUFFER_SIZE + buffer.read_ptr_2 - val;
 		buffer.flag_retract = true;
 	}
-	
+
 	else {
 		if (buffer.buffer_ptr == 1)
 			buffer.read_ptr_1 -= val;
 		else
-			buffer.read_ptr_2 -= val;		
+			buffer.read_ptr_2 -= val;
 	}
 }
 
@@ -229,22 +232,23 @@ void getStream(FILE *fp){
 
 struct symbol getNextToken(FILE * fp) {
 	struct symbol symbol;
-	
+
 	int state = 1; // starting state
 	char str[40];
 	int num = 0;
 	char ch;
 
 	while(true) {
-		ch = getNextChar(fp);		
+		ch = getNextChar(fp);
 		// printf("%c %d %d\n", ch, state, line_no);
-		
+
 		switch(state) {
 			// start state
 			case 1:
 				// identifiers and keywords
-				if (ch == ' ' || ch == '\t')
+				if (ch == ' ' || ch == '\t') {
 					break;
+				}
 
 				else if (ch == '\n') {
 					line_no += 1;
@@ -253,8 +257,7 @@ struct symbol getNextToken(FILE * fp) {
 
 				else if (isalpha(ch)) {
 					state = 2;
-					str[num] = ch;
-					num += 1;
+					str[num++] = ch;
 				}
 
 				// numbers
@@ -265,46 +268,57 @@ struct symbol getNextToken(FILE * fp) {
 
 				// arithmetic
 				else if (ch == '+') {
-					symbol.token = PLUS;
 					populateSymbol(&symbol, PLUS, NULL);
 					return symbol;
 				}
-				else if (ch == '-') 
+
+				else if (ch == '-') {
 					state = 9;
+				}
+
 				else if (ch == '*') {
 					state = 18;
-					// populateSymbol(&symbol, MUL, NULL);
-					// return symbol;
 				}
+
 				else if (ch == '/') {
-					symbol.token = DIV;
 					populateSymbol(&symbol, DIV, NULL);
 					return symbol;
 				}
 
 				// relational
-				else if (ch == '<')
+
+				else if (ch == '<') {
 					state = 10;
-				else if (ch == '>')
+				}
+
+				else if (ch == '>') {
 					state = 12;
-				else if (ch == '=')
+				}
+
+				else if (ch == '=') {
 					state = 14;
-				else if (ch == '!')
+				}
+
+				else if (ch == '!') {
 					state = 15;
+				}
 
 				// brackets
 				else if (ch == '[') {
 					populateSymbol(&symbol, SQBO, NULL);
 					return symbol;
 				}
+
 				else if (ch == ']') {
 					populateSymbol(&symbol, SQBC, NULL);
 					return symbol;
 				}
+
 				else if (ch == '(') {
 					populateSymbol(&symbol, BO, NULL);
 					return symbol;
 				}
+
 				else if (ch == ')') {
 					populateSymbol(&symbol, BC, NULL);
 					return symbol;
@@ -315,12 +329,16 @@ struct symbol getNextToken(FILE * fp) {
 					state = 16;
 					// printf("DOT DETECTED\n");
 				}
-				else if (ch == ':')
+
+				else if (ch == ':') {
 					state = 17;
+				}
+
 				else if (ch == ';') {
 					populateSymbol(&symbol, SEMICOL, NULL);
 					return symbol;
 				}
+
 				else if (ch == ',') {
 					populateSymbol(&symbol, COMMA, NULL);
 					return symbol;
@@ -334,6 +352,9 @@ struct symbol getNextToken(FILE * fp) {
 					retractRead(1); // retract
 					str[num] = '\0';
 					enum terminal token = (enum terminal) hashMapGet(str, hash_map);
+					if (token == -1) {
+						token = IDENTIFIER;
+					}
 					populateSymbol(&symbol, token, str);
 					return symbol;
 				}
@@ -480,6 +501,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				// ERROR
+				state = 100;
+				break;
 
 			case 15:
 				if (ch == '=') {
@@ -488,6 +511,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				// ERROR
+				state = 100;
+				break;
 
 			case 16:
 				if (ch == '.') {
@@ -496,6 +521,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				// ERROR
+				state = 100;
+				break;
 
 			case 17:
 				if (ch == '=')
@@ -522,8 +549,9 @@ struct symbol getNextToken(FILE * fp) {
 				break;
 
 			case 20:
-				if (ch == '*')
+				if (ch == '*') {
 					state = 1;
+				}
 				else {
 					if (ch == '\n')
 						line_no += 1;
@@ -535,7 +563,6 @@ struct symbol getNextToken(FILE * fp) {
 				printf("%c %d\n", ch, ch);
 				symbol.token = -1;
 				return symbol;
-
 		}
 	}
 }

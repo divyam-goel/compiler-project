@@ -381,34 +381,124 @@ void createParseTable() {
 }
 
 
-// parseInputSourceCode(char *testcaseFile, table T) {
-// 	//
+// void parseInputSourceCode(char *testcaseFile) {
+//     loadGrammar(testcaseFile);
+//     computeFirstAndFollowSets();
+//     createParseTable();    
 // }
 
 
-// char *writeNode(struct node *ptr) {
+/*
+lexeme	lineno	tokenName	valueIfNumber	parentNodeSymbol	isLeafNode(yes/no)	NodeSymbol
 
+The lexeme of the current node is printed when it is the leaf
+node else a dummy string of characters "‐‐‐‐" is printed. The line number is
+one of the information collected by the lexical analyzer during single pass of the source code.
+The token name corresponding to the current node is printed third.
+If the lexeme is an integer or real number, then its value computed by the 
+lexical analyzer should be printed at the fourth place. Print the grammar 
+symbol (non-terminal symbol) of the parent node of the currently visited 
+node appropriately at fifth place (for the root node print ROOT for parent symbol).
+The sixth column is for printing yes or no appropriately. Print the non-terminal
+symbol of the node being currently visited at the 7th place,
+if the node is not the leaf node [Print the actual non-terminal symbol and not the
+enumerated values for the non-terminal]. Ensure appropriate justification so
+that the columns appear neat and straight.
+*/
+
+/*
+	Maps needed:
+	map_non_terminal : enum to string (ex: 0 -> "PROGRAM")
+	map_terminal_enum_str : enum to string (ex: 4 -> "PLUS")
+	map_terminal_enum_lex : enum to string (ex: 4 -> "+")
+*/
+
+// char *writeNode(struct node *ptr, struct node *p_ptr, FILE *fp) {
+// 	/*
+// 		ptr - pointer to current node
+// 		p_ptr - pointer to parent node
+// 	*/
+
+// 	char is_leaf_node[4];
+// 	if (p_ptr != NULL)
+// 		char parent_node_symbol[] = map_non_terminal[p_ptr->symbol.non_terminal];
+// 	else
+// 		char parent_node_symbol[] = "NULL";
+
+// 	if (ptr->flag == TERMINAL) {
+// 		int line_no = ptr->symbol.line_no;
+// 		char token_name = map_terminal_enum_str[ptr->symbol.token]; // DEFINE MAP TOKEN
+// 		strcpy(is_leaf_node, "YES");
+
+// 		if (ptr->symbol.token == NUM) {
+// 			int value_if_number = ptr->symbol.lexeme.num;
+// 			fprintf(fp, "---- \t %d \t %s \t %d \t %s \t %s \n",
+// 				line_no, token_name, value_if_number,
+// 				parent_node_symbol, is_leaf_node);
+// 		}
+
+// 		else if (ptr->symbol.tkoen == RNUM) {
+// 			float value_if_number = ptr->symbol.lexeme.rnum;
+// 			fprintf(fp, "---- \t %d \t %s \t %f \t %s \t %s \n",
+// 				line_no, token_name, value_if_number,
+// 				parent_node_symbol, is_leaf_node);
+// 		}
+
+// 		else {
+// 			char lexeme[MAX_LEXEME_LEN];
+			
+// 			if (ptr->symbol.token == IDENTIFIER) {
+// 				strcpy(lexeme, ptr->symbol.lexeme.str);
+// 			}
+
+// 			else {
+// 				strcpy(lexeme, map_terminal_enum_lex[ptr->symbol.token]);
+// 			}
+
+// 			fprintf(fp, "%s \t %d \t %s \t %f \t %s \t %s \n",
+// 				lexeme, line_no, token_name, value_if_number,
+// 				parent_node_symbol, is_leaf_node);
+// 		}
+// 	}
+
+// 	else {
+// 		strcpy(is_leaf_node, "NO");
+// 		char node_symbol[] = map_non_terminal[ptr->symbol.non_terminal];
+// 		fprintf(fp, " \t \t \t \t %s \t %s \t %s"
+// 			parent_node, is_leaf_node, node_symbol);
+// 	}
 // }
 
 
-void recursivePrint(struct node *ptr, FILE *fp) {
-	if (ptr == NULL)
-		return;
-	recursivePrint(ptr->child, fp);
-	char *str = "%s\t%d\t%s\t%d";
-	// fwrite(fp, )
-}
+// struct node *recursiveInOrderPrint(struct node *ptr, struct node *p_ptr, FILE *fp) {
+// 	if (ptr == NULL)
+// 		return NULL;
+	
+// 	struct node *last_child = recursivePrint(ptr->child, ptr, fp);
+	
+// 	writeNode(ptr, p_ptr, fp);
+	
+// 	if (last_child != NULL) {
+// 		recursivePrint(last_child, ptr, fp);
+// 	}
+	
+// 	if (ptr->next != NULL and ptr->next->next == NULL) {
+// 		return ptr->next;
+// 	}
+	
+// 	return recursivePrint(ptr->next, ptr, fp);
+// }
 
 
-void printParseTree(parseTree PT, char *outfile) {
-    FILE * fp = fopen(outfile, "w");
+// void printParseTree(parseTree PT, char *outfile) {
+//     FILE * fp = fopen(outfile, "w");
 
-    if(fp == NULL) {
-        printf("Error in opening the file!\n");
-        return;
-    }
+//     if(fp == NULL) {
+//         printf("Error in opening the file!\n");
+//         return;
+//     }
 
-	struct node *ptr = PT.head;
+// 	struct node *ptr = PT.head;
 
-	recursivePrint(ptr, fp);
-}
+// 	recursiveInOrderPrint(ptr, NULL, fp);
+// }

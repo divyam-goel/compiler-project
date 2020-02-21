@@ -26,13 +26,14 @@ void defineBuffer() {
     buffer.flag_retract = false;
 }
 
-void defineHashMap() {
-    extern struct hashMap *hash_map;
-    getTerminalsHashMap(hash_map);
-}
+// void defineHashMap() {
+//     extern struct hashMap *hash_map;
+//     populateTerminalsHashMap();
+// }
 
 void test_getStream() {
-    FILE * fp = fopen("test/fixtures/test_case_1.txt", "r");
+    // FILE * fp = fopen("test/fixtures/test_case_1.txt", "r");
+    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
 
     if(fp == NULL) {
         printf("Error in opening the file!\n");
@@ -40,7 +41,7 @@ void test_getStream() {
     }
 
     defineBuffer();
-    
+
     getStream(fp);
     while(!feof(fp)) {
         for(int i = 0; i < getNumBytes(); i++)
@@ -49,7 +50,9 @@ void test_getStream() {
 }
 
 void test_getNextToken() {
-    FILE * fp = fopen("test/fixtures/test_case_3.txt", "r");
+    // FILE * fp = fopen("test/fixtures/test_custom.txt", "r");
+    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+    // FILE * fp = fopen("test/fixtures/test_case_3.txt", "r");
 
     if(fp == NULL) {
         printf("Error in opening the file!\n");
@@ -57,16 +60,17 @@ void test_getNextToken() {
     }
 
     defineBuffer();
-    defineHashMap();
-    
+    // defineHashMap();
+    populateTerminalsHashMap();
+
     struct symbol token;
     while (!feof(fp)) {
         token = getNextToken(fp);
-        if (token.token == 0)
+        if (token.token == IDENTIFIER)
             printf("Token value: %d %s %d\n", token.token, token.lexeme.str, token.line_no);
-        else if (token.token == 1)
+        else if (token.token == NUM)
             printf("Token value: %d %d %d\n", token.token, token.lexeme.num, token.line_no);
-        else if (token.token == 2)
+        else if (token.token == RNUM)
             printf("Token value: %d %f %d\n", token.token, token.lexeme.rnum, token.line_no);
         else
             printf("Token value: %d %d\n", token.token, token.line_no);
@@ -91,7 +95,7 @@ struct rhsNode *newRule(
     enum nonTerminal non_terminal,
     enum terminal terminal,
     enum typeOfSymbol flag) {
-    
+
     struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
     ptr->flag = flag;
     if (flag == TERMINAL)
@@ -104,7 +108,7 @@ struct rhsNode *newRule(
 
 // void populateGrammar() {
 //     extern grammar G;
-// 
+//
 //     // E -> TE'
 //     G[0].non_terminal = E;
 //     G[0].head = newRule(T, EPS_, NON_TERMINAL);
@@ -141,18 +145,18 @@ struct rhsNode *newRule(
 
 void initializeFirstAndFollow() {
     extern struct firstAndFollow F;
-    
+
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             F.first[i][j] = -1;
             F.follow[i][j] = '0';
         }
-    }    
+    }
 }
 
 void intializeParseTable() {
     extern table parseTable;
-    
+
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         for (int j = 0; j < NUM_TERMINALS; j++) {
             parseTable[i][j] = -1;
@@ -196,7 +200,7 @@ void test_computeFirstAndFollow() {
 
     printf("\nCreating parse table....\n");
     createParseTable();
-    
+
     // code to print out table
     printf("\nParse table:\n");
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
@@ -205,14 +209,14 @@ void test_computeFirstAndFollow() {
         }
         printf("\n");
     }
-    
+
 }
 
 void test_strl() {
     llog("\t+ Running test_strl... ");
     char* str;
     struct str_list* strl = strl_allocate();
-    
+
     strl_append(strl, "hello");
     str = strl_get(strl, 0);
     assert(strcmp(str, "hello") == 0);
@@ -329,7 +333,11 @@ void test_loadGrammar() {
 
 int main() {
     puts("Running tests... ");
-    test_loadGrammar();
-    puts("Tests complete!!!");
+    // test_strl();
+    // test_hashMap();
+    // test_getStream();
+    test_getNextToken();
+    // test_computeFirstAndFollow();
+    printf("\nTests complete!!!\n");
     return 0;
 }

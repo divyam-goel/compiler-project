@@ -7,6 +7,7 @@
 
 #define BUFFER_SIZE 512
 #define CHAR_BUFFER_SIZE 10
+#define MAX_LEXEME_LEN 10
 
 struct twinBuffer {
 	char buffer_1[CHAR_BUFFER_SIZE];

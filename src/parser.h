@@ -10,8 +10,8 @@ struct hashMap *getNonTerminalMap();
 int extractRules(char *line, int ruleNumber);
 void loadGrammar(const char* filename);
 void printGrammar();
-void computeFirstAndFollow();
-void computeParseTable();
+void ComputeFirstAndFollowSets();
+void createParseTable();
 
 // ComputeFirstAndFollowSets (grammar G, FirstAndFollow  F)
 // createParseTable(FirstAndFollow F, table T)
