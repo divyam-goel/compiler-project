@@ -12,6 +12,6 @@ char getChar(int index);
 char getNextChar(FILE *fp);
 bool isBufferEnd();
 void getStream(FILE * fp);
-struct symbol getNextToken();
+struct symbol getNextToken(FILE *fp);
 
 #endif

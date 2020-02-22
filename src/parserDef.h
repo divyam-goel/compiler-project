@@ -40,11 +40,11 @@ union nodeValue {
 	enum nonTerminal non_terminal;
 };
 
-struct node {
+struct treeNode {
 	union nodeValue symbol;
 	enum typeOfSymbol flag;
-	struct node *child;
-	struct node *next;
+	struct treeNode *child;
+	struct treeNode *next;
 };
 
 struct parseTree {

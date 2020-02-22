@@ -12,6 +12,7 @@ void loadGrammar(const char* filename);
 void printGrammar();
 void computeFirstAndFollowSets();
 void createParseTable();
+void parseInputSourceCode(char *testcaseFile);
 
 // ComputeFirstAndFollowSets (grammar G, FirstAndFollow  F)
 // createParseTable(FirstAndFollow F, table T)

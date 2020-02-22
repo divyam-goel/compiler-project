@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "../src/lexer.h"
 #include "../src/parser.h"
+#include "../src/data_structures/stack.h"
 
 void test_removeComments(){
     /*
@@ -51,7 +52,7 @@ void test_getStream() {
 
 void test_getNextToken() {
     // FILE * fp = fopen("test/fixtures/test_custom.txt", "r");
-    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+    FILE * fp = fopen("test/fixtures/stage 1/t2.txt", "r");
     // FILE * fp = fopen("test/fixtures/test_case_3.txt", "r");
 
     if(fp == NULL) {
@@ -168,7 +169,7 @@ void test_computeFirstAndFollow() {
     extern struct firstAndFollow F;
     extern table parseTable;
 
-    FILE *fp = fopen("test/test_result_first.txt","w+");
+    // FILE *fp = fopen("test/test_result_first.txt","w+");
 
     printf("Populating grammar\n");
     // populateGrammar();
@@ -180,44 +181,55 @@ void test_computeFirstAndFollow() {
     printf("Computing first and follow ...\n");
     computeFirstAndFollowSets();
 
-    fprintf(fp, "Printing first and follow ...\n");
-    fprintf(fp, "\nFirst:\n");
+    printf("Printing first and follow ...\n");
 
-    for (int j = 0; j < NUM_TERMINALS; ++j) {
-        fprintf(fp, "%5.3d ", j);
-    }
-    fprintf(fp, "\n");
+    // fprintf(fp, "Printing first and follow ...\n");
+    // fprintf(fp, "\nFirst:\n");
 
-    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-        fprintf(fp, "%.3d ", i);
-        for (int j = 0; j < NUM_TERMINALS; j++) {
-            fprintf(fp, "%5d ", F.first[i][j]);
-        }
-        fprintf(fp, "\n");
-    }
+    // for (int j = 0; j < NUM_TERMINALS; ++j) {
+    //     fprintf(fp, "%5.3d ", j);
+    // }
+    // fprintf(fp, "\n");
+
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     fprintf(fp, "%.3d ", i);
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         fprintf(fp, "%5d ", F.first[i][j]);
+    //     }
+    //     fprintf(fp, "\n");
+    // }
+
+    // printf("\nFirst:\n");
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     printf("%d ", i);
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         printf("%d ", F.first[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 
     // printf("\nFollow:\n");
     // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
     //     for (int j = 0; j < NUM_TERMINALS; j++) {
-    //         printf("%c\t", F.follow[i][j]);
+    //         printf("%c ", F.follow[i][j]);
     //     }
     //     printf("\n");
     // }
 
-    // printf("\nIntializing parse table ...\n");
-    // intializeParseTable();
+    printf("\nIntializing parse table ...\n");
+    intializeParseTable();
 
-    // printf("\nCreating parse table....\n");
-    // createParseTable();
+    printf("\nCreating parse table....\n");
+    createParseTable();
 
-    // // code to print out table
-    // printf("\nParse table:\n");
-    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-    //     for (int j = 0; j < NUM_TERMINALS; j++) {
-    //         printf("%d\t", parseTable[i][j]);
-    //     }
-    //     printf("\n");
-    // }
+    // code to print out table
+    printf("\nParse table:\n");
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            printf("%d\t", parseTable[i][j]);
+        }
+        printf("\n");
+    }
 
 }
 
@@ -340,14 +352,60 @@ void test_loadGrammar() {
     printGrammar();
 }
 
+void test_stack() {
+    initialiseStack();
+    struct rule *rule = (struct rule *) malloc(sizeof(struct rule));
+    rule->non_terminal = _PROGRAM;
+    rule->head = newRule(_VALUE, PLUS, TERMINAL);
+    rule->head->next = newRule(_OP1, EPSILON, NON_TERMINAL);
+    rule->head->next->next = newRule(_OP2, EPSILON, NON_TERMINAL);
+
+    // struct stackNode *stack_node = (struct stackNode *) malloc(sizeof(struct stackNode));
+    // stack_node->symbol.non_terminal = rule->non_terminal;
+    // stack_node->flag = NON_TERMINAL;
+    // stack_node->next = NULL;
+    // push(stack_node);
+    pushRuleIntoStack(rule);
+    printStack();
+}
+
+void test_parseInputSourceCode() {
+    printf("Loading grammar ...\n");
+    loadGrammar("./docs/grammar/text/grammar.txt");
+
+    printf("Intializing first and follow\n");
+    initializeFirstAndFollow();
+
+    printf("Computing first and follow ...\n");
+    computeFirstAndFollowSets();
+    
+    printf("Intializing parse table ...\n");
+    intializeParseTable();
+
+    printf("Creating parse table ...\n");
+    createParseTable();
+
+    printf("Creating a buffer ...\n");
+    defineBuffer();
+    
+    printf("Populating terminal hash map ...\n");
+    populateTerminalsHashMap();
+
+    printf("Parsing input source code ...\n");
+    // parseInputSourceCode("test/fixtures/test_case_4.txt");
+    parseInputSourceCode("test/fixtures/stage 1/t4.txt");
+}
+
 int main() {
-    puts("Running tests... ");
+    puts("\nRunning tests... ");
     // test_strl();
     // test_hashMap();
     // test_getStream();
     // test_getNextToken();
-    test_computeFirstAndFollow();
+    // test_computeFirstAndFollow();
     // test_loadGrammar();
+    // test_stack();
+    test_parseInputSourceCode();
     printf("\nTests complete!!!\n");
     return 0;
 }

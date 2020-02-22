@@ -66,7 +66,7 @@
 
 <u>                         ->      PLUS <sub_u> | MINUS <sub_u>
 
-<sub_u>                     ->     BO <arithmeticExpr> BC | <var>
+<sub_u>                     ->    	BO <arithmeticExpr> BC | <var>
 
 <expression>                ->      <AnyTerm> <N7>
 
@@ -84,7 +84,7 @@
 
 <sub_term>                  ->      <op2> <factor> <sub_term> | EPSILON
 
-<factor>                    ->      BO <arithmeticExpr> BC | <var>
+<factor>                    ->      BO <expression> BC | <var>
 
 <op1>                       ->      PLUS | MINUS
 

@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "data_structures/stack.h"
 
 grammar G;
 table parseTable;
@@ -6,6 +7,7 @@ struct parseTree PT;
 struct hashMap *nonTerminalMap;
 struct hashMap *terminalMap;
 struct firstAndFollow F;
+extern struct stack *stack;
 
 char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32] = {
 	"<program>", "<moduleDeclarations>", "<moduleDeclaration>", "<otherModules>",
@@ -272,6 +274,8 @@ void computeFollow(){
 
 
 void computeFirstAndFollowSets() {
+	printf("Computing first set ...\n");
+	
 	int dirty_bit_non_terminals[NUM_NON_TERMINALS];
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
 		dirty_bit_non_terminals[i] = 0;
@@ -352,6 +356,8 @@ void computeFirstAndFollowSets() {
 		}
 	}
 
+	printf("Computing follow set ...\n");
+
 	computeFollow();
 }
 
@@ -375,11 +381,131 @@ void createParseTable() {
 }
 
 
-// void parseInputSourceCode(char *testcaseFile) {
-//     loadGrammar(testcaseFile);
-//     computeFirstAndFollowSets();
-//     createParseTable();    
-// }
+struct parseTree * initialiseParseTree() {
+	struct parseTree * parse_tree = (struct parseTree *) malloc(sizeof(struct parseTree));
+	return parse_tree;
+}
+
+struct treeNode * addTreeNode(union nodeValue symbol, enum typeOfSymbol flag) {
+	struct treeNode * node_ptr = (struct treeNode *) malloc(sizeof(struct treeNode));
+	node_ptr->symbol = symbol;
+	node_ptr->flag = flag;
+	node_ptr->child = NULL;
+	node_ptr->next = NULL;
+	return node_ptr;
+}
+
+
+void parseInputSourceCode(char *testcaseFile) {
+	FILE *fp = fopen(testcaseFile, "r");
+
+	if (fp == NULL) {
+		printf("Error in opening the file!!\n");
+		exit(0);
+	}
+
+	printf("Initialising stack ...\n");
+    initialiseStack();
+
+    printf("Adding <program> to stack\n");
+    // Push <program> to stack
+    struct stackNode *stack_node = (struct stackNode *) malloc(sizeof(struct stackNode));
+    stack_node->symbol.non_terminal = _PROGRAM;
+    stack_node->flag = NON_TERMINAL;
+    stack_node->next = NULL;
+    push(stack_node);
+
+    // printf("Check 1\n");
+
+
+
+    // union nodeValue node_value;
+
+    // struct parseTree * parse_tree = initialiseParseTree();
+    // struct treeNode * tree_node = NULL;
+
+    // tree_node = addTreeNode(node_value, NON_TERMINAL);
+    // node_value.non_terminal = _PROGRAM
+
+    // struct rhsNode *rhs_node = NULL;
+
+    struct symbol symbol;
+    stack_node = NULL;
+    enum nonTerminal stack_top_non_terminal;
+    enum terminal symbol_terminal;
+    int rule_no;
+
+    // printf("Check 2\n");
+	symbol = getNextToken(fp);
+	symbol_terminal = symbol.token;
+
+	// printf("check 3\n");
+    while(true) {
+
+    	if(stack->head == NULL){
+    		break;
+    	}
+
+    	printf("\n");
+    	printf("Printing stack ...\n");
+    	printStack();
+    	printf("\n");
+
+    	if (stack->head->flag == NON_TERMINAL) {
+    		stack_top_non_terminal = stack->head->symbol.non_terminal;
+    		// printf("%d %d\n", stack_top_non_terminal, symbol_terminal);
+   //  		printf("Check 4\n");
+			// fflush(stdout);
+    		// printf("%d\n", parseTable[stack_top_non_terminal][symbol_terminal]);
+
+    		
+    		// find next applicable rule
+    		if (parseTable[stack_top_non_terminal][symbol_terminal] != -1) {
+    			rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
+    			
+    			// printf("check in loop\n");
+    			stack_node = pop();
+    			if (G[rule_no].head->flag == TERMINAL && G[rule_no].head->symbol.terminal == EPSILON) {
+    				continue;
+    			}
+    			else
+    				pushRuleIntoStack(&G[rule_no]);
+    				// addRuletoTree(&G[rule_no]);
+
+    			// add rule to parse tree
+
+    		}
+
+    		// if no rule, then ERROR state
+    		else {
+	    		printf("ERROR!!\n");
+	    		break;
+
+    		}
+    	}
+
+    	else if (stack->head->symbol.terminal == symbol_terminal) {
+    		// pop the terminal
+    		stack_node = pop();
+			
+			// get the next token
+			symbol = getNextToken(fp);
+			symbol_terminal = symbol.token;
+			printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
+			printf("Value:%s\n", symbol.lexeme.str);
+    		
+    		// add stack node to parse tree
+    	}
+
+    	else {
+    		// ERROR state
+    		printf("ERROR!!\n");
+    		break;
+    	}
+    	
+    }
+
+}
 
 
 /*

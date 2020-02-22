@@ -18,7 +18,7 @@ takes input [index: integer, val_: integer];
 end
 
 
-<<driver Program>>
+<<<driver program>>>
 start
 	declare a,b, dummy:integer;
 
@@ -34,9 +34,9 @@ start
 	switch(flag)
 
 	start
-		case FALSE :print(100);
+		case false :print(100);
 		break;
-		case TRUE :use mod1 with parameters a, b;
+		case true :use module mod1 with parameters a, b;
 		break;
 	end
 

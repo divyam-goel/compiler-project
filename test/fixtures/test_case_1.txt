@@ -1,6 +1,6 @@
 declare module mod1;
 
-<<driver Program>>
+<<<driver program>>>
 start
 	declare v, w, r :integer;
 
@@ -9,7 +9,7 @@ start
 
 	declare m:real;
 
-	[r,m] := use mod1 with parameters v, w;
+	[r,m] := use module mod1 with parameters v, w;
 
 	print(r);
 	print(m);

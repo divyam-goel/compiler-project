@@ -230,6 +230,8 @@ void getStream(FILE *fp){
 }
 
 struct symbol getNextToken(FILE * fp) {
+	printf("Getting next token ...\n");	
+	
 	struct symbol symbol;
 
 	int state = 1; // starting state
@@ -272,7 +274,9 @@ struct symbol getNextToken(FILE * fp) {
 				}
 
 				else if (ch == '-') {
-					state = 9;
+					// state = 9;
+					populateSymbol(&symbol, MINUS, NULL);
+					return symbol;
 				}
 
 				else if (ch == '*') {
@@ -439,15 +443,15 @@ struct symbol getNextToken(FILE * fp) {
 				populateSymbol(&symbol, RNUM, str);
 				return symbol;
 
-			case 9:
-				if (isdigit(ch)) {
-					str[num++] = ch;
-					state = 3;
-					break;
-				}
-				retractRead(1); // retract
-				populateSymbol(&symbol, MINUS, NULL);
-				return symbol;
+			// case 9:
+			// 	if (isdigit(ch)) {
+			// 		str[num++] = ch;
+			// 		state = 3;
+			// 		break;
+			// 	}
+			// 	retractRead(1); // retract
+			// 	populateSymbol(&symbol, MINUS, NULL);
+			// 	return symbol;
 
 			case 10:
 				if (ch == '<') {
@@ -537,6 +541,7 @@ struct symbol getNextToken(FILE * fp) {
 					state = 19;
 					break;
 				}
+				retractRead(1);
 				populateSymbol(&symbol, MUL, NULL);
 				return symbol;
 
@@ -559,7 +564,7 @@ struct symbol getNextToken(FILE * fp) {
 				break;
 
 			default:
-				printf("%c %d\n", ch, ch);
+				// printf("%c %d\n", ch, ch);
 				symbol.token = -1;
 				return symbol;
 		}

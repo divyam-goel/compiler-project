@@ -1,4 +1,4 @@
-<<driver program>>
+<<<driver program>>>
 
 
 start
@@ -13,10 +13,10 @@ start
 	switch(c)
 
 	start
-		case TRUE: b:=100;
+		case true: b:=100;
 		break;
-		
-		case FALSE: b := -100;
+		** change true and false to capitalized in code **
+		case false: b := -100;
 			break;
 	end
 
