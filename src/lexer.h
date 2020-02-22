@@ -5,7 +5,6 @@
 #define LEXER_H
 
 
-void populateTerminalsHashMap();
 void removeComments(char *testcaseFile, char *cleanFile);
 int getNumBytes();
 char getChar(int index);

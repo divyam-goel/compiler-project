@@ -1,6 +1,10 @@
 #include "lexer.h"
 
+int line_no = 1;
+struct twinBuffer buffer;
 struct hashMap *hash_map;
+extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
+extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
 
 void removeComments(char *testcaseFile, char *cleanFile) {
     int inp_fd;
@@ -101,9 +105,6 @@ void removeComments(char *testcaseFile, char *cleanFile) {
     return;
 }
 
-struct twinBuffer buffer;
-int line_no = 1;
-
 
 /* START - buffer helper code */
 
@@ -138,13 +139,13 @@ char getNextChar(FILE *fp) {
 void retractRead(int val) {
 	if (buffer.buffer_ptr == 1 && (buffer.read_ptr_1 - val) < -1) {
 		buffer.buffer_ptr = 2;
-		buffer.read_ptr_2 = CHAR_BUFFER_SIZE + buffer.read_ptr_1 - val;
+		buffer.read_ptr_2 = BUFFER_SIZE + buffer.read_ptr_1 - val;
 		buffer.flag_retract = true;
 	}
 
 	else if (buffer.buffer_ptr == 2 && (buffer.read_ptr_2 - val) < -1) {
 		buffer.buffer_ptr = 1;
-		buffer.read_ptr_1 = CHAR_BUFFER_SIZE + buffer.read_ptr_2 - val;
+		buffer.read_ptr_1 = BUFFER_SIZE + buffer.read_ptr_2 - val;
 		buffer.flag_retract = true;
 	}
 
@@ -186,17 +187,14 @@ void populateSymbol(struct symbol * symbol, int token, char *str) {
 /* END -  struct symbol helper coder */
 
 void getStream(FILE *fp){
-	/*	getStream function takes in file pointer fp and :
-		1) fills in the buffer twin_buffer
-		2) returns the fp to user
-	*/
+	/*	getStream function takes in file pointer fp fills in the buffer twin_buffer. */
 
 	switch (buffer.buffer_ptr) {
 		case 1:
 			buffer.buffer_ptr = 2;
 		    buffer.read_ptr_2 = -1;
 		    if (!buffer.flag_retract)
-		    	buffer.num_bytes_2 = fread(buffer.buffer_2, sizeof(char), CHAR_BUFFER_SIZE, fp);
+		    	buffer.num_bytes_2 = fread(buffer.buffer_2, sizeof(char), BUFFER_SIZE, fp);
 		    else {
 		    	buffer.flag_retract = false;
 			}
@@ -206,7 +204,7 @@ void getStream(FILE *fp){
 			buffer.buffer_ptr = 1;
 		    buffer.read_ptr_1 = -1;
 		    if (!buffer.flag_retract)
-		    	buffer.num_bytes_1 = fread(buffer.buffer_1, sizeof(char), CHAR_BUFFER_SIZE, fp);
+		    	buffer.num_bytes_1 = fread(buffer.buffer_1, sizeof(char), BUFFER_SIZE, fp);
 		    else {
 		    	buffer.flag_retract = false;
 			}
@@ -215,8 +213,6 @@ void getStream(FILE *fp){
 }
 
 struct symbol getNextToken(FILE * fp) {
-	printf("Getting next token ...\n");	
-	
 	struct symbol symbol;
 
 	int state = 1; // starting state
@@ -226,112 +222,111 @@ struct symbol getNextToken(FILE * fp) {
 
 	while(true) {
 		ch = getNextChar(fp);
-		// printf("%c %d %d\n", ch, state, line_no);
 
 		switch(state) {
 			// start state
 			case 1:
-				// identifiers and keywords
-				if (ch == ' ' || ch == '\t') {
-					break;
-				}
-
-				else if (ch == '\n') {
-					line_no += 1;
-					break;
-				}
-
-				else if (isalpha(ch)) {
+				// identifiers
+				if (isalpha(ch)) {
 					state = 2;
 					str[num++] = ch;
+					break;
 				}
 
 				// numbers
 				else if (isdigit(ch)) {
 					state = 3;
 					str[num++] = ch;
+					break;
 				}
 
-				// arithmetic
-				else if (ch == '+') {
-					populateSymbol(&symbol, PLUS, NULL);
-					return symbol;
+				switch (ch) {
+					// identifiers and keywords
+					case ' ':
+						break;
+
+					case '\t':
+						break;
+
+					case '\n':
+						line_no += 1;
+						break;
+
+					// arithmetic
+					case '+':
+						populateSymbol(&symbol, PLUS, NULL);
+						return symbol;
+						break;
+
+					case '-':
+						state = 9;
+						break;
+
+					case '*':
+						state = 18;
+						break;
+
+					case '/':
+						populateSymbol(&symbol, DIV, NULL);
+						return symbol;
+
+					// relational
+					case '<':
+						state = 10;
+						break;
+
+					case '>':
+						state = 12;
+						break;
+
+					case '=':
+						state = 14;
+						break;
+
+					case '!':
+						state = 15;
+						break;
+
+					// brackets
+					case '[':
+						populateSymbol(&symbol, SQBO, NULL);
+						return symbol;
+						break;
+
+					case ']':
+						populateSymbol(&symbol, SQBC, NULL);
+						return symbol;
+						break;
+
+					case '(':
+						populateSymbol(&symbol, BO, NULL);
+						return symbol;
+						break;
+
+					case ')':
+						populateSymbol(&symbol, BC, NULL);
+						return symbol;
+						break;
+
+					// others
+					case '.':
+						state = 16;
+						break;
+
+					case ':':
+						state = 17;
+						break;
+
+					case ';':
+						populateSymbol(&symbol, SEMICOL, NULL);
+						return symbol;
+						break;
+
+					case ',':
+						populateSymbol(&symbol, COMMA, NULL);
+						return symbol;
+						break;
 				}
-
-				else if (ch == '-') {
-					// state = 9;
-					populateSymbol(&symbol, MINUS, NULL);
-					return symbol;
-				}
-
-				else if (ch == '*') {
-					state = 18;
-				}
-
-				else if (ch == '/') {
-					populateSymbol(&symbol, DIV, NULL);
-					return symbol;
-				}
-
-				// relational
-
-				else if (ch == '<') {
-					state = 10;
-				}
-
-				else if (ch == '>') {
-					state = 12;
-				}
-
-				else if (ch == '=') {
-					state = 14;
-				}
-
-				else if (ch == '!') {
-					state = 15;
-				}
-
-				// brackets
-				else if (ch == '[') {
-					populateSymbol(&symbol, SQBO, NULL);
-					return symbol;
-				}
-
-				else if (ch == ']') {
-					populateSymbol(&symbol, SQBC, NULL);
-					return symbol;
-				}
-
-				else if (ch == '(') {
-					populateSymbol(&symbol, BO, NULL);
-					return symbol;
-				}
-
-				else if (ch == ')') {
-					populateSymbol(&symbol, BC, NULL);
-					return symbol;
-				}
-
-				// others
-				else if (ch == '.') {
-					state = 16;
-					// printf("DOT DETECTED\n");
-				}
-
-				else if (ch == ':') {
-					state = 17;
-				}
-
-				else if (ch == ';') {
-					populateSymbol(&symbol, SEMICOL, NULL);
-					return symbol;
-				}
-
-				else if (ch == ',') {
-					populateSymbol(&symbol, COMMA, NULL);
-					return symbol;
-				}
-
 				break;
 
 			case 2: // recognize identifier & keywords
@@ -530,14 +525,14 @@ struct symbol getNextToken(FILE * fp) {
 				populateSymbol(&symbol, MUL, NULL);
 				return symbol;
 
-			case 19:
+			case 19: // Comment enter
 				if (ch == '*')
 					state = 20;
 				else if (ch == '\n')
 					line_no += 1;
 				break;
 
-			case 20:
+			case 20: // Comment exit
 				if (ch == '*') {
 					state = 1;
 				}
@@ -549,7 +544,7 @@ struct symbol getNextToken(FILE * fp) {
 				break;
 
 			default:
-				// printf("%c %d\n", ch, ch);
+            	printf("Error condt: %10s %30c %10d\n",  "ERROR", ch, line_no);
 				symbol.token = -1;
 				return symbol;
 		}

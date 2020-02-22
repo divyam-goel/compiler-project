@@ -28,64 +28,65 @@ void defineBuffer() {
 }
 
 void test_getStream() {
-    // FILE * fp = fopen("test/fixtures/test_case_1.txt", "r");
     FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
-
-    if(fp == NULL) {
+    if (fp == NULL) {
         printf("Error in opening the file!\n");
-        return;
+        exit(EXIT_FAILURE);
     }
 
+    // Initialize the twin buffer to a blank state.
     defineBuffer();
 
     getStream(fp);
+    int num_bytes = getNumBytes();
     while(!feof(fp)) {
-        for(int i = 0; i < getNumBytes(); i++)
+        for(int i = 0; i < num_bytes; i++) {
             printf("%c", getNextChar(fp));
+        }
+        num_bytes = getNumBytes();
     }
 }
 
 void test_getNextToken() {
-    // FILE * fp = fopen("test/fixtures/test_custom.txt", "r");
-    FILE * fp = fopen("test/fixtures/stage 1/t2.txt", "r");
-    // FILE * fp = fopen("test/fixtures/test_case_3.txt", "r");
+    //int numberOfTokens = 0;
+    //enum terminal expectedTokens[] = {};
+    //union lexeme expectedLexemes[] = {};
 
-    if(fp == NULL) {
+    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+
+    if (fp == NULL) {
         printf("Error in opening the file!\n");
         return;
     }
 
+
+    // Set up the global twin buffer and fill the global terminals hashmap (in lexer.c).
     defineBuffer();
     extern struct hashMap *hash_map;
+    extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
+    extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
     hash_map = getTerminalMap();
 
     struct symbol token;
+    printf("             %10s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
     while (!feof(fp)) {
         token = getNextToken(fp);
+        if (token.token == -1) {
+            continue;
+        }
         if (token.token == IDENTIFIER)
-            printf("Token value: %d %s %d\n", token.token, token.lexeme.str, token.line_no);
+            printf("Token value: %10s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
         else if (token.token == NUM)
-            printf("Token value: %d %d %d\n", token.token, token.lexeme.num, token.line_no);
+            printf("Token value: %10s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
         else if (token.token == RNUM)
-            printf("Token value: %d %f %d\n", token.token, token.lexeme.rnum, token.line_no);
+            printf("Token value: %10s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
         else
-            printf("Token value: %d %d\n", token.token, token.line_no);
+            printf("Token value: %10s %30s %10d\n",  terminalStringRepresentations[token.token], terminalLiteralRepresentations[token.token],token.line_no);
     }
+
+    fclose(fp);
 }
 
-void test_structSymbol() {
-    struct symbol s1;
-    s1.token = 10;
-
-    s1.lexeme.num = 3;
-    printf("%d %d\n", s1.token, s1.lexeme.num);
-
-    s1.lexeme.rnum = 3.4;
-    printf("%d %f\n", s1.token, s1.lexeme.rnum);
-
-    strcpy(s1.lexeme.str, "Hello, world!");
-    printf("%d %s\n", s1.token, s1.lexeme.str);
-}
 
 struct rhsNode *newRule(
     enum nonTerminal non_terminal,
@@ -384,7 +385,8 @@ void test_parseInputSourceCode() {
     defineBuffer();
     
     printf("Populating terminal hash map ...\n");
-    populateTerminalsHashMap();
+    extern struct hashMap *hash_map;
+    hash_map = getTerminalMap();
 
     printf("Parsing input source code ...\n");
     // parseInputSourceCode("test/fixtures/test_case_4.txt");
@@ -392,15 +394,8 @@ void test_parseInputSourceCode() {
 }
 
 int main() {
-    puts("\nRunning tests... ");
-    // test_strl();
-    // test_hashMap();
-    // test_getStream();
-    // test_getNextToken();
-    // test_computeFirstAndFollow();
-    // test_loadGrammar();
-    // test_stack();
-    test_parseInputSourceCode();
+    puts("Running tests... ");
+    test_getNextToken();
     printf("\nTests complete!!!\n");
     return 0;
 }

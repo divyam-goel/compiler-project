@@ -6,12 +6,11 @@
 #define LEXERDEF_H
 
 #define BUFFER_SIZE 512
-#define CHAR_BUFFER_SIZE 10
 #define MAX_LEXEME_LEN 10
 
 struct twinBuffer {
-	char buffer_1[CHAR_BUFFER_SIZE];
-	char buffer_2[CHAR_BUFFER_SIZE];
+	char buffer_1[BUFFER_SIZE];
+	char buffer_2[BUFFER_SIZE];
 
 	int num_bytes_1;
 	int num_bytes_2;
