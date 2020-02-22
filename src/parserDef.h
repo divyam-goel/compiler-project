@@ -48,7 +48,7 @@ struct treeNode {
 };
 
 struct parseTree {
-	struct node *head;
+	struct treeNode *head;
 };
 
 #endif

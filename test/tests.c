@@ -351,7 +351,7 @@ void test_stack() {
     // stack_node->flag = NON_TERMINAL;
     // stack_node->next = NULL;
     // push(stack_node);
-    pushRuleIntoStack(rule);
+    // pushRuleIntoStack(rule);
     printStack();
 }
 
@@ -381,6 +381,8 @@ void test_parseInputSourceCode() {
     printf("Parsing input source code ...\n");
     // parseInputSourceCode("test/fixtures/test_case_4.txt");
     parseInputSourceCode("test/fixtures/stage 1/t4.txt");
+
+    printParseTree("test/parse_tree_output.txt");
 }
 
 int main() {
