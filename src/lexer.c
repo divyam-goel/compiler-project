@@ -2,7 +2,7 @@
 
 int line_no = 1;
 struct twinBuffer buffer;
-struct hashMap *hash_map;
+extern struct hashMap *terminalMap;  // in parser.c
 extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
 
@@ -107,6 +107,15 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 
 
 /* START - buffer helper code */
+void defineBuffer() {
+    buffer.num_bytes_1 = 0;
+    buffer.num_bytes_2 = 0;
+    buffer.read_ptr_1 = -1;
+    buffer.read_ptr_2 = -1;
+    buffer.buffer_ptr = 2;
+    buffer.flag_retract = false;
+}
+
 
 int getNumBytes() {
 	if (buffer.buffer_ptr == 1)
@@ -334,7 +343,7 @@ struct symbol getNextToken(FILE * fp) {
 				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
 					retractRead(1); // retract
 					str[num] = '\0';
-					enum terminal token = (enum terminal) hashMapGet(str, hash_map);
+					enum terminal token = (enum terminal) hashMapGet(str, terminalMap);
 					if (token == -1) {
 						token = IDENTIFIER;
 					}

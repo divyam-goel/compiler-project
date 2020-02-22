@@ -17,16 +17,6 @@ void test_removeComments(){
     llog("Success!!!\n");
 }
 
-void defineBuffer() {
-    extern struct twinBuffer buffer;
-    buffer.num_bytes_1 = 0;
-    buffer.num_bytes_2 = 0;
-    buffer.read_ptr_1 = -1;
-    buffer.read_ptr_2 = -1;
-    buffer.buffer_ptr = 2;
-    buffer.flag_retract = false;
-}
-
 void test_getStream() {
     FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
     if (fp == NULL) {
@@ -62,10 +52,10 @@ void test_getNextToken() {
 
     // Set up the global twin buffer and fill the global terminals hashmap (in lexer.c).
     defineBuffer();
-    extern struct hashMap *hash_map;
+    extern struct hashMap *terminalMap;
     extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
     extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
-    hash_map = getTerminalMap();
+    terminalMap = getTerminalMap();
 
     struct symbol token;
     printf("             %10s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
@@ -385,8 +375,8 @@ void test_parseInputSourceCode() {
     defineBuffer();
     
     printf("Populating terminal hash map ...\n");
-    extern struct hashMap *hash_map;
-    hash_map = getTerminalMap();
+    extern struct hashMap *terminalMap;
+    terminalMap = getTerminalMap();
 
     printf("Parsing input source code ...\n");
     // parseInputSourceCode("test/fixtures/test_case_4.txt");
