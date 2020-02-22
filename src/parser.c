@@ -229,50 +229,57 @@ void computeFollow() {
 	struct rhsNode *ptr;
 	struct rhsNode *iter;
 	
+	enum nonTerminal non_terminal;
+	
 	for(int loop = 0; loop < 2; loop++) {
+		
 		for(int i = 0; i < NUM_RULES; i++)  {
-			enum nonTerminal non_terminal = G[i].non_terminal;
+			
+			non_terminal = G[i].non_terminal;
 			ptr = G[i].head;
 
 			while(ptr != NULL) {				
+				
 				if(ptr->flag == TERMINAL) {
 					ptr = ptr->next;
 					continue;
 				}
 				
+				// iter iterates over all symbols to the right of current RHS non terminal
+				// pointed to by ptr
 				iter = ptr;
-
 				while (true) {
 					iter = iter->next;
 					
+					// CASE 1 - iter reaches end of rule
 					if(iter == NULL) {
+						// add follow of current LHS non terminal to 
+						// follow of current RHS non terminal
 						for (int i = 0; i < NUM_TERMINALS; i++) {
-							if (F.follow[non_terminal][i] == '1') {
-								if(i == EPSILON)
-									continue;
+							if (F.follow[non_terminal][i] == '1' && i != EPSILON)								
 								F.follow[ptr->symbol.non_terminal][i] = '1';
-							}
-						}
+						}						
 						break;
 					}
 
+					// CASE 2 - iter reaches a terminal
 					else if(iter->flag == TERMINAL) {
+						// add terminal to the follow of current RHS non terminal and break
 						F.follow[ptr->symbol.non_terminal][iter->symbol.terminal] = '1';
 						break;
 					}
 
+					// CASE 3 - iter reaches a non terminal
 					else {
+						// add all terminals in the follow of iter non terminal to ptr non terminal
 						for (int i = 0; i < NUM_TERMINALS; i++) {
-							if (F.first[iter->symbol.non_terminal][i] != -1) {
-								if(i == EPSILON)
-									continue;
+							if (F.first[iter->symbol.non_terminal][i] != -1 && i != EPSILON)
 								F.follow[ptr->symbol.non_terminal][i] = '1';
-							}
 						}
 
-						if(F.first[iter->symbol.non_terminal][EPSILON] == -1){
+						// if iter non terminal does NOT derive EPSILON then break
+						if(F.first[iter->symbol.non_terminal][EPSILON] == -1)
 							break;
-						}
 	 				}
 				}
 				
@@ -280,61 +287,79 @@ void computeFollow() {
 			}
 		}
 	} 
-
-	return;
 }
 
 
 void computeFirstAndFollowSets() {
 	printf("Computing first set ...\n");
 	
+	// ditry bit for non terminals - 
+	// 0 if first for non terminal hasn't been computed
+	// initialized to total number of rules for that non terminal
+
+	// ditry bit for grammar rules - 
+	// 0 if grammar rule hasn't been used in first set computation
+	// initialized to 1
+
 	int dirty_bit_non_terminals[NUM_NON_TERMINALS];
+	int dirty_bit_rules[NUM_RULES];
+
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
 		dirty_bit_non_terminals[i] = 0;
 	}
 
-	int dirty_bit_rules[NUM_RULES];
 	for (int i = 0; i < NUM_RULES; i++) {
 		dirty_bit_rules[i] = 1;
 		dirty_bit_non_terminals[G[i].non_terminal] += 1;
 	}
 
-	int rules_used_count = 0;
 	struct rhsNode *ptr_node;
-
 	enum nonTerminal non_terminal;
 
+	// loop till all rules have used in first set computation
+	int rules_used_count = 0;
 	while (rules_used_count != NUM_RULES) {
 		
 		for (int i = 0; i < NUM_RULES; i++) {
 			
 			non_terminal = G[i].non_terminal;
 			
+			// first of non terminal has ALREADY been computed, OR
+			// current rule has ALREADY been used
 			if (dirty_bit_non_terminals[non_terminal] == 0 || dirty_bit_rules[i] == 0)
 				continue;
 			
+			// iterate over symbols in the RHS of the current rule
 			ptr_node = G[i].head;
-			
 			while (ptr_node != NULL) {
+				
+				// CASE 1 - symbol is a terminal
 				if (ptr_node->flag == TERMINAL) {
+					// add terminal to first of LHS non terminal
 					F.first[non_terminal][ptr_node->symbol.terminal] = i;
 					dirty_bit_rules[i] = 0;
 					rules_used_count += 1;
-					dirty_bit_non_terminals[G[i].non_terminal] -= 1;
+					dirty_bit_non_terminals[non_terminal] -= 1;
 					break;
 				}
 				
+				// CASE 2 - symbol is a non terminal & it's first has NOT been computed
 				else if (dirty_bit_non_terminals[ptr_node->symbol.non_terminal] != 0) {
 					break;
 				}
 				
+				// CASE 3
 				else {
+					// add all terminals in the first of RHS non terminal to
+					// first of LHS non terminal
 					for (int j = 0; j < NUM_TERMINALS; j++) {
 						if (F.first[ptr_node->symbol.non_terminal][j] != -1 && j != EPSILON) {
 							F.first[non_terminal][j] = i;
 						}
 					}
 
+					// end the traversal through rhs if current LHS non terminal
+					// does NOT derive EPSILON
 					if (F.first[ptr_node->symbol.non_terminal][EPSILON] == -1) {
 						dirty_bit_rules[i] = 0;
 						rules_used_count += 1;
@@ -342,6 +367,8 @@ void computeFirstAndFollowSets() {
 						break;
 					}
 
+					// if current LHS non terminal derives EPSILON and
+					// is the last symbol in the rule THEN add EPSILON to first set
 					if (ptr_node->next == NULL) {
 						F.first[non_terminal][EPSILON] = i;
 						dirty_bit_rules[i] = 0;
@@ -349,6 +376,7 @@ void computeFirstAndFollowSets() {
 						dirty_bit_non_terminals[G[i].non_terminal] -= 1;
 					}
 					
+					// continue traversal to the next symbol in RHS
 					ptr_node = ptr_node->next;
 				}
 			}
