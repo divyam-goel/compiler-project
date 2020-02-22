@@ -8,6 +8,9 @@ test: build-test
 memtest: build-test
 	valgrind build/tests
 
+driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o
+	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
+
 build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o
 	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/tests
 
@@ -19,6 +22,14 @@ test.o: test/tests.c \
 		src/data_structures/hashMap_str_int.h \
 		src/data_structures/stack.h
 	$(CC) test/tests.c -o lib/tests.o $(OBJ_CFLAGS)
+
+driver.o: src/driver.c src/utils.h \
+		src/lexer.h src/lexerDef.h \
+		src/parser.h src/parserDef.h \
+		src/data_structures/str_list.h \
+		src/data_structures/hashMap_str_int.h \
+		src/data_structures/stack.h
+	$(CC) src/driver.c -o lib/driver.o $(OBJ_CFLAGS)
 
 utils.o: src/utils.c src/utils.h
 	$(CC) src/utils.c -o lib/utils.o $(OBJ_CFLAGS)

@@ -1,10 +1,30 @@
+#include <time.h>
+#include "lexer.h"
 #include "parser.h"
-#include<time.h>
+#include "data_structures/stack.h"
 
+#define GRAMMAR_FILENAME "./docs/grammar/text/grammar.txt" 
 
-int main(int argc, char const *argv[])
-{
+extern grammar G;
+extern struct hashMap *terminalMap;
+extern struct hashMap *nonTerminalMap;
+
+void initializeEverything() {
+    terminalMap = getTerminalMap();
+    nonTerminalMap = getNonTerminalMap();
+    defineBuffer();
+    loadGrammar(GRAMMAR_FILENAME);
+}
+
+int main(int argc, char const *argv[]) {
+    initializeEverything();
+
 	int choice = 0;
+
+	if (argc < 2) {
+		puts("missing arguments.");
+		exit(-1);
+	}
 
 	do{
 		printf("Menu:\n0 --> Exit out of program\n1 --> Remove comments, and print out cleaned code\n");
@@ -22,10 +42,11 @@ int main(int argc, char const *argv[])
 			}
 			case 1:{
 				// print the contents of removeComments
-				printf("File without the comments:%s\n",argv[1]);
-				char *hjh = "";
-				strcpy(hjh, argv[1]);
-				removeComments(hjh, "/media/nevin/Shared/Studies/3_2(2019)/Compilers/project/github/src/remove_comments_output.txt");
+    			char *cleanFile = "./no_comments.erplag";
+			    char testcaseFile[512];
+				strncpy(testcaseFile, argv[1], 512);
+			    removeComments(testcaseFile, cleanFile);
+				printf("Check %s for the clean file.\n", cleanFile);
 				break;
 			}
 			case 2:{
@@ -60,6 +81,6 @@ int main(int argc, char const *argv[])
 
 
 
-	}while(choice !=0 );
+	} while(choice !=0 );
 	return 0;
 }
