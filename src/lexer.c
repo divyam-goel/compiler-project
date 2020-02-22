@@ -14,10 +14,14 @@ void removeComments(char *testcaseFile, char *cleanFile) {
     }
 
     int out_fd;
-    out_fd = open(cleanFile, O_WRONLY | O_CREAT);
-    if (out_fd == -1) {
-        die("removeComments: Failed to open the output file.");
-    }
+	if (cleanFile == NULL) {
+		out_fd = STDOUT_FILENO;
+	} else {
+    	out_fd = open(cleanFile, O_WRONLY | O_CREAT);
+    	if (out_fd == -1) {
+    	    die("removeComments: Failed to open the output file.");
+   		}
+	}
 
     unsigned short int state = 1;
     ssize_t rd = 0;

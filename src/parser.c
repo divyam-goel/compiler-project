@@ -639,7 +639,7 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 		if (ptr->symbol.terminal.token == NUM) {
 			int value_if_number = ptr->symbol.terminal.lexeme.num;
 			// fprintf(fp, "---- \t %d \t %s \t %d \t %s \t %s \n",
-			printf("%-25s %-15.4d %-15s %-25d %-25s %-25s\n",
+			printf("%-25s %-15.4d %-15s %-25d %-25s %-25s %-25s\n",
 				"", line_no, token_name, value_if_number,
 				parent_node_symbol, is_leaf_node, "");
 			fflush(stdout);
@@ -648,7 +648,7 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 		else if (ptr->symbol.terminal.token == RNUM) {
 			float value_if_number = ptr->symbol.terminal.lexeme.rnum;
 			// fprintf(fp, "---- \t %d \t %s \t %f \t %s \t %s \n",
-			printf("%-25s %-15.4d %-15s %-25f %-25s %-25s\n",
+			printf("%-25s %-15.4d %-15s %-25f %-25s %-25s %-25s\n",
 				"", line_no, token_name, value_if_number,
 				parent_node_symbol, is_leaf_node, "");
 			fflush(stdout);
