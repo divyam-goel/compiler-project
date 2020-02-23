@@ -590,10 +590,10 @@ void parseInputSourceCode(char *testcaseFile) {
     		break;
     	}
 
-    	// printf("\n");
-    	// printf("Printing stack ...\n");
-    	// printStack();
-    	// printf("\n");
+    	printf("\n");
+    	printf("Printing stack ...\n");
+    	printStack();
+    	printf("\n");
 
     	if (stack->head->flag == NON_TERMINAL) {
     		stack_top_non_terminal = stack->head->symbol.non_terminal;
@@ -625,7 +625,27 @@ void parseInputSourceCode(char *testcaseFile) {
 
     		// if no rule, then ERROR state
     		else {
-	    		printf("ERROR!!\n");
+	    		printErrorMessage(symbol);
+	    		// keep getting next token till that token is in follow(non-terminal)
+	    		while(true){
+	    			if(F.follow[stack_top_non_terminal][symbol_terminal] == '1'){
+	    				// we pop the non-terminal at the top of stack,discard current token and continue normal parsing
+	    				stack_node = pop();
+	    				getNextToken(fp,&symbol);
+	    				symbol_terminal = symbol.token;
+	    				break;
+	    			}
+	    			// if the current token isn't in the follow of current non_terminal, we discard the token
+	    			// and generate a new one- do this till the first condition is fulfilled
+	    			else{
+	    				// if DOLLAR was generated, and it wasn't in the follow set of non-terminal(above if condition),
+	    				// then, its the end of file and there are no more characters- we stop
+	    				if(symbol_terminal == DOLLAR)
+	    					break;
+	    				getNextToken(fp,&symbol);
+	    				symbol_terminal = symbol.token;
+	    			}
+	    		}
 	    		fflush(stdout);
 	    		break;
     		}
@@ -668,7 +688,22 @@ void parseInputSourceCode(char *testcaseFile) {
 
 }
 
+void printErrorMessage(struct symbol symbol){
 
+	switch (symbol.token) {
+	    case IDENTIFIER:
+	        printf("Syntax Error: Received '%s' character at line number %d\n", symbol.lexeme.str, symbol.line_no);
+			break;
+	    case NUM:
+	        printf("Syntax Error: Received '%d' character at line number %d\n", symbol.lexeme.num, symbol.line_no);
+			break;
+	    case RNUM:
+	        printf("Syntax Error: Received '%f' character at line number %d\n", symbol.lexeme.rnum, symbol.line_no);
+			break;
+	    default:
+	        printf("Syntax Error: Received '%s' character at line number %d\n", terminalLiteralRepresentations[symbol.token],symbol.line_no);
+    	}
+}
 /* PRINT PARSE TREE Helper Code - START */
 
 void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {

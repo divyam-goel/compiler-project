@@ -25,6 +25,7 @@ void createParseTable();
 
 void parseInputSourceCode(char *testcaseFile);
 void printParseTree();
+void printErrorMessage(struct symbol symbol);
 
 // ComputeFirstAndFollowSets (grammar G, FirstAndFollow  F)
 // createParseTable(FirstAndFollow F, table T)
