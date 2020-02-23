@@ -526,6 +526,7 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 
 		curr_stack_node_ptr = addStackNode(curr_rhs_rule_node);
 		curr_stack_node_ptr->tree_node_ptr = curr_tree_node_ptr;
+		curr_stack_node_ptr->tree_node_parent_enum = grammar_rule->non_terminal;
 		push(curr_stack_node_ptr);
 
 		curr_rhs_rule_node = curr_rhs_rule_node->next;
@@ -649,7 +650,8 @@ void parseInputSourceCode(char *testcaseFile) {
 
     	else {
     		// ERROR state
-    		printf("Syntax Error:Line %d --> Terminals not matching - Expected %s but got %s\n",
+    		printf("Syntax Error: Line %d --> Terminals not matching - Expected %s but got %s\n",
+    				symbol.line_no,
     				terminalStringRepresentations[stack->head->symbol.terminal],
     				terminalStringRepresentations[symbol_terminal]);
     		// pop current terminal out of the stack, and discard current token

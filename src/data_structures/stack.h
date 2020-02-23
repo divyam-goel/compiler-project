@@ -14,6 +14,7 @@ struct stackNode {
 	enum typeOfSymbol flag;
 	struct stackNode *next;
 	struct treeNode *tree_node_ptr;
+	enum nonTerminal tree_node_parent_enum;
 };
 
 void initialiseStack();
