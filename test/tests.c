@@ -179,14 +179,18 @@ void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     printf("Parsing input source code ...\n");
     parseInputSourceCode(source_file);
 
-    printParseTree("test/test_result_parse_tree_output.txt");
+    // printParseTree("test/test_result_parse_tree_output.txt");
 }
 
 int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char source_file[] = "./test/fixtures/stage 1/t4.txt";
+<<<<<<< HEAD
     char source_file[] = "./test/fixtures/stage 1/t2.txt";
+=======
+    char source_file[] = "./test/fixtures/stage 1/t6(with_syntax_errors).txt";
+>>>>>>> Completed syntax error analysis for non-terminals, and unstable code for terminals
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);

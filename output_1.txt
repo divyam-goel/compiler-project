@@ -1,0 +1,451 @@
+gcc test/tests.c -o lib/tests.o -Wall -g -c
+gcc src/utils.c -o lib/utils.o -Wall -g -c
+gcc src/lexer.c -o lib/lexer.o -Wall -g -c
+gcc src/parser.c -o lib/parser.o -Wall -g -c
+gcc src/data_structures/hashMap_str_int.c -o lib/hashMap_str_int.o -Wall -g -c
+gcc src/data_structures/str_list.c -o lib/str_list.o -Wall -g -c
+gcc src/data_structures/stack.c -o lib/stack.o -Wall -g -c
+gcc lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/tests
+build/tests
+
+Running tests...
+Loading grammar ...
+Intializing first and follow
+Computing first and follow ...
+Computing first set ...
+Computing follow set ...
+Intializing parse table ...
+Creating parse table ...
+Creating a buffer ...
+Populating terminal and terminal literal hash map ...
+Parsing input source code ...
+Creating <program> parse tree node ...
+Initialising parse tree ...
+Initialising stack ...
+Adding <program> to stack ...
+
+Token: DECLARE
+
+Printing stack ...
+<program>
+
+
+Printing stack ...
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<moduleDeclaration>
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+DECLARE
+MODULE
+ID
+SEMICOL
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+MODULE
+ID
+SEMICOL
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+ID
+SEMICOL
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+SEMICOL
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<moduleDeclarations>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<module>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+DEF
+MODULE
+ID
+ENDDEF
+TAKES
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+MODULE
+ID
+ENDDEF
+TAKES
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+ID
+ENDDEF
+TAKES
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+ENDDEF
+TAKES
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+TAKES
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+INPUT
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+SQBO
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+ID
+COLON
+<dataType>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+COLON
+<dataType>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<dataType>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+ARRAY
+SQBO
+<dynamic_range>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+SQBO
+<dynamic_range>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<dynamic_range>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<index>
+RANGEOP
+<index>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+NUM
+RANGEOP
+<index>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+RANGEOP
+<index>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<index>
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+NUM
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+SQBC
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+OF
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<type>
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+REAL
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printing stack ...
+<sub_input_plist>
+SQBC
+SEMICOL
+<ret>
+<moduleDef>
+<otherModules>
+<driverModule>
+<otherModules>
+
+
+Printimakefile:6: recipe for target 'test' failed

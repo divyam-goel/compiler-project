@@ -593,13 +593,15 @@ void parseInputSourceCode(char *testcaseFile) {
     		// if no rule, then ERROR state
     		else {
 	    		printErrorMessage(symbol);
+	    		printf("\nStarting Recovery.....");
 	    		// keep getting next token till that token is in follow(non-terminal)
 	    		while(true){
 	    			if(F.follow[stack_top_non_terminal][symbol_terminal] == '1'){
 	    				// we pop the non-terminal at the top of stack,discard current token and continue normal parsing
 	    				stack_node = pop();
-	    				getNextToken(fp,&symbol);
-	    				symbol_terminal = symbol.token;
+	    				// getNextToken(fp,&symbol);
+	    				// symbol_terminal = symbol.token;
+	    				printf("Recovery finished!! Continuing with token %s\n", terminalStringRepresentations[symbol_terminal]);
 	    				break;
 	    			}
 	    			// if the current token isn't in the follow of current non_terminal, we discard the token
@@ -609,12 +611,13 @@ void parseInputSourceCode(char *testcaseFile) {
 	    				// then, its the end of file and there are no more characters- we stop
 	    				if(symbol_terminal == DOLLAR)
 	    					break;
+	    				printf("Token discarded %s\n",terminalStringRepresentations[symbol_terminal]);
 	    				getNextToken(fp,&symbol);
 	    				symbol_terminal = symbol.token;
 	    			}
 	    		}
 	    		fflush(stdout);
-	    		break;
+	    		// break;
     		}
     	}
 
@@ -646,9 +649,15 @@ void parseInputSourceCode(char *testcaseFile) {
 
     	else {
     		// ERROR state
-    		printf("ERROR!!\n");
+    		printf("Syntax Error:Line %d --> Terminals not matching - Expected %s but got %s\n",
+    				terminalStringRepresentations[stack->head->symbol.terminal],
+    				terminalStringRepresentations[symbol_terminal]);
+    		// pop current terminal out of the stack, and discard current token
+    		pop();
+    		// getNextToken(fp, &symbol);
+			// symbol_terminal = symbol.token;
     		fflush(stdout);
-    		break;
+    		// break;
     	}
 
     }
@@ -659,16 +668,16 @@ void printErrorMessage(struct symbol symbol){
 
 	switch (symbol.token) {
 	    case IDENTIFIER:
-	        printf("Syntax Error: Received '%s' character at line number %d\n", symbol.lexeme.str, symbol.line_no);
+	        printf("Syntax Error:Line %d --> Received '%s' character\n", symbol.line_no, symbol.lexeme.str);
 			break;
 	    case NUM:
-	        printf("Syntax Error: Received '%d' character at line number %d\n", symbol.lexeme.num, symbol.line_no);
+	        printf("Syntax Error:Line %d --> Received '%d' character\n", symbol.line_no,  symbol.lexeme.num);
 			break;
 	    case RNUM:
-	        printf("Syntax Error: Received '%f' character at line number %d\n", symbol.lexeme.rnum, symbol.line_no);
+	        printf("Syntax Error:Line %d --> Received '%f' character\n",  symbol.line_no, symbol.lexeme.rnum);
 			break;
 	    default:
-	        printf("Syntax Error: Received '%s' character at line number %d\n", terminalLiteralRepresentations[symbol.token],symbol.line_no);
+	        printf("Syntax Error:Line %d --> Received '%s' character\n",symbol.line_no, terminalLiteralRepresentations[symbol.token]);
     	}
 }
 /* PRINT PARSE TREE Helper Code - START */
