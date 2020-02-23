@@ -7,6 +7,7 @@
 
 extern grammar G;
 extern struct hashMap *terminalMap;
+extern struct hashMap *terminalLiteralMap;
 extern struct hashMap *nonTerminalMap;
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];
@@ -15,6 +16,7 @@ char sourceFilePath[512];
 void initializeEverything() {
     terminalMap = getTerminalMap();
     nonTerminalMap = getNonTerminalMap();
+    terminalLiteralMap = getTerminalLiteralMap();
     defineBuffer();
     loadGrammar(GRAMMAR_FILENAME);
 }
