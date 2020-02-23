@@ -272,7 +272,8 @@ struct symbol getNextToken(FILE * fp) {
 						break;
 
 					case '-':
-						state = 9;
+						populateSymbol(&symbol, DIV, NULL);
+						return symbol;
 						break;
 
 					case '*':
