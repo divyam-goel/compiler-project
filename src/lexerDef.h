@@ -20,6 +20,7 @@ struct twinBuffer {
 
 	int buffer_ptr;
 	bool flag_retract;
+	bool eof;
 };
 
 

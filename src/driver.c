@@ -46,8 +46,10 @@ void demonstrateLexicalAnalysis() {
 
     struct symbol token;
     printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
-    while (!feof(fp)) {
-        token = getNextToken(fp);
+    while (true) {
+        if (getNextToken(fp, &token) == 0) {
+			break;
+		}
         if (token.token == -1) {
             continue;
         }

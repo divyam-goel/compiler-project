@@ -42,7 +42,8 @@ void test_getNextToken() {
     //enum terminal expectedTokens[] = {};
     //union lexeme expectedLexemes[] = {};
 
-    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+    // FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+    FILE * fp = fopen("test/fixtures/all_terminals.txt", "r");
 
     if (fp == NULL) {
         printf("Error in opening the file!\n");
@@ -58,20 +59,22 @@ void test_getNextToken() {
     terminalMap = getTerminalMap();
 
     struct symbol token;
-    printf("             %10s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
-    while (!feof(fp)) {
-        token = getNextToken(fp);
+    printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
+    while (true) {
+        if (getNextToken(fp, &token) == 0) {
+            break;
+        }
         if (token.token == -1) {
             continue;
         }
         if (token.token == IDENTIFIER)
-            printf("Token value: %10s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
+            printf("Token value: %15s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
         else if (token.token == NUM)
-            printf("Token value: %10s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
+            printf("Token value: %15s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
         else if (token.token == RNUM)
-            printf("Token value: %10s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
+            printf("Token value: %15s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
         else
-            printf("Token value: %10s %30s %10d\n",  terminalStringRepresentations[token.token], terminalLiteralRepresentations[token.token],token.line_no);
+            printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token], terminalLiteralRepresentations[token.token],token.line_no);
     }
 
     fclose(fp);
@@ -387,7 +390,8 @@ void test_parseInputSourceCode() {
 
 int main() {
     puts("Running tests... ");
-    test_getNextToken();
+    // test_getNextToken();
+    test_parseInputSourceCode();
     printf("\nTests complete!!!\n");
     return 0;
 }

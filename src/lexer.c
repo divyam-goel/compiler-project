@@ -118,6 +118,7 @@ void defineBuffer() {
     buffer.read_ptr_2 = -1;
     buffer.buffer_ptr = 2;
     buffer.flag_retract = false;
+    buffer.eof = false;
 }
 
 
@@ -135,6 +136,9 @@ char getChar(int index) {
 
 char getNextChar(FILE *fp) {
 	if (isBufferEnd()) {
+		if (buffer.eof) {
+			return '\0';
+		}
 		getStream(fp);
 	}
 
@@ -208,6 +212,9 @@ void getStream(FILE *fp){
 		    buffer.read_ptr_2 = -1;
 		    if (!buffer.flag_retract)
 		    	buffer.num_bytes_2 = fread(buffer.buffer_2, sizeof(char), BUFFER_SIZE, fp);
+				if (buffer.num_bytes_2 < BUFFER_SIZE) {
+					buffer.eof = true;
+				}
 		    else {
 		    	buffer.flag_retract = false;
 			}
@@ -218,6 +225,9 @@ void getStream(FILE *fp){
 		    buffer.read_ptr_1 = -1;
 		    if (!buffer.flag_retract)
 		    	buffer.num_bytes_1 = fread(buffer.buffer_1, sizeof(char), BUFFER_SIZE, fp);
+				if (buffer.num_bytes_1 < BUFFER_SIZE) {
+					buffer.eof = true;
+				}
 		    else {
 		    	buffer.flag_retract = false;
 			}
@@ -225,9 +235,7 @@ void getStream(FILE *fp){
 	}
 }
 
-struct symbol getNextToken(FILE * fp) {
-	struct symbol symbol;
-
+int getNextToken(FILE * fp, struct symbol *symbol) {
 	int state = 1; // starting state
 	char str[40];
 	int num = 0;
@@ -235,6 +243,12 @@ struct symbol getNextToken(FILE * fp) {
 
 	while(true) {
 		ch = getNextChar(fp);
+
+		if (ch == '\0') {
+			buffer.eof = false;
+			populateSymbol(symbol, DOLLAR, NULL);
+			return 0;
+		}
 
 		switch(state) {
 			// start state
@@ -267,13 +281,13 @@ struct symbol getNextToken(FILE * fp) {
 
 					// arithmetic
 					case '+':
-						populateSymbol(&symbol, PLUS, NULL);
-						return symbol;
+						populateSymbol(symbol, PLUS, NULL);
+						return 1;
 						break;
 
 					case '-':
-						populateSymbol(&symbol, DIV, NULL);
-						return symbol;
+						populateSymbol(symbol, DIV, NULL);
+						return 1;
 						break;
 
 					case '*':
@@ -281,8 +295,8 @@ struct symbol getNextToken(FILE * fp) {
 						break;
 
 					case '/':
-						populateSymbol(&symbol, DIV, NULL);
-						return symbol;
+						populateSymbol(symbol, DIV, NULL);
+						return 1;
 
 					// relational
 					case '<':
@@ -303,23 +317,23 @@ struct symbol getNextToken(FILE * fp) {
 
 					// brackets
 					case '[':
-						populateSymbol(&symbol, SQBO, NULL);
-						return symbol;
+						populateSymbol(symbol, SQBO, NULL);
+						return 1;
 						break;
 
 					case ']':
-						populateSymbol(&symbol, SQBC, NULL);
-						return symbol;
+						populateSymbol(symbol, SQBC, NULL);
+						return 1;
 						break;
 
 					case '(':
-						populateSymbol(&symbol, BO, NULL);
-						return symbol;
+						populateSymbol(symbol, BO, NULL);
+						return 1;
 						break;
 
 					case ')':
-						populateSymbol(&symbol, BC, NULL);
-						return symbol;
+						populateSymbol(symbol, BC, NULL);
+						return 1;
 						break;
 
 					// others
@@ -332,13 +346,13 @@ struct symbol getNextToken(FILE * fp) {
 						break;
 
 					case ';':
-						populateSymbol(&symbol, SEMICOL, NULL);
-						return symbol;
+						populateSymbol(symbol, SEMICOL, NULL);
+						return 1;
 						break;
 
 					case ',':
-						populateSymbol(&symbol, COMMA, NULL);
-						return symbol;
+						populateSymbol(symbol, COMMA, NULL);
+						return 1;
 						break;
 				}
 				break;
@@ -352,8 +366,8 @@ struct symbol getNextToken(FILE * fp) {
 					if (token == -1) {
 						token = IDENTIFIER;
 					}
-					populateSymbol(&symbol, token, str);
-					return symbol;
+					populateSymbol(symbol, token, str);
+					return 1;
 				}
 				str[num++] = ch;
 				break;
@@ -370,8 +384,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				str[num] = '\0';
-				populateSymbol(&symbol, NUM, str);
-				return symbol;
+				populateSymbol(symbol, NUM, str);
+				return 1;
 
 			case 4:
 				if (isdigit(ch)) {
@@ -381,8 +395,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(2); // double retraction
 				str[--num] = '\0';
-				populateSymbol(&symbol, NUM, str);
-				return symbol;
+				populateSymbol(symbol, NUM, str);
+				return 1;
 
 			case 5:
 				if (isdigit(ch)) {
@@ -396,8 +410,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				str[num] = '\0';
-				populateSymbol(&symbol, RNUM, str);
-				return symbol;
+				populateSymbol(symbol, RNUM, str);
+				return 1;
 
 			case 6:
 				if (isdigit(ch)) {
@@ -412,8 +426,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(2); // double retract
 				str[--num] = '\0';
-				populateSymbol(&symbol, RNUM, str);
-				return symbol;
+				populateSymbol(symbol, RNUM, str);
+				return 1;
 
 			case 7:
 				if (isdigit(ch)) {
@@ -424,8 +438,8 @@ struct symbol getNextToken(FILE * fp) {
 				retractRead(3); // triple retract
 				num -= 2;
 				str[num] = '\0';
-				populateSymbol(&symbol, RNUM, str);
-				return symbol;
+				populateSymbol(symbol, RNUM, str);
+				return 1;
 
 			case 8:
 				if (isdigit(ch)) {
@@ -434,8 +448,8 @@ struct symbol getNextToken(FILE * fp) {
 				}
 				retractRead(1); // retract
 				str[--num] = '\0';
-				populateSymbol(&symbol, RNUM, str);
-				return symbol;
+				populateSymbol(symbol, RNUM, str);
+				return 1;
 
 			// case 9:
 			// 	if (isdigit(ch)) {
@@ -444,8 +458,8 @@ struct symbol getNextToken(FILE * fp) {
 			// 		break;
 			// 	}
 			// 	retractRead(1); // retract
-			// 	populateSymbol(&symbol, MINUS, NULL);
-			// 	return symbol;
+			// 	populateSymbol(symbol, MINUS, NULL);
+			// 	return 1;
 
 			case 10:
 				if (ch == '<') {
@@ -453,21 +467,21 @@ struct symbol getNextToken(FILE * fp) {
 					break;
 				}
 				if (ch == '=')
-					populateSymbol(&symbol, LE, NULL);
+					populateSymbol(symbol, LE, NULL);
 				else {
 					retractRead(1); // retract
-					populateSymbol(&symbol, LT, NULL);
+					populateSymbol(symbol, LT, NULL);
 				}
-				return symbol;
+				return 1;
 
 			case 11:
 				if (ch == '<')
-					populateSymbol(&symbol, DRIVERDEF, NULL);
+					populateSymbol(symbol, DRIVERDEF, NULL);
 				else {
 					retractRead(1); // retract
-					populateSymbol(&symbol, DEF, NULL);
+					populateSymbol(symbol, DEF, NULL);
 				}
-				return symbol;
+				return 1;
 
 			case 12:
 				if (ch == '>') {
@@ -475,26 +489,26 @@ struct symbol getNextToken(FILE * fp) {
 					break;
 				}
 				if (ch == '=')
-					populateSymbol(&symbol, GE, NULL);
+					populateSymbol(symbol, GE, NULL);
 				else {
 					retractRead(1); // retract
-					populateSymbol(&symbol, GT, NULL);
+					populateSymbol(symbol, GT, NULL);
 				}
-				return symbol;
+				return 1;
 
 			case 13:
 				if (ch == '>')
-					populateSymbol(&symbol, DRIVERENDDEF, NULL);
+					populateSymbol(symbol, DRIVERENDDEF, NULL);
 				else {
 					retractRead(1); // retract
-					populateSymbol(&symbol, ENDDEF, NULL);
+					populateSymbol(symbol, ENDDEF, NULL);
 				}
-				return symbol;
+				return 1;
 
 			case 14:
 				if (ch == '=') {
-					populateSymbol(&symbol, EQ, NULL);
-					return symbol;
+					populateSymbol(symbol, EQ, NULL);
+					return 1;
 				}
 				retractRead(1); // retract
 				// ERROR
@@ -503,8 +517,8 @@ struct symbol getNextToken(FILE * fp) {
 
 			case 15:
 				if (ch == '=') {
-					populateSymbol(&symbol, NE, NULL);
-					return symbol;
+					populateSymbol(symbol, NE, NULL);
+					return 1;
 				}
 				retractRead(1); // retract
 				// ERROR
@@ -513,8 +527,8 @@ struct symbol getNextToken(FILE * fp) {
 
 			case 16:
 				if (ch == '.') {
-					populateSymbol(&symbol, RANGEOP, NULL);
-					return symbol;
+					populateSymbol(symbol, RANGEOP, NULL);
+					return 1;
 				}
 				retractRead(1); // retract
 				// ERROR
@@ -523,12 +537,12 @@ struct symbol getNextToken(FILE * fp) {
 
 			case 17:
 				if (ch == '=')
-					populateSymbol(&symbol, ASSIGNOP, NULL);
+					populateSymbol(symbol, ASSIGNOP, NULL);
 				else {
 					retractRead(1);
-					populateSymbol(&symbol, COLON, NULL);
+					populateSymbol(symbol, COLON, NULL);
 				}
-				return symbol;
+				return 1;
 
 			case 18:
 				if (ch == '*') {
@@ -536,8 +550,8 @@ struct symbol getNextToken(FILE * fp) {
 					break;
 				}
 				retractRead(1);
-				populateSymbol(&symbol, MUL, NULL);
-				return symbol;
+				populateSymbol(symbol, MUL, NULL);
+				return 1;
 
 			case 19: // Comment enter
 				if (ch == '*')
@@ -559,8 +573,8 @@ struct symbol getNextToken(FILE * fp) {
 
 			default:
             	printf("Error condt: %15s %30c %10d\n",  "ERROR", ch, line_no);
-				symbol.token = -1;
-				return symbol;
+				symbol->token = -1;
+				return 1;
 		}
 	}
 }

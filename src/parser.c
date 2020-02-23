@@ -531,7 +531,7 @@ void parseInputSourceCode(char *testcaseFile) {
     int rule_no;
 
 	printf("\n");
-	symbol = getNextToken(fp);
+	getNextToken(fp, &symbol);
 	printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
 	fflush(stdout);
 	symbol_terminal = symbol.token;
@@ -588,7 +588,7 @@ void parseInputSourceCode(char *testcaseFile) {
     		}
 			
 			// get the next token
-			symbol = getNextToken(fp);
+			getNextToken(fp, &symbol);
 			symbol_terminal = symbol.token;
 			printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
 			fflush(stdout);
