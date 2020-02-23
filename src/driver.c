@@ -50,6 +50,8 @@ void demonstrateLexicalAnalysis() {
     printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
     while (true) {
         if (getNextToken(fp, &token) == 0) {
+        	printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token],
+					   terminalLiteralRepresentations[token.token],token.line_no);
 			break;
 		}
         if (token.token == -1) {

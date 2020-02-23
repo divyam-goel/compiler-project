@@ -41,7 +41,7 @@ char terminalStringRepresentations[NUM_TERMINALS][16] = {
 		"WITH", "PARAMETERS", "TRUE", "FALSE", "TAKES",
 		"INPUT", "RETURNS", "AND", "OR", "FOR",
 		"IN", "SWITCH", "CASE", "BREAK", "DEFAULT",
-		"WHILE", "EPSILON"
+		"WHILE", "EPSILON","DOLLAR"
 	};
 
 
@@ -57,7 +57,7 @@ char terminalLiteralRepresentations[NUM_TERMINALS][16] = {
 		"with", "parameters", "true", "false", "takes",
 		"input", "returns", "AND", "OR", "for",
 		"in", "switch", "case", "break", "default",
-		"while", "EPSILON"
+		"while", "EPSILON", "$"
 	};
 
 /* GLOBAL VARIABLES - END */
