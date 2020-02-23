@@ -72,9 +72,9 @@
 
 <N7>                        ->      <logicalOp> <AnyTerm> <N7> | EPSILON
 
-<AnyTerm>                   ->      <arithmeticExpr> <N8> | <boolConstt> <N8>
+<AnyTerm>                   ->      <arithmeticExpr> <N8> | <boolConstt> 
 
-<N8>                        ->      <relationalOp> <arithmeticExpr> <N8> | EPSILON
+<N8>                        ->      <relationalOp> <arithmeticExpr> | EPSILON
 
 <arithmeticExpr>            ->      <term> <sub_arithmeticExpr>
 
