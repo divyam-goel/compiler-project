@@ -7,13 +7,25 @@
 
 struct hashMap *getTerminalMap();
 struct hashMap *getNonTerminalMap();
+struct hashMap *getTerminalLiteralMap();
+
+struct rhsNode *newRule(
+    enum nonTerminal non_terminal,
+    enum terminal terminal,
+    enum typeOfSymbol flag);
 int extractRules(char *line, int ruleNumber);
 void loadGrammar(const char* filename);
 void printGrammar();
+
+void initializeFirstAndFollow();
 void computeFirstAndFollowSets();
+
+void intializeParseTable();
 void createParseTable();
+
 void parseInputSourceCode(char *testcaseFile);
 void printParseTree();
+
 // ComputeFirstAndFollowSets (grammar G, FirstAndFollow  F)
 // createParseTable(FirstAndFollow F, table T)
 // parseInputSourceCode(char *testcaseFile, table T)

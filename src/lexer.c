@@ -2,7 +2,7 @@
 
 int line_no = 1;
 struct twinBuffer buffer;
-extern struct hashMap *terminalMap;  // in parser.c
+extern struct hashMap *terminalLiteralMap;  // in parser.c
 extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
 
@@ -362,7 +362,7 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
 					retractRead(1); // retract
 					str[num] = '\0';
-					enum terminal token = (enum terminal) hashMapGet(str, terminalMap);
+					enum terminal token = (enum terminal) hashMapGet(str, terminalLiteralMap);
 					if (token == -1) {
 						token = IDENTIFIER;
 					}

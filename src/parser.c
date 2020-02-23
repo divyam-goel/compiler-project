@@ -8,6 +8,7 @@ table parseTable;
 struct parseTree PT;
 struct hashMap *nonTerminalMap;
 struct hashMap *terminalMap;
+struct hashMap *terminalLiteralMap;
 struct firstAndFollow F;
 extern struct stack *stack;
 
@@ -43,14 +44,14 @@ char terminalStringRepresentations[NUM_TERMINALS][16] = {
 		"WHILE", "EPSILON"
 	};
 
-	
+
 char terminalLiteralRepresentations[NUM_TERMINALS][16] = {
 		"ID", "NUM", "RNUM", "+", "-",
 		"*", "/", "<", "<=", ">",
 		">=", "=", "!=", "<<", "<<<",
 		">>", ">>>", "[", "]", "(",
 		")", "..", ":", ":=", ";",
-		",", "INTEGER", "REAL", "BOOLEAN", "of",
+		",", "integer", "real", "boolean", "of",
 		"array", "start", "end", "declare", "module",
 		"driver", "program", "get_value", "print", "use",
 		"with", "parameters", "true", "false", "takes",
@@ -73,8 +74,17 @@ struct hashMap *getTerminalMap() {
 	return map;
 }
 
+struct hashMap *getTerminalLiteralMap() {
+	struct hashMap *map = initialiseHashMap();
+	for (int i = 0; i < NUM_TERMINALS; ++i) {
+		hashMapPut(terminalLiteralRepresentations[i], i, map);
+	}
+
+	return map;
+}
+
 struct hashMap *getNonTerminalMap() {
-	struct hashMap *map = initialiseHashMap();	
+	struct hashMap *map = initialiseHashMap();
 	for (int i = 0; i < NUM_NON_TERMINALS; ++i) {
 		hashMapPut(nonTerminalStringRepresentations[i], i, map);
 	}
@@ -104,6 +114,22 @@ struct rhsNode *createRhsNode(const char *val) {
 
 
 /* GRAMMAR Helper Code - START */
+
+struct rhsNode *newRule(
+    enum nonTerminal non_terminal,
+    enum terminal terminal,
+    enum typeOfSymbol flag) {
+
+    struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
+    ptr->flag = flag;
+    if (flag == TERMINAL)
+        ptr->symbol.terminal = terminal;
+    else
+        ptr->symbol.non_terminal = non_terminal;
+    ptr->next = NULL;
+    return ptr;
+}
+
 
 int extractRules(char *line, int ruleNumber) {
 	/* Extract the non-termial LHS and the rules for that LHS from a given line in the grammar.
@@ -223,42 +249,52 @@ void printGrammar() {
 
 /* FIRST & FOLLOW Helper Code - START */
 
+void initializeFirstAndFollow() {
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            F.first[i][j] = -1;
+            F.follow[i][j] = '0';
+        }
+    }
+}
+
+
 void computeFollow() {
 	F.follow[G[0].non_terminal][DOLLAR] = '1';
 
 	struct rhsNode *ptr;
 	struct rhsNode *iter;
-	
+
 	enum nonTerminal non_terminal;
-	
+
 	for(int loop = 0; loop < 2; loop++) {
-		
+
 		for(int i = 0; i < NUM_RULES; i++)  {
-			
+
 			non_terminal = G[i].non_terminal;
 			ptr = G[i].head;
 
-			while(ptr != NULL) {				
-				
+			while(ptr != NULL) {
+
 				if(ptr->flag == TERMINAL) {
 					ptr = ptr->next;
 					continue;
 				}
-				
+
 				// iter iterates over all symbols to the right of current RHS non terminal
 				// pointed to by ptr
 				iter = ptr;
 				while (true) {
 					iter = iter->next;
-					
+
 					// CASE 1 - iter reaches end of rule
 					if(iter == NULL) {
-						// add follow of current LHS non terminal to 
+						// add follow of current LHS non terminal to
 						// follow of current RHS non terminal
 						for (int i = 0; i < NUM_TERMINALS; i++) {
-							if (F.follow[non_terminal][i] == '1' && i != EPSILON)								
+							if (F.follow[non_terminal][i] == '1' && i != EPSILON)
 								F.follow[ptr->symbol.non_terminal][i] = '1';
-						}						
+						}
 						break;
 					}
 
@@ -282,22 +318,22 @@ void computeFollow() {
 							break;
 	 				}
 				}
-				
+
 				ptr = ptr->next;
 			}
 		}
-	} 
+	}
 }
 
 
 void computeFirstAndFollowSets() {
 	printf("Computing first set ...\n");
-	
-	// ditry bit for non terminals - 
+
+	// ditry bit for non terminals -
 	// 0 if first for non terminal hasn't been computed
 	// initialized to total number of rules for that non terminal
 
-	// ditry bit for grammar rules - 
+	// ditry bit for grammar rules -
 	// 0 if grammar rule hasn't been used in first set computation
 	// initialized to 1
 
@@ -319,20 +355,20 @@ void computeFirstAndFollowSets() {
 	// loop till all rules have used in first set computation
 	int rules_used_count = 0;
 	while (rules_used_count != NUM_RULES) {
-		
+
 		for (int i = 0; i < NUM_RULES; i++) {
-			
+
 			non_terminal = G[i].non_terminal;
-			
+
 			// first of non terminal has ALREADY been computed, OR
 			// current rule has ALREADY been used
 			if (dirty_bit_non_terminals[non_terminal] == 0 || dirty_bit_rules[i] == 0)
 				continue;
-			
+
 			// iterate over symbols in the RHS of the current rule
 			ptr_node = G[i].head;
 			while (ptr_node != NULL) {
-				
+
 				// CASE 1 - symbol is a terminal
 				if (ptr_node->flag == TERMINAL) {
 					// add terminal to first of LHS non terminal
@@ -342,12 +378,12 @@ void computeFirstAndFollowSets() {
 					dirty_bit_non_terminals[non_terminal] -= 1;
 					break;
 				}
-				
+
 				// CASE 2 - symbol is a non terminal & it's first has NOT been computed
 				else if (dirty_bit_non_terminals[ptr_node->symbol.non_terminal] != 0) {
 					break;
 				}
-				
+
 				// CASE 3
 				else {
 					// add all terminals in the first of RHS non terminal to
@@ -375,7 +411,7 @@ void computeFirstAndFollowSets() {
 						rules_used_count += 1;
 						dirty_bit_non_terminals[G[i].non_terminal] -= 1;
 					}
-					
+
 					// continue traversal to the next symbol in RHS
 					ptr_node = ptr_node->next;
 				}
@@ -390,6 +426,14 @@ void computeFirstAndFollowSets() {
 
 /* FIRST & FOLLOW Helper Code - END */
 
+void intializeParseTable() {
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            parseTable[i][j] = -1;
+        }
+    }
+}
+
 
 void createParseTable() {
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
@@ -398,7 +442,7 @@ void createParseTable() {
 					parseTable[i][j] = F.first[i][j];
 			}
 		}
-		
+
 		if (F.first[i][EPSILON] != -1) {
 			for (int j = 0; j < NUM_TERMINALS; j++) {
 				if (F.follow[i][j] == '1') {
@@ -420,16 +464,16 @@ struct parseTree * initialiseParseTree() {
 
 struct treeNode * addTreeNode(struct rhsNode *rhs_node_ptr) {
 	struct treeNode * tree_node_ptr = (struct treeNode *) malloc(sizeof(struct treeNode));
-	
+
 	if (rhs_node_ptr->flag == TERMINAL)
 		tree_node_ptr->symbol.terminal.token = rhs_node_ptr->symbol.terminal;
 	else
 		tree_node_ptr->symbol.non_terminal = rhs_node_ptr->symbol.non_terminal;
-	
+
 	tree_node_ptr->flag = rhs_node_ptr->flag;
 	tree_node_ptr->child = NULL;
 	tree_node_ptr->next = NULL;
-	
+
 	return tree_node_ptr;
 }
 
@@ -449,7 +493,7 @@ struct rhsNode *reverseRule(struct rhsNode *rhs_node_ptr) {
 	return prev_rhs_node_ptr;
 }
 
- 
+
 struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 	// X -> PQR - we pop non terminal X and push in all elements of RHS of rule- in reverse order- RQP
 	// X has already been popped- if we call this function
@@ -471,24 +515,19 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 
 	// now, they are in reverse order- now to insert elements as well as restore the original order
 	while(curr_rhs_rule_node != NULL){
-		// printf("TOKEN: %d\n", curr_rhs_rule_node->symbol);
 		curr_tree_node_ptr = addTreeNode(curr_rhs_rule_node);
 		curr_tree_node_ptr->next = prev_tree_node_ptr;
 		prev_tree_node_ptr = curr_tree_node_ptr;
-				
+
 		curr_stack_node_ptr = addStackNode(curr_rhs_rule_node);
 		curr_stack_node_ptr->tree_node_ptr = curr_tree_node_ptr;
 		push(curr_stack_node_ptr);
-		
+
 		curr_rhs_rule_node = curr_rhs_rule_node->next;
 	}
 
-	// printf("Am I a seg fault?!\n");
-	fflush(stdout);
 	reverseRule(last_rhs_rule_node);
 
-	// printf("Exiting addRuleToStackAndTree ...\n");
-	// fflush(stdout);
 	return curr_tree_node_ptr;
 }
 
@@ -523,7 +562,7 @@ void parseInputSourceCode(char *testcaseFile) {
     stack_node->next = NULL;
     stack_node->tree_node_ptr = tree_node_ptr;
     push(stack_node);
-    
+
     struct symbol symbol;
     stack_node = NULL;
     enum nonTerminal stack_top_non_terminal;
@@ -542,19 +581,34 @@ void parseInputSourceCode(char *testcaseFile) {
     		break;
     	}
 
-    	printf("\n");
-    	printf("Printing stack ...\n");
-    	printStack();
-    	printf("\n");
+    	// printf("\n");
+    	// printf("Printing stack ...\n");
+    	// printStack();
+    	// printf("\n");
 
     	if (stack->head->flag == NON_TERMINAL) {
     		stack_top_non_terminal = stack->head->symbol.non_terminal;
-    		
+
     		// find next applicable rule
     		if (parseTable[stack_top_non_terminal][symbol_terminal] != -1) {
     			rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
        			stack_node = pop();
 				stack_node->tree_node_ptr->child = addRuleToStackAndTree(&G[rule_no]);
+		    	printf("\nPrinting subtree ...\n");
+		    	struct treeNode *tree_node_ptr = stack_node->tree_node_ptr;
+		    	if (tree_node_ptr->flag == NON_TERMINAL)
+		    		printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
+		    	else
+		    		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
+		    	tree_node_ptr = tree_node_ptr->child;
+		    	while(tree_node_ptr != NULL) {
+			    	if (tree_node_ptr->flag == NON_TERMINAL)
+			    		printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
+			    	else
+			    		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
+		    		tree_node_ptr = tree_node_ptr->next;
+		    	}
+
 		    	// printf("Printing stack ...\n");
 		    	// printStack();
 		    	// fflush(stdout);
@@ -586,12 +640,12 @@ void parseInputSourceCode(char *testcaseFile) {
     		else if (symbol.token == RNUM) {
     			stack_node->tree_node_ptr->symbol.terminal.lexeme.rnum = symbol.lexeme.rnum;
     		}
-			
+
 			// get the next token
 			getNextToken(fp, &symbol);
 			symbol_terminal = symbol.token;
-			printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
-			fflush(stdout);
+			// printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
+			// fflush(stdout);
     	}
 
     	else {
@@ -600,7 +654,7 @@ void parseInputSourceCode(char *testcaseFile) {
     		fflush(stdout);
     		break;
     	}
-    	
+
     }
 
 }
@@ -613,13 +667,6 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 		ptr - pointer to current node
 		p_ptr - pointer to parent node
 	*/
-	// printf("Printing node ...\n");
-	// fflush(stdout);
-	
-	// if (ptr->flag == TERMINAL)
-	// 	printf("T: %d\n", ptr->symbol.terminal.token);
-	// else
-	// 	printf("NT: %d\n", ptr->symbol.non_terminal);
 
 	char is_leaf_node[4];
 	char parent_node_symbol[MAX_LEXEME_LEN];
@@ -638,19 +685,17 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 
 		if (ptr->symbol.terminal.token == NUM) {
 			int value_if_number = ptr->symbol.terminal.lexeme.num;
-			// fprintf(fp, "---- \t %d \t %s \t %d \t %s \t %s \n",
-			printf("%-25s %-15.4d %-15s %-25d %-25s %-25s %-25s\n",
-				"", line_no, token_name, value_if_number,
-				parent_node_symbol, is_leaf_node, "");
+			printf("%-25s %-15.4d %-15s %-25d %-25s %-25s\n",
+				"----", line_no, token_name, value_if_number,
+				parent_node_symbol, is_leaf_node);
 			fflush(stdout);
 		}
 
 		else if (ptr->symbol.terminal.token == RNUM) {
 			float value_if_number = ptr->symbol.terminal.lexeme.rnum;
-			// fprintf(fp, "---- \t %d \t %s \t %f \t %s \t %s \n",
-			printf("%-25s %-15.4d %-15s %-25f %-25s %-25s %-25s\n",
-				"", line_no, token_name, value_if_number,
-				parent_node_symbol, is_leaf_node, "");
+			printf("%-25s %-15.4d %-15s %-25f %-25s %-25s\n",
+				"----", line_no, token_name, value_if_number,
+				parent_node_symbol, is_leaf_node);
 			fflush(stdout);
 		}
 
@@ -660,7 +705,7 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 			if (ptr->symbol.terminal.token == EPSILON) {
 				return;
 			}
-			
+
 			if (ptr->symbol.terminal.token == IDENTIFIER) {
 				strcpy(lexeme, ptr->symbol.terminal.lexeme.str);
 			}
@@ -669,7 +714,6 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 				strcpy(lexeme, terminalLiteralRepresentations[ptr->symbol.terminal.token]);
 			}
 
-			// fprintf(fp, "%s \t %d \t %s \t  \t %s \t %s \n",
 			printf("%-25s %-15.4d %-15s %-25s %-25s %-25s %-25s\n",
 				lexeme, line_no, token_name, "", parent_node_symbol, is_leaf_node, "");
 			fflush(stdout);
@@ -680,10 +724,8 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 		strcpy(is_leaf_node, "NO");
 		char node_symbol[30];
 		strcpy(node_symbol, nonTerminalStringRepresentations[ptr->symbol.non_terminal]);
-		// fprintf(fp, "%-25s %-25.4d %-25s %-25d %-25s %-25s\n",
-		// 	parent_node_symbol, is_leaf_node, node_symbol);
 		printf("%-25s %-15s %-15s %-25s %-25s %-15s %s\n",
-				"", "", "", "", parent_node_symbol, is_leaf_node, node_symbol);
+				"----", "", "", "", parent_node_symbol, is_leaf_node, node_symbol);
 	}
 }
 
@@ -692,28 +734,16 @@ struct treeNode *recursiveInOrderPrint(struct treeNode *ptr, struct treeNode *p_
 	if (ptr == NULL)
 		return NULL;
 
-	// printf("Running recursiveInOrderPrint ...\n");
-	// if (ptr->flag == TERMINAL)
-	// 	printf("T: %d\n", ptr->symbol.terminal.token);
-	// else
-	// 	printf("NT: %d\n", ptr->symbol.non_terminal);
+	struct treeNode *next_child = recursiveInOrderPrint(ptr->child, ptr, fp);
 
-	fflush(stdout);
-	
-	
-	struct treeNode *last_child = recursiveInOrderPrint(ptr->child, ptr, fp);
-	
 	writeNode(ptr, p_ptr, fp);
-	
-	if (last_child != NULL) {
-		recursiveInOrderPrint(last_child, ptr, fp);
+
+	while (next_child != NULL) {
+		recursiveInOrderPrint(next_child, ptr, fp);
+		next_child = next_child->next;
 	}
-	
-	if (ptr->next != NULL && ptr->next->next == NULL) {
-		return ptr->next;
-	}
-	
-	return recursiveInOrderPrint(ptr->next, ptr, fp);
+
+	return recursiveInOrderPrint(ptr->next, p_ptr, fp);
 }
 
 /* PRINT PARSE TREE Helper Code - END */
@@ -721,7 +751,6 @@ struct treeNode *recursiveInOrderPrint(struct treeNode *ptr, struct treeNode *p_
 
 void printParseTree(char *outfile) {
     printf("Printing parse tree ...\n");
-    fflush(stdout);
 
     FILE * fp = fopen(outfile, "w");
 
