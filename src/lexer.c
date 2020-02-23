@@ -216,6 +216,7 @@ void getStream(FILE *fp){
 	/*	getStream function takes in file pointer fp fills in the buffer twin_buffer. */
 
 	switch (buffer.buffer_ptr) {
+		case 1:
 			buffer.buffer_ptr = 2;
 		    buffer.read_ptr_2 = -1;
 		    if (!buffer.flag_retract)

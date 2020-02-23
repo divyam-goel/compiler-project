@@ -90,12 +90,12 @@ void test_loadGrammar(char *file_name) {
 
 void test_computeFirstAndFollow(char *file_name) {
     extern struct firstAndFollow F;
-    extern table parseTable;
+    // extern table parseTable;
 
     extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
     extern char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32];
     
-    FILE *fp = fopen("test/test_result_first.txt","w+");
+    FILE *fp = fopen("test/test_result_follow.txt","w+");
 
     printf("Populating grammar\n");
     // populateGrammar();
@@ -118,28 +118,27 @@ void test_computeFirstAndFollow(char *file_name) {
     }
     fprintf(fp, "\n");
 
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     fprintf(fp, "%20s ", nonTerminalStringRepresentations[i]);
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         fprintf(fp, "%7d ", F.first[i][j]);
+    //     }
+    //     fprintf(fp, "\n");
+    // }
+
     for (int i = 0; i < NUM_NON_TERMINALS; i++) {
         fprintf(fp, "%20s ", nonTerminalStringRepresentations[i]);
-        // fprintf(fp, "%25d ", F.first[i][0]);
         for (int j = 0; j < NUM_TERMINALS; j++) {
-            fprintf(fp, "%7d ", F.first[i][j]);
+            fprintf(fp, "%7c ", F.follow[i][j]);
         }
         fprintf(fp, "\n");
     }
 
-    // printf("\nFollow:\n");
-    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-    //     for (int j = 0; j < NUM_TERMINALS; j++) {
-    //         printf("%c ", F.follow[i][j]);
-    //     }
-    //     printf("\n");
-    // }
+    // printf("Intializing parse table ...\n");
+    // intializeParseTable();
 
-    printf("\nIntializing parse table ...\n");
-    intializeParseTable();
-
-    printf("\nCreating parse table....\n");
-    createParseTable();
+    // printf("Creating parse table....\n");
+    // createParseTable();
 
     // code to print out table
     // printf("\nParse table:\n");
@@ -187,13 +186,13 @@ int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char source_file[] = "./test/fixtures/stage 1/t4.txt";
-    char source_file[] = "./test/fixtures/all_terminals.txt";
+    char source_file[] = "./test/fixtures/stage 1/t2.txt";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
-    test_computeFirstAndFollow(grammar_file);
-    // test_parseInputSourceCode(grammar_file, source_file);
+    // test_computeFirstAndFollow(grammar_file);
+    test_parseInputSourceCode(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }
