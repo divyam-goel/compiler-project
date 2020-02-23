@@ -45,7 +45,7 @@ void demonstrateLexicalAnalysis() {
     }
 
     struct symbol token;
-    printf("             %10s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
+    printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
     while (!feof(fp)) {
         token = getNextToken(fp);
         if (token.token == -1) {
@@ -53,16 +53,16 @@ void demonstrateLexicalAnalysis() {
         }
 		switch (token.token) {
 	        case IDENTIFIER:
-	            printf("Token value: %10s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
+	            printf("Token value: %15s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
 				break;
 	        case NUM:
-	            printf("Token value: %10s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
+	            printf("Token value: %15s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
 				break;
 	        case RNUM:
-	            printf("Token value: %10s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
+	            printf("Token value: %15s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
 				break;
 	        default:
-	            printf("Token value: %10s %30s %10d\n",  terminalStringRepresentations[token.token],
+	            printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token],
 					   terminalLiteralRepresentations[token.token],token.line_no);
     	}
 	}

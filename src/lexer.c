@@ -557,7 +557,7 @@ struct symbol getNextToken(FILE * fp) {
 				break;
 
 			default:
-            	printf("Error condt: %10s %30c %10d\n",  "ERROR", ch, line_no);
+            	printf("Error condt: %15s %30c %10d\n",  "ERROR", ch, line_no);
 				symbol.token = -1;
 				return symbol;
 		}
