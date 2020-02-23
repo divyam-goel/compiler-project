@@ -6,10 +6,12 @@
 #define GRAMMAR_FILENAME "./docs/grammar/text/grammar.txt" 
 
 extern grammar G;
+extern struct firstAndFollow F;
 extern struct hashMap *terminalMap;
 extern struct hashMap *terminalLiteralMap;
 extern struct hashMap *nonTerminalMap;
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
+extern char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32];
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];
 char sourceFilePath[512];
 char outputFilePath[512];
@@ -33,6 +35,7 @@ void printProgressInfo() {
 	for (int i = 0; i < num_msg; ++i) {
 		printf("\t %d. %s\n", i, messages[i]);
 	}
+	printf("\n");
 }
 
 int promptUser() {
@@ -45,7 +48,10 @@ int promptUser() {
 	1 --> Remove comments, and print out cleaned code\n\
 	2 --> Print out token list from the lexer output\n\
 	3 --> Parse the given file and construct the corresponding parse tree. Print out any errors on the console if necessary\n\
-	4 --> Print out time taken for lexical analysis and parsing\n");
+	4 --> Print out time taken for lexical analysis and parsing\n\
+	5 --> Print the grammar\n\
+	6 --> Print the first sets\n\
+	7 --> Print the follow sets\n");
 		shown = true;
 	}
 	printf(">>> ");
@@ -100,6 +106,41 @@ void runLexicalAndSyntaxAnalyzers() {
 	printParseTree(outputFilePath);
 }
 
+void printFirstSetHumanFriendly() {
+    initializeFirstAndFollow();
+    computeFirstAndFollowSets();
+
+    for (int i = 0; i < NUM_NON_TERMINALS; ++i) {
+        printf("%s: { ", nonTerminalStringRepresentations[i]);
+        for (int j = 0; j < NUM_TERMINALS; ++j) {
+            if (F.first[i][j] != -1) {
+                printf("%s ", terminalStringRepresentations[j]);
+            }
+        }
+        printf("}\n");
+    }
+
+    return;
+}
+
+void printFollowSetHumanFriendly() {
+    initializeFirstAndFollow();
+    computeFirstAndFollowSets();
+
+    for (int i = 0; i < NUM_NON_TERMINALS; ++i) {
+        printf("%s: { ", nonTerminalStringRepresentations[i]);
+        for (int j = 0; j < NUM_TERMINALS; ++j) {
+            if (F.follow[i][j] != '0') {
+                printf("%s ", terminalStringRepresentations[j]);
+            }
+        }
+        printf("}\n");
+        fflush(stdout);
+    }
+
+    return;
+}
+
 int main(int argc, char const *argv[]) {
 
 	if (argc < 3) {
@@ -147,6 +188,18 @@ int main(int argc, char const *argv[]) {
 				CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
 
 				printf("Time taken: %lf seconds.\n", CPU_time_seconds);
+				break;
+
+			case 5:
+				printGrammar();
+				break;
+
+			case 6:
+				printFirstSetHumanFriendly();
+				break;
+
+			case 7:
+				printFollowSetHumanFriendly();
 				break;
 
 			default:
