@@ -385,7 +385,7 @@ void test_parseInputSourceCode() {
     // parseInputSourceCode("test/fixtures/test_case_4.txt");
     parseInputSourceCode("test/fixtures/stage 1/t4.txt");
 
-    printParseTree("test/parse_tree_output.txt");
+    printParseTree("test/test_result_parse_tree_output.txt");
 }
 
 int main() {
