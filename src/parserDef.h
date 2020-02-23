@@ -27,8 +27,8 @@ struct rule {
 typedef struct rule grammar[NUM_RULES];
 
 struct firstAndFollow {
-	int first[NUM_NON_TERMINALS][NUM_TERMINALS + 1];
-	char follow[NUM_NON_TERMINALS][NUM_TERMINALS + 1];
+	int first[NUM_NON_TERMINALS][NUM_TERMINALS];
+	char follow[NUM_NON_TERMINALS][NUM_TERMINALS];
 };
 
 typedef int table[NUM_NON_TERMINALS][NUM_TERMINALS];
