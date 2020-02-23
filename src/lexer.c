@@ -6,6 +6,13 @@ extern struct hashMap *terminalLiteralMap;  // in parser.c
 extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
 
+char *line_no_to_ascii(int line_no) {
+	char *buf = malloc(sizeof(8));
+	memset(buf, 0, 8);
+	sprintf(buf, "%3d) ", line_no);
+	return buf;
+}
+
 void removeComments(char *testcaseFile, char *cleanFile) {
     int inp_fd;
     inp_fd = open(testcaseFile, O_RDONLY);
@@ -25,10 +32,18 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 
     unsigned short int state = 1;
     ssize_t rd = 0;
-    int rd_idx = 0, wr_idx = 0;
-    char rd_buf[BUFFER_SIZE], wr_buf[BUFFER_SIZE];
+    int rd_idx = 0, wr_idx = 5;
+    char rd_buf[BUFFER_SIZE], wr_buf[BUFFER_SIZE * 2];
     memset(rd_buf, 0, BUFFER_SIZE);
     memset(wr_buf, 0, BUFFER_SIZE);
+
+	int line_no = 1;
+	char *line_no_str;
+	wr_buf[0] = ' ';
+	wr_buf[1] = ' ';
+	wr_buf[2] = '1';
+	wr_buf[3] = ')';
+	wr_buf[4] = ' ';
 
     // Outer loop for filling the data buffers.
     while ((rd = read(inp_fd, rd_buf, BUFFER_SIZE)) > 0) {
@@ -46,30 +61,63 @@ void removeComments(char *testcaseFile, char *cleanFile) {
             switch (state) {
 
                 case 1:
-                    if (ch == '*') {
+					if (ch == '\n') {
+                        wr_buf[wr_idx] = '\n';
+                        wr_idx += 1;
+
+						// increment the line number.
+						line_no += 1;
+						line_no_str = line_no_to_ascii(line_no);
+						for(int i = 0; i < strlen(line_no_str); ++i) {
+							wr_buf[wr_idx] = line_no_str[i];
+							wr_idx += 1;
+						}
+						free(line_no_str);
+                    } else if (ch == '*') {
                         state = state << 1;
-                        break;
-                    }
-                    wr_buf[wr_idx] = ch;
-                    wr_idx += 1;
+                    } else {
+                    	wr_buf[wr_idx] = ch;
+                    	wr_idx += 1;
+					}
                     break;
 
                 case 2:
-                    if (ch == '*') {
+					if (ch == '\n') {
+                        wr_buf[wr_idx] = '\n';
+                        wr_idx += 1;
+
+						// increment the line number.
+						line_no += 1;
+						line_no_str = line_no_to_ascii(line_no);
+						for(int i = 0; i < strlen(line_no_str); ++i) {
+							wr_buf[wr_idx] = line_no_str[i];
+							wr_idx += 1;
+						}
+						free(line_no_str);
+                    } else  if (ch == '*') {
                         state = state << 1;
-                        break;
-                    }
-                    wr_buf[wr_idx] = '*';
-                    wr_idx += 1;
-                    wr_buf[wr_idx] = ch;
-                    wr_idx += 1;
-                    state = state >> 1;
+                    } else {
+                    	wr_buf[wr_idx] = '*';
+                    	wr_idx += 1;
+                    	wr_buf[wr_idx] = ch;
+                    	wr_idx += 1;
+                    	state = state >> 1;
+					}
                     break;
 
                 case 4:
                     if (ch == '\n') {
                         wr_buf[wr_idx] = '\n';
                         wr_idx += 1;
+
+						// increment the line number.
+						line_no += 1;
+						line_no_str = line_no_to_ascii(line_no);
+						for(int i = 0; i < strlen(line_no_str); ++i) {
+							wr_buf[wr_idx] = line_no_str[i];
+							wr_idx += 1;
+						}
+						free(line_no_str);
                     } else if (ch == '*') {
                         state = state << 1;
                     }
@@ -80,6 +128,15 @@ void removeComments(char *testcaseFile, char *cleanFile) {
                         wr_buf[wr_idx] = '\n';
                         wr_idx += 1;
                         state = state >> 1;
+
+						// increment the line number.
+						line_no += 1;
+						line_no_str = line_no_to_ascii(line_no);
+						for(int i = 0; i < strlen(line_no_str); ++i) {
+							wr_buf[wr_idx] = line_no_str[i];
+							wr_idx += 1;
+						}
+						free(line_no_str);
                     } else if (ch == '*') {
                         state = state >> 3;
                     }
@@ -105,6 +162,8 @@ void removeComments(char *testcaseFile, char *cleanFile) {
     if (rd < 0) {
         die("removeComments: Error in reading from testcase file.");
     }
+
+	puts("");
 
     return;
 }
