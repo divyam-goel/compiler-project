@@ -440,6 +440,15 @@ void createParseTable() {
 		for (int j = 0; j < NUM_TERMINALS; j++) {
 			if (F.first[i][j] != -1 && j != EPSILON) {
 					parseTable[i][j] = F.first[i][j];
+			} else if (parseTable[i][j] != -1) {
+				// LL(1) Compatibility check.
+				printGrammar();
+				char *stri, *strj;
+				stri = nonTerminalStringRepresentations[i];
+				strj = terminalStringRepresentations[j];
+				printf("Rule #%d and #%d clash - (%s, %s) violation of LL(1) compatibility.\n",
+					   parseTable[i][j], F.first[i][j], stri, strj);
+				die("LL(1) Compatibility violation");
 			}
 		}
 
