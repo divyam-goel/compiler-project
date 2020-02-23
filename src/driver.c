@@ -12,6 +12,7 @@ extern struct hashMap *nonTerminalMap;
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
 extern char terminalLiteralRepresentations[NUM_TERMINALS][16];
 char sourceFilePath[512];
+char outputFilePath[512];
 
 void initializeEverything() {
     terminalMap = getTerminalMap();
@@ -19,6 +20,19 @@ void initializeEverything() {
     terminalLiteralMap = getTerminalLiteralMap();
     defineBuffer();
     loadGrammar(GRAMMAR_FILENAME);
+}
+
+void printProgressInfo() {
+	printf("Welcome to Group #17's ERPLAG compiler. Here is our progress:\n");
+	int num_msg = 3;
+	char *messages[] = {
+		"Lexical analysis module implemented and works on all test cases.",
+		"Syntax analysis module implemented and works on all test cases.",
+		"FIRST and FOLLOW set generation automated.",
+	};
+	for (int i = 0; i < num_msg; ++i) {
+		printf("\t %d. %s\n", i, messages[i]);
+	}
 }
 
 int promptUser() {
@@ -76,17 +90,31 @@ void demonstrateLexicalAnalysis() {
     fclose(fp);
 }
 
+void runLexicalAndSyntaxAnalyzers() {
+	demonstrateLexicalAnalysis();
+	initializeFirstAndFollow();
+	computeFirstAndFollowSets();
+	intializeParseTable();
+	createParseTable();
+	parseInputSourceCode(sourceFilePath);
+	printParseTree(outputFilePath);
+}
+
 int main(int argc, char const *argv[]) {
-    initializeEverything();
 
-	int choice = 0;
-
-	if (argc < 2) {
-		puts("Missing arguments.\nUsage: build/driver source_file");
+	if (argc < 3) {
+		puts("Missing arguments.\nUsage: build/driver source_file output_file");
 		exit(-1);
 	}
 
+    initializeEverything();
+	printProgressInfo();
+
+	int choice = 0;
+
 	strncpy(sourceFilePath, argv[1], 512);
+	strncpy(outputFilePath, argv[2], 512);
+
 	clock_t start_time, end_time;
 	double CPU_time, CPU_time_seconds;
 
@@ -106,11 +134,14 @@ int main(int argc, char const *argv[]) {
 				break;
 
 			case 3: // print errors in parsing and construct the parse tree 
+				runLexicalAndSyntaxAnalyzers();
 				break;
 
 			case 4: // lexer and parsing and then print out time taken 
 				start_time = clock();
-				// code for parsing and lexeical analysis
+
+				runLexicalAndSyntaxAnalyzers();
+
 				end_time = clock();
 				CPU_time = (double) (end_time - start_time);
 				CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
