@@ -518,11 +518,11 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 	if (curr_rhs_rule_node->flag == TERMINAL && curr_rhs_rule_node->symbol.terminal == EPSILON)
 		return addTreeNode(curr_rhs_rule_node);
 
-	// first, temporarily reversing the order of temp order
+	// first, temporarily reverse the order of temp order.
 	last_rhs_rule_node = reverseRule(curr_rhs_rule_node);
 	curr_rhs_rule_node = last_rhs_rule_node;
 
-	// now, they are in reverse order- now to insert elements as well as restore the original order
+	// now, they are in reverse order - insert elements into the stack and tree.
 	while(curr_rhs_rule_node != NULL){
 		curr_tree_node_ptr = addTreeNode(curr_rhs_rule_node);
 		curr_tree_node_ptr->next = prev_tree_node_ptr;
@@ -535,6 +535,7 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 		curr_rhs_rule_node = curr_rhs_rule_node->next;
 	}
 
+	// Now restore the original order of the rule.
 	reverseRule(last_rhs_rule_node);
 
 	return curr_tree_node_ptr;
@@ -578,9 +579,8 @@ void parseInputSourceCode(char *testcaseFile) {
     enum terminal symbol_terminal;
     int rule_no;
 
-	printf("\n");
 	getNextToken(fp, &symbol);
-	printf("Token: %s\n", terminalStringRepresentations[symbol.token]);
+	printf("\nToken: %s\n", terminalStringRepresentations[symbol.token]);
 	fflush(stdout);
 	symbol_terminal = symbol.token;
 
@@ -599,10 +599,12 @@ void parseInputSourceCode(char *testcaseFile) {
     		stack_top_non_terminal = stack->head->symbol.non_terminal;
 
     		// find next applicable rule
-    		if (parseTable[stack_top_non_terminal][symbol_terminal] != -1) {
-    			rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
+    		rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
+    		if (rule_no != -1) {
        			stack_node = pop();
 				stack_node->tree_node_ptr->child = addRuleToStackAndTree(&G[rule_no]);
+
+				// Just to print the subtree for debugging purposes.
 		    	// printf("\nPrinting subtree ...\n");
 		    	// struct treeNode *tree_node_ptr = stack_node->tree_node_ptr;
 		    	// if (tree_node_ptr->flag == NON_TERMINAL)
@@ -616,7 +618,6 @@ void parseInputSourceCode(char *testcaseFile) {
 			    // 	else
 			    // 		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
 		    	// 	tree_node_ptr = tree_node_ptr->next;
-		    	// }
 
 		    	// printf("Printing stack ...\n");
 		    	// printStack();
