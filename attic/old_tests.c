@@ -83,6 +83,24 @@ void test_strl() {
     llog("Success!!!\n");
 }
 
+void test_stack() {
+    initialiseStack();
+    struct rule *rule = (struct rule *) malloc(sizeof(struct rule));
+    rule->non_terminal = _PROGRAM;
+    rule->head = newRule(_VALUE, PLUS, TERMINAL);
+    rule->head->next = newRule(_OP1, EPSILON, NON_TERMINAL);
+    rule->head->next->next = newRule(_OP2, EPSILON, NON_TERMINAL);
+
+    // struct stackNode *stack_node = (struct stackNode *) malloc(sizeof(struct stackNode));
+    // stack_node->symbol.non_terminal = rule->non_terminal;
+    // stack_node->flag = NON_TERMINAL;
+    // stack_node->next = NULL;
+    // push(stack_node);
+    // pushRuleIntoStack(rule);
+    printStack();
+}
+
+
 void test_hashMap() {
     llog("\t+ Running test_hashMap... ");
     struct hashMap *hash_map = initialiseHashMap();

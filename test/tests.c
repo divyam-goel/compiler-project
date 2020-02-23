@@ -17,8 +17,8 @@ void test_removeComments(){
     llog("Success!!!\n");
 }
 
-void test_getStream() {
-    FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
+void test_getStream(char *file_name) {
+    FILE * fp = fopen(file_name, "r");
     if (fp == NULL) {
         printf("Error in opening the file!\n");
         exit(EXIT_FAILURE);
@@ -37,13 +37,8 @@ void test_getStream() {
     }
 }
 
-void test_getNextToken() {
-    //int numberOfTokens = 0;
-    //enum terminal expectedTokens[] = {};
-    //union lexeme expectedLexemes[] = {};
-
-    // FILE * fp = fopen("test/fixtures/stage 1/t1.txt", "r");
-    FILE * fp = fopen("test/fixtures/all_terminals.txt", "r");
+void test_getNextToken(char *file_name) {
+    FILE * fp = fopen(file_name, "r");
 
     if (fp == NULL) {
         printf("Error in opening the file!\n");
@@ -63,7 +58,7 @@ void test_getNextToken() {
     terminalLiteralMap = getTerminalLiteralMap();
 
     struct symbol token;
-    printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
+    printf("             %10s %30s %30s\n\n", "LINE #", "LEXEME", "TOKEN");
     while (true) {
         if (getNextToken(fp, &token) == 0) {
             break;
@@ -72,27 +67,39 @@ void test_getNextToken() {
             continue;
         }
         if (token.token == IDENTIFIER)
-            printf("Token value: %15s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
+            printf("Token value: %10d %30s %30s\n",
+                token.line_no, token.lexeme.str, terminalStringRepresentations[token.token]);
         else if (token.token == NUM)
-            printf("Token value: %15s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
+            printf("Token value: %10d %30d %30s\n",
+                token.line_no, token.lexeme.num, terminalStringRepresentations[token.token]);
         else if (token.token == RNUM)
-            printf("Token value: %15s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
+            printf("Token value: %10d %30f %30s\n",
+                token.line_no, token.lexeme.rnum, terminalStringRepresentations[token.token]);
         else
-            printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token], terminalLiteralRepresentations[token.token],token.line_no);
+            printf("Token value: %10d %30s %30s\n",
+                token.line_no, terminalLiteralRepresentations[token.token], terminalStringRepresentations[token.token]);
     }
 
     fclose(fp);
 }
 
-void test_computeFirstAndFollow() {
-    // extern struct firstAndFollow F;
+void test_loadGrammar(char *file_name) {
+    loadGrammar(file_name);
+    printGrammar();
+}
+
+void test_computeFirstAndFollow(char *file_name) {
+    extern struct firstAndFollow F;
     extern table parseTable;
 
-    // FILE *fp = fopen("test/test_result_first.txt","w+");
+    extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
+    extern char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32];
+    
+    FILE *fp = fopen("test/test_result_first.txt","w+");
 
     printf("Populating grammar\n");
     // populateGrammar();
-    loadGrammar("./docs/grammar/text/grammar.txt");
+    loadGrammar(file_name);
 
     printf("Intializing first and follow\n");
     initializeFirstAndFollow();
@@ -105,27 +112,20 @@ void test_computeFirstAndFollow() {
     // fprintf(fp, "Printing first and follow ...\n");
     // fprintf(fp, "\nFirst:\n");
 
-    // for (int j = 0; j < NUM_TERMINALS; ++j) {
-    //     fprintf(fp, "%5.3d ", j);
-    // }
-    // fprintf(fp, "\n");
+    fprintf(fp, "%27s ", terminalStringRepresentations[0]);
+    for (int j = 1; j < NUM_TERMINALS; ++j) {
+        fprintf(fp, "%7s ", terminalStringRepresentations[j]);
+    }
+    fprintf(fp, "\n");
 
-    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-    //     fprintf(fp, "%.3d ", i);
-    //     for (int j = 0; j < NUM_TERMINALS; j++) {
-    //         fprintf(fp, "%5d ", F.first[i][j]);
-    //     }
-    //     fprintf(fp, "\n");
-    // }
-
-    // printf("\nFirst:\n");
-    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-    //     printf("%d ", i);
-    //     for (int j = 0; j < NUM_TERMINALS; j++) {
-    //         printf("%d ", F.first[i][j]);
-    //     }
-    //     printf("\n");
-    // }
+    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+        fprintf(fp, "%20s ", nonTerminalStringRepresentations[i]);
+        // fprintf(fp, "%25d ", F.first[i][0]);
+        for (int j = 0; j < NUM_TERMINALS; j++) {
+            fprintf(fp, "%7d ", F.first[i][j]);
+        }
+        fprintf(fp, "\n");
+    }
 
     // printf("\nFollow:\n");
     // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
@@ -142,41 +142,18 @@ void test_computeFirstAndFollow() {
     createParseTable();
 
     // code to print out table
-    printf("\nParse table:\n");
-    for (int i = 0; i < NUM_NON_TERMINALS; i++) {
-        for (int j = 0; j < NUM_TERMINALS; j++) {
-            printf("%d\t", parseTable[i][j]);
-        }
-        printf("\n");
-    }
-
+    // printf("\nParse table:\n");
+    // for (int i = 0; i < NUM_NON_TERMINALS; i++) {
+    //     for (int j = 0; j < NUM_TERMINALS; j++) {
+    //         printf("%d\t", parseTable[i][j]);
+    //     }
+    //     printf("\n");
+    // }
 }
 
-void test_loadGrammar() {
-    loadGrammar("./docs/grammar/text/grammar.txt");
-    printGrammar();
-}
-
-void test_stack() {
-    initialiseStack();
-    struct rule *rule = (struct rule *) malloc(sizeof(struct rule));
-    rule->non_terminal = _PROGRAM;
-    rule->head = newRule(_VALUE, PLUS, TERMINAL);
-    rule->head->next = newRule(_OP1, EPSILON, NON_TERMINAL);
-    rule->head->next->next = newRule(_OP2, EPSILON, NON_TERMINAL);
-
-    // struct stackNode *stack_node = (struct stackNode *) malloc(sizeof(struct stackNode));
-    // stack_node->symbol.non_terminal = rule->non_terminal;
-    // stack_node->flag = NON_TERMINAL;
-    // stack_node->next = NULL;
-    // push(stack_node);
-    // pushRuleIntoStack(rule);
-    printStack();
-}
-
-void test_parseInputSourceCode() {
+void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     printf("Loading grammar ...\n");
-    loadGrammar("./docs/grammar/text/grammar.txt");
+    loadGrammar(grammar_file);
 
     printf("Intializing first and follow\n");
     initializeFirstAndFollow();
@@ -201,16 +178,22 @@ void test_parseInputSourceCode() {
     terminalLiteralMap = getTerminalLiteralMap();
 
     printf("Parsing input source code ...\n");
-    // parseInputSourceCode("test/fixtures/test_case_4.txt");
-    parseInputSourceCode("test/fixtures/stage 1/t3.txt");
+    parseInputSourceCode(source_file);
 
     printParseTree("test/test_result_parse_tree_output.txt");
 }
 
 int main() {
-    puts("Running tests... ");
-    // test_getNextToken();
-    test_parseInputSourceCode();
+    puts("\nRunning tests...");
+    char grammar_file[] = "./docs/grammar/text/grammar.txt";
+    // char source_file[] = "./test/fixtures/stage 1/t4.txt";
+    char source_file[] = "./test/fixtures/all_terminals.txt";
+    // test_removeComments();
+    // test_getStream(source_file);
+    // test_getNextToken(source_file);
+    // test_loadGrammar(grammar_file);
+    test_computeFirstAndFollow(grammar_file);
+    // test_parseInputSourceCode(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

@@ -128,11 +128,13 @@ int getNumBytes() {
 	return buffer.num_bytes_2;
 }
 
+
 char getChar(int index) {
 	if (buffer.buffer_ptr == 1)
 		return buffer.buffer_1[index];
 	return buffer.buffer_2[index];
 }
+
 
 char getNextChar(FILE *fp) {
 	if (isBufferEnd()) {
@@ -153,6 +155,7 @@ char getNextChar(FILE *fp) {
 	}
 }
 
+
 void retractRead(int val) {
 	if (buffer.buffer_ptr == 1 && (buffer.read_ptr_1 - val) < -1) {
 		buffer.buffer_ptr = 2;
@@ -167,12 +170,15 @@ void retractRead(int val) {
 	}
 
 	else {
-		if (buffer.buffer_ptr == 1)
+		if (buffer.buffer_ptr == 1) {
 			buffer.read_ptr_1 -= val;
-		else
+		}
+		else {
 			buffer.read_ptr_2 -= val;
+		}
 	}
 }
+
 
 bool isBufferEnd() {
 	if (buffer.buffer_ptr == 1)
@@ -188,6 +194,7 @@ bool isBufferEnd() {
 
 /* END - buffer helper code */
 
+
 /* START -  struct symbol helper coder */
 
 void populateSymbol(struct symbol * symbol, int token, char *str) {
@@ -197,17 +204,18 @@ void populateSymbol(struct symbol * symbol, int token, char *str) {
 		strcpy(symbol->lexeme.str, str);
 	else if (token == NUM)
 		symbol->lexeme.num = atoi(str);
-	else if (token == RNUM)
+	else if (token == RNUM) {
 		symbol->lexeme.rnum = atof(str);
+	}
 }
 
 /* END -  struct symbol helper coder */
+
 
 void getStream(FILE *fp){
 	/*	getStream function takes in file pointer fp fills in the buffer twin_buffer. */
 
 	switch (buffer.buffer_ptr) {
-		case 1:
 			buffer.buffer_ptr = 2;
 		    buffer.read_ptr_2 = -1;
 		    if (!buffer.flag_retract)
@@ -234,6 +242,7 @@ void getStream(FILE *fp){
 			break;
 	}
 }
+
 
 int getNextToken(FILE * fp, struct symbol *symbol) {
 	int state = 1; // starting state
@@ -286,7 +295,7 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 						break;
 
 					case '-':
-						populateSymbol(symbol, DIV, NULL);
+						populateSymbol(symbol, MINUS, NULL);
 						return 1;
 						break;
 
@@ -354,12 +363,17 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 						populateSymbol(symbol, COMMA, NULL);
 						return 1;
 						break;
+
+					default:
+		            	printf("\nToken ERROR: %10d %30c %30s\n\n",
+		            		line_no, ch, "ERROR");
+						break;
 				}
 				break;
 
 			case 2: // recognize identifier & keywords
 				// fix the identifier length condition
-				if ((isalnum(ch) == 0 && ch != '_') || num == 21) {
+				if ((isalnum(ch) == 0 && ch != '_') || num == 20) {
 					retractRead(1); // retract
 					str[num] = '\0';
 					enum terminal token = (enum terminal) hashMapGet(str, terminalLiteralMap);
@@ -447,7 +461,7 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 					break;
 				}
 				retractRead(1); // retract
-				str[--num] = '\0';
+				str[num] = '\0';
 				populateSymbol(symbol, RNUM, str);
 				return 1;
 
@@ -510,9 +524,12 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 					populateSymbol(symbol, EQ, NULL);
 					return 1;
 				}
-				retractRead(1); // retract
 				// ERROR
-				state = 100;
+				retractRead(2); // retract
+            	ch = getNextChar(fp);
+            	printf("\nToken value: %10s %30c %10d\n\n",
+            		"ERROR", ch, line_no);
+				state = 1;
 				break;
 
 			case 15:
@@ -520,9 +537,12 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 					populateSymbol(symbol, NE, NULL);
 					return 1;
 				}
-				retractRead(1); // retract
 				// ERROR
-				state = 100;
+				retractRead(2); // retract
+            	ch = getNextChar(fp);
+            	printf("\nToken value: %10s %30c %10d\n\n",
+            		"ERROR", ch, line_no);
+				state = 1;
 				break;
 
 			case 16:
@@ -530,9 +550,12 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 					populateSymbol(symbol, RANGEOP, NULL);
 					return 1;
 				}
-				retractRead(1); // retract
 				// ERROR
-				state = 100;
+				retractRead(2); // retract
+            	ch = getNextChar(fp);
+            	printf("\nToken value: %10s %30c %10d\n\n",
+            		"ERROR", ch, line_no);
+				state = 1;
 				break;
 
 			case 17:
@@ -572,7 +595,7 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 				break;
 
 			default:
-            	printf("Error condt: %15s %30c %10d\n",  "ERROR", ch, line_no);
+            	printf("ERROR:      %10s %30c %10d\n",  "ERROR", ch, line_no);
 				symbol->token = -1;
 				return 1;
 		}

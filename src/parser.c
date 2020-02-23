@@ -41,14 +41,14 @@ char terminalStringRepresentations[NUM_TERMINALS][16] = {
 		"WITH", "PARAMETERS", "TRUE", "FALSE", "TAKES",
 		"INPUT", "RETURNS", "AND", "OR", "FOR",
 		"IN", "SWITCH", "CASE", "BREAK", "DEFAULT",
-		"WHILE", "EPSILON","DOLLAR"
+		"WHILE", "EPSILON", "DOLLAR"
 	};
 
 
 char terminalLiteralRepresentations[NUM_TERMINALS][16] = {
 		"ID", "NUM", "RNUM", "+", "-",
-		"*", "/", "<", "<=", ">",
-		">=", "=", "!=", "<<", "<<<",
+		"*", "/", "<", "<=", ">=",
+		">", "=", "!=", "<<", "<<<",
 		">>", ">>>", "[", "]", "(",
 		")", "..", ":", ":=", ";",
 		",", "integer", "real", "boolean", "of",
@@ -603,20 +603,20 @@ void parseInputSourceCode(char *testcaseFile) {
     			rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
        			stack_node = pop();
 				stack_node->tree_node_ptr->child = addRuleToStackAndTree(&G[rule_no]);
-		    	printf("\nPrinting subtree ...\n");
-		    	struct treeNode *tree_node_ptr = stack_node->tree_node_ptr;
-		    	if (tree_node_ptr->flag == NON_TERMINAL)
-		    		printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
-		    	else
-		    		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
-		    	tree_node_ptr = tree_node_ptr->child;
-		    	while(tree_node_ptr != NULL) {
-			    	if (tree_node_ptr->flag == NON_TERMINAL)
-			    		printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
-			    	else
-			    		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
-		    		tree_node_ptr = tree_node_ptr->next;
-		    	}
+		    	// printf("\nPrinting subtree ...\n");
+		    	// struct treeNode *tree_node_ptr = stack_node->tree_node_ptr;
+		    	// if (tree_node_ptr->flag == NON_TERMINAL)
+		    	// 	printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
+		    	// else
+		    	// 	printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
+		    	// tree_node_ptr = tree_node_ptr->child;
+		    	// while(tree_node_ptr != NULL) {
+			    // 	if (tree_node_ptr->flag == NON_TERMINAL)
+			    // 		printf("%s\n", nonTerminalStringRepresentations[tree_node_ptr->symbol.non_terminal]);
+			    // 	else
+			    // 		printf("%s\n", terminalStringRepresentations[tree_node_ptr->symbol.terminal.token]);
+		    	// 	tree_node_ptr = tree_node_ptr->next;
+		    	// }
 
 		    	// printf("Printing stack ...\n");
 		    	// printStack();
@@ -752,7 +752,8 @@ struct treeNode *recursiveInOrderPrint(struct treeNode *ptr, struct treeNode *p_
 		next_child = next_child->next;
 	}
 
-	return recursiveInOrderPrint(ptr->next, p_ptr, fp);
+	// return recursiveInOrderPrint(ptr->next, p_ptr, fp);
+	return ptr->next;
 }
 
 /* PRINT PARSE TREE Helper Code - END */

@@ -9,9 +9,6 @@ declare
 module
 driver
 program
-record
-tagged
-union
 get_value
 parameters
 true
@@ -41,7 +38,9 @@ with
 >
 ==
 !=
+<<<
 <<
+>>>
 >>
 :
 ..
@@ -49,7 +48,13 @@ with
 ,
 :=
 [
+$
 ]
 (
 )
-**
+1
+1.2
+2.453ef2
+5.3e+3
+4.1e-4
+identifieridentifieridentifier
