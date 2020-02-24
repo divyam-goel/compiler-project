@@ -67,11 +67,11 @@ void demonstrateLexicalAnalysis() {
     }
 
     struct symbol token;
-    printf("             %15s %30s %10s\n", "TOKEN", "LEXEME", "LINE #");
+    printf("             %10s %30s %30s\n", "LINE #", "LEXEME", "TOKEN");
     while (true) {
         if (getNextToken(fp, &token) == 0) {
-        	printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token],
-					   terminalLiteralRepresentations[token.token],token.line_no);
+        	printf("Token value: %10d %30s %30s\n",
+					token.line_no, terminalLiteralRepresentations[token.token], terminalStringRepresentations[token.token]);
 			break;
 		}
         if (token.token == -1) {
@@ -79,17 +79,20 @@ void demonstrateLexicalAnalysis() {
         }
 		switch (token.token) {
 	        case IDENTIFIER:
-	            printf("Token value: %15s %30s %10d\n", terminalStringRepresentations[token.token], token.lexeme.str, token.line_no);
+	            printf("Token value: %10d %30s %30s\n",
+	            	token.line_no, token.lexeme.str, terminalStringRepresentations[token.token]);
 				break;
 	        case NUM:
-	            printf("Token value: %15s %30d %10d\n", terminalStringRepresentations[token.token], token.lexeme.num, token.line_no);
+	            printf("Token value: %10d %30d %30s\n",
+	            	token.line_no, token.lexeme.num, terminalStringRepresentations[token.token]);
 				break;
 	        case RNUM:
-	            printf("Token value: %15s %30f %10d\n", terminalStringRepresentations[token.token], token.lexeme.rnum, token.line_no);
+	            printf("Token value: %10d %30f %30s\n",
+	            	token.line_no, token.lexeme.rnum, terminalStringRepresentations[token.token]);
 				break;
 	        default:
-	            printf("Token value: %15s %30s %10d\n",  terminalStringRepresentations[token.token],
-					   terminalLiteralRepresentations[token.token],token.line_no);
+	            printf("Token value: %10d %30s %30s\n",
+					token.line_no, terminalLiteralRepresentations[token.token], terminalStringRepresentations[token.token]);
     	}
 	}
 
@@ -97,11 +100,16 @@ void demonstrateLexicalAnalysis() {
 }
 
 void runLexicalAndSyntaxAnalyzers() {
+    printf("Demonstrating LEXICAL ANALYSIS ...\n\n");
 	demonstrateLexicalAnalysis();
+	
 	initializeFirstAndFollow();
 	computeFirstAndFollowSets();
+	
 	intializeParseTable();
 	createParseTable();
+    
+    printf("\n\nDemonstrating SYNTACTIC ANALYSIS ...\n\n");
 	parseInputSourceCode(sourceFilePath);
 	printParseTree(outputFilePath);
 }

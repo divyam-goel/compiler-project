@@ -13,6 +13,7 @@ struct hashMap *terminalMap;
 struct hashMap *terminalLiteralMap;
 
 extern struct stack *stack;
+extern int line_no;
 
 char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32] = {
 	"<program>", "<moduleDeclarations>", "<moduleDeclaration>", "<otherModules>",
@@ -581,8 +582,12 @@ void parseInputSourceCode(char *testcaseFile) {
     enum terminal symbol_terminal;
     int rule_no;
 
+	// reinitialize the global line no in lexer
+	line_no = 1;
+	
 	getNextToken(fp, &symbol);
 	symbol_terminal = symbol.token;
+
 
     while(true) {
     	if(stack->head == NULL){
@@ -613,6 +618,7 @@ void parseInputSourceCode(char *testcaseFile) {
 	    		else
 	    			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
 	    				symbol.line_no, terminalStringRepresentations[symbol.token], "----");
+
 	    		// keep getting next token till that token is in follow(non-terminal)
 	    		while(true) {
 	    			if(F.follow[stack_top_non_terminal][symbol_terminal] == '1') {
@@ -672,36 +678,24 @@ void parseInputSourceCode(char *testcaseFile) {
     		else
     			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
     				symbol.line_no, terminalStringRepresentations[symbol.token], "----");
-    		pop();
-    		// printf("Printing Stack ...\n");
-    		// printStack();
-    		// while(stack->head->flag == TERMINAL)
-    		// 	pop();
-    		// printf("\nPrinting Stack after popping...\n");
-    		// printStack();
 
-    		// if (stack_node->flag == TERMINAL && stack_node->symbol.terminal == symbol_terminal) {
-    		// 		getNextToken(fp,&symbol);
-    		// 		symbol_terminal = symbol.token;
-    		// 		continue;
-    		// }
+    		while(stack->head->flag == TERMINAL)
+    			pop();
 
-    		// enum nonTerminal stack_non_terminal = stack->head->symbol.non_terminal;
-    		// // printf("Parent Non Terminal%d\n", parent_non_terminal);
-    		// while(true){
-    		// 	if(F.first[stack_non_terminal][symbol_terminal] != -1){
-    		// 		// stack_node = pop();
-    		// 		printf("Recovery finished!! Continuing with token %s\n", terminalStringRepresentations[symbol_terminal]);
-    		// 		break;
-    		// 	}
-    		// 	else {
-    		// 		if(symbol_terminal == DOLLAR)
-    		// 			break;
-    		// 		printf("Token discarded %s\n",terminalStringRepresentations[symbol_terminal]);
-    		// 		getNextToken(fp,&symbol);
-    		// 		symbol_terminal = symbol.token;
-    		// 	}
-    		// }
+    		enum nonTerminal stack_non_terminal = stack->head->symbol.non_terminal;
+    		while(true){
+    			if(F.follow[stack_non_terminal][symbol_terminal] == '1'){
+    				pop();
+    				break;
+    			}
+    			else if(symbol_terminal == DOLLAR) {
+					break;
+    			}
+    			else {
+    				getNextToken(fp, &symbol);
+    				symbol_terminal = symbol.token;
+    			}
+    		}
     	}
     }
 }
@@ -746,10 +740,6 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 
 		else {
 			char lexeme[MAX_LEXEME_LEN];
-
-			// if (ptr->symbol.terminal.token == EPSILON) {
-			// 	return;
-			// }
 
 			if (ptr->symbol.terminal.token == IDENTIFIER) {
 				strcpy(lexeme, ptr->symbol.terminal.lexeme.str);
@@ -811,5 +801,5 @@ void printParseTree(char *outfile) {
 
 	recursiveInOrderPrint(ptr, NULL, fp);
 
-	printf("\nPrinted the parse tree to %s.\n", outfile);
+	printf("\nPrinted the PARSE TREE to file: %s.\n\n", outfile);
 }

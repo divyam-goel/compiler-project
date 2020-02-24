@@ -9,7 +9,7 @@ extern char terminalLiteralRepresentations[NUM_TERMINALS][16];  // in parser.c
 char *line_no_to_ascii(int line_no) {
 	char *buf = malloc(sizeof(8));
 	memset(buf, 0, 8);
-	sprintf(buf, "%3d) ", line_no);
+	sprintf(buf, "%3d.   ", line_no);
 	return buf;
 }
 
@@ -32,7 +32,7 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 
     unsigned short int state = 1;
     ssize_t rd = 0;
-    int rd_idx = 0, wr_idx = 5;
+    int rd_idx = 0, wr_idx = 7;
     char rd_buf[BUFFER_SIZE], wr_buf[BUFFER_SIZE * 2];
     memset(rd_buf, 0, BUFFER_SIZE);
     memset(wr_buf, 0, BUFFER_SIZE);
@@ -42,8 +42,10 @@ void removeComments(char *testcaseFile, char *cleanFile) {
 	wr_buf[0] = ' ';
 	wr_buf[1] = ' ';
 	wr_buf[2] = '1';
-	wr_buf[3] = ')';
+	wr_buf[3] = '.';
 	wr_buf[4] = ' ';
+	wr_buf[5] = ' ';
+	wr_buf[6] = ' ';
 
     // Outer loop for filling the data buffers.
     while ((rd = read(inp_fd, rd_buf, BUFFER_SIZE)) > 0) {
