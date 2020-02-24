@@ -425,8 +425,8 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 						break;
 
 					default:
-		            	printf("\nToken ERROR: %10d %30c %30s\n\n",
-		            		line_no, ch, "ERROR");
+		            	printf("\nLEXICAL ERROR: %8d %30c %30s\n\n",
+		            		line_no, ch, "----");
 						break;
 				}
 				break;
@@ -587,8 +587,8 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 				// ERROR
 				retractRead(2); // retract
             	ch = getNextChar(fp);
-            	printf("\nToken value: %10s %30c %10d\n\n",
-            		"ERROR", ch, line_no);
+            	printf("\nLEXICAL ERROR: %8d %30c %30s\n\n",
+            		line_no, ch, "----");
 				state = 1;
 				break;
 
@@ -600,8 +600,8 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 				// ERROR
 				retractRead(2); // retract
             	ch = getNextChar(fp);
-            	printf("\nToken value: %10s %30c %10d\n\n",
-            		"ERROR", ch, line_no);
+            	printf("\nLEXICAL ERROR: %8d %30c %30s\n\n",
+            		line_no, ch, "----");
 				state = 1;
 				break;
 
@@ -613,8 +613,8 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 				// ERROR
 				retractRead(2); // retract
             	ch = getNextChar(fp);
-            	printf("\nToken value: %10s %30c %10d\n\n",
-            		"ERROR", ch, line_no);
+            	printf("\nLEXICAL ERROR: %8d %30c %30s\n\n",
+            		line_no, ch, "----");
 				state = 1;
 				break;
 
