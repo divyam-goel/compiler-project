@@ -652,6 +652,7 @@ void parseInputSourceCode(char *testcaseFile) {
 		exit(0);
 	}
 
+	int no_errors = 1;
 	// Add <program> to root of the parsetree
 	struct treeNode *tree_node_ptr = (struct treeNode *) malloc(sizeof(struct treeNode));
 	tree_node_ptr->symbol.non_terminal = _PROGRAM;
@@ -703,6 +704,7 @@ void parseInputSourceCode(char *testcaseFile) {
 
     		// SYNTAX ERROR - input TERMINAL not in first of stack top NON TERMINAL
     		else {
+    			no_errors = 0;
     			printSyntaxError(symbol);
     			syntaxErrorRecovery(fp, &symbol, 0);
     			symbol_terminal = symbol.token;
@@ -723,14 +725,17 @@ void parseInputSourceCode(char *testcaseFile) {
     	// CASE 3
 		// SYNTAX ERROR - input TERMINAL not matching stack top TERMINAL
     	else {
+    		no_errors = 0;
     		printSyntaxError(symbol);
-			printf("CASE 2\n");
 			syntaxErrorRecovery(fp, &symbol, 1);
 			symbol_terminal = symbol.token;
     	}
     }
 
     fclose(fp);
+    if(no_errors == 1){
+    	printf("Syntax Analysis completed successfully! No errors found.\n");
+    }
     return;
 }
 

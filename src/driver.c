@@ -217,7 +217,8 @@ int main(int argc, char const *argv[]) {
 				break;
 
 			default:
-				exit(0);
+				printf("\nWrong option! Enter option again[0,1,2,3,4,5,6,7]\n");
+				// exit(0);
 		}
 	}
 
