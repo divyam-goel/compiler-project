@@ -749,7 +749,7 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 	*/
 
 	char is_leaf_node[4];
-	char parent_node_symbol[MAX_LEXEME_LEN];
+	char parent_node_symbol[MAX_LEXEME_LEN * 3]; // the x3 part is just a temporary fix.
 	if (p_ptr != NULL) {
 		strcpy(parent_node_symbol, nonTerminalStringRepresentations[p_ptr->symbol.non_terminal]);
 	}
