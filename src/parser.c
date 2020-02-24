@@ -848,4 +848,6 @@ void printParseTree(char *outfile) {
 	recursiveInOrderPrint(ptr, NULL, fp);
 
 	printf("\nPrinted the PARSE TREE to file: %s.\n\n", outfile);
+
+	fclose(fp);
 }
