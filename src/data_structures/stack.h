@@ -20,7 +20,6 @@ struct stackNode {
 void initialiseStack();
 void push(struct stackNode *newNode);
 struct stackNode *pop();
-void pushRuleIntoStack(struct rule *production_rule);
 void printStack();
 struct stackNode * addStackNode(struct rhsNode *rhs_node_ptr);
 #endif

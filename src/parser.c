@@ -108,30 +108,37 @@ struct rhsNode *newRule(
 
     struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
     ptr->flag = flag;
+    
     if (flag == TERMINAL)
         ptr->symbol.terminal = terminal;
     else
         ptr->symbol.non_terminal = non_terminal;
+    
     ptr->next = NULL;
+    
     return ptr;
 }
 
 
 struct rhsNode *createRhsNode(const char *val) {
 	struct rhsNode *node = (struct rhsNode *) malloc(sizeof(struct rhsNode)); // TODO: Free this memory
+	
 	if (val[0] == '<') {
 		node->flag = NON_TERMINAL;
 		node->symbol.non_terminal = hashMapGet(val, nonTerminalMap);
 		if (node->symbol.non_terminal == -1) {
 			die(val);
 		}
-	} else {
+	}
+
+	else {
 		node->flag = TERMINAL;
 		node->symbol.terminal = hashMapGet(val, terminalMap);
 		if (node->symbol.terminal == -1) {
 			die(val);
 		}
 	}
+
 	return node;
 }
 
@@ -228,6 +235,7 @@ void loadGrammar(const char *filename) {
 	free(terminalMap);
 	free(nonTerminalMap);
 	fclose(fp);
+	
 	return;
 }
 
@@ -249,6 +257,8 @@ void printGrammar() {
 		}
 		printf("\n");
 	}
+
+	return;
 }
 
 /* GRAMMAR Helper Code - END */
@@ -263,6 +273,8 @@ void initializeFirstAndFollow() {
             F.follow[i][j] = '0';
         }
     }
+
+    return;
 }
 
 
@@ -275,7 +287,6 @@ void computeFollow() {
 	enum nonTerminal non_terminal;
 
 	for(int loop = 0; loop < 2; loop++) {
-
 		for(int i = 0; i < NUM_RULES; i++)  {
 
 			non_terminal = G[i].non_terminal;
@@ -330,6 +341,8 @@ void computeFollow() {
 			}
 		}
 	}
+
+	return;
 }
 
 
@@ -425,6 +438,8 @@ void computeFirstAndFollowSets() {
 	}
 
 	computeFollow();
+
+	return;
 }
 
 /* FIRST & FOLLOW Helper Code - END */
@@ -436,8 +451,9 @@ void intializeParseTable() {
             parseTable[i][j] = -1;
         }
     }
-}
 
+    return;
+}
 
 void createParseTable() {
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
@@ -466,11 +482,9 @@ void createParseTable() {
 				}
 			}
 		}
-
-		// if (F.follow[i][DOLLAR] == '1') {
-		// 	parseTable[i][j] = 1;
-		// }
 	}
+
+	return;
 }
 
 
@@ -480,7 +494,6 @@ struct parseTree * initialiseParseTree() {
 	struct parseTree * parse_tree = (struct parseTree *) malloc(sizeof(struct parseTree));
 	return parse_tree;
 }
-
 
 struct treeNode * addTreeNode(struct rhsNode *rhs_node_ptr) {
 	struct treeNode * tree_node_ptr = (struct treeNode *) malloc(sizeof(struct treeNode));
@@ -497,7 +510,6 @@ struct treeNode * addTreeNode(struct rhsNode *rhs_node_ptr) {
 	return tree_node_ptr;
 }
 
-
 struct rhsNode *reverseRule(struct rhsNode *rhs_node_ptr) {
 	struct rhsNode *curr_rhs_node_ptr = rhs_node_ptr;
 	struct rhsNode *prev_rhs_node_ptr = NULL;
@@ -512,7 +524,6 @@ struct rhsNode *reverseRule(struct rhsNode *rhs_node_ptr) {
 
 	return prev_rhs_node_ptr;
 }
-
 
 struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 	// X -> PQR - we pop non terminal X and push in all elements of RHS of rule- in reverse order- RQP
@@ -552,7 +563,6 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 	return curr_tree_node_ptr;
 }
 
-
 void printSyntaxError(struct symbol symbol) {
 	if (symbol.token == IDENTIFIER)
 		printf("\nSYNTAX ERROR: %9d %30s %30s\n",
@@ -567,7 +577,6 @@ void printSyntaxError(struct symbol symbol) {
 		printf("\nSYNTAX ERROR: %9d %30s %30s\n",
 			symbol.line_no, terminalStringRepresentations[symbol.token], "----");
 }
-
 
 void syntaxErrorRecovery(FILE *fp, struct symbol *symbol, int which_recovery) {
     enum nonTerminal stack_top_non_terminal;
@@ -621,7 +630,6 @@ void syntaxErrorRecovery(FILE *fp, struct symbol *symbol, int which_recovery) {
 
 	return;
 }
-
 
 void populateTreeNodeWithSymbol(struct treeNode *tree_node_ptr, struct symbol symbol) {
 	tree_node_ptr->symbol.terminal.line_no = symbol.line_no;
@@ -803,7 +811,6 @@ void writeNode(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 				parent_node_symbol, is_leaf_node, node_symbol);
 	}
 }
-
 
 struct treeNode *recursiveInOrderPrint(struct treeNode *ptr, struct treeNode *p_ptr, FILE *fp) {
 	if (ptr == NULL)
