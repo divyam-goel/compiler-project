@@ -200,6 +200,7 @@ char getChar(int index) {
 char getNextChar(FILE *fp) {
 	if (isBufferEnd()) {
 		if (buffer.eof) {
+			buffer.read_ptr_1 += 1;
 			return '\0';
 		}
 		getStream(fp);
@@ -315,12 +316,6 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 	while(true) {
 		ch = getNextChar(fp);
 
-		if (ch == '\0') {
-			buffer.eof = false;
-			populateSymbol(symbol, DOLLAR, NULL);
-			return 0;
-		}
-
 		switch(state) {
 			// start state
 			case 1:
@@ -425,6 +420,11 @@ int getNextToken(FILE * fp, struct symbol *symbol) {
 						populateSymbol(symbol, COMMA, NULL);
 						return 1;
 						break;
+
+					case '\0':
+						buffer.eof = false;
+						populateSymbol(symbol, DOLLAR, NULL);
+						return 0;
 
 					default:
 		            	printf("\nLEXICAL ERROR: %8d %30c %30s\n\n",
