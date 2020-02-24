@@ -109,7 +109,10 @@ void runLexicalAndSyntaxAnalyzers() {
 	intializeParseTable();
 	createParseTable();
     
-    printf("\n\nDemonstrating SYNTACTIC ANALYSIS ...\n\n");
+    printf("\n\nDemonstrating SYNTAX ANALYSIS ...\n\n");
+    extern int line_no;
+    line_no = 1;
+    defineBuffer();
 	parseInputSourceCode(sourceFilePath);
 	printParseTree(outputFilePath);
 }
@@ -168,6 +171,9 @@ int main(int argc, char const *argv[]) {
 	double CPU_time, CPU_time_seconds;
 
 	while ((choice = promptUser())) {
+	    defineBuffer();
+	    extern int line_no; 
+	    line_no = 1;
 		switch (choice) {
 
 			case 0: // exit

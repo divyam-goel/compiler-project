@@ -466,6 +466,10 @@ void createParseTable() {
 				}
 			}
 		}
+
+		// if (F.follow[i][DOLLAR] == '1') {
+		// 	parseTable[i][j] = 1;
+		// }
 	}
 }
 
@@ -548,6 +552,95 @@ struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
 	return curr_tree_node_ptr;
 }
 
+
+void printSyntaxError(struct symbol symbol) {
+	if (symbol.token == IDENTIFIER)
+		printf("\nSYNTAX ERROR: %9d %30s %30s\n",
+			symbol.line_no, symbol.lexeme.str, "----");
+	else if (symbol.token == NUM)
+		printf("\nSYNTAX ERROR: %9d %30d %30s\n",
+			symbol.line_no, symbol.lexeme.num, "----");
+	else if (symbol.token == RNUM)
+		printf("\nSYNTAX ERROR: %9d %30f %30s\n",
+			symbol.line_no, symbol.lexeme.rnum, "----");
+	else
+		printf("\nSYNTAX ERROR: %9d %30s %30s\n",
+			symbol.line_no, terminalStringRepresentations[symbol.token], "----");
+}
+
+
+void syntaxErrorRecovery(FILE *fp, struct symbol *symbol, int which_recovery) {
+    enum nonTerminal stack_top_non_terminal;
+    enum terminal input_stream_terminal;
+
+	if (which_recovery == 1) {
+		while(stack->head != NULL && stack->head->flag == TERMINAL)
+			pop();
+
+		if (stack->head == NULL)
+			return;
+	}
+
+	// discard terminals from input stream till terminal is in
+	// the follow of stack top non terminal, and then discard
+	// the stack top non terminal
+	stack_top_non_terminal = stack->head->symbol.non_terminal;
+	input_stream_terminal = symbol->token;
+	while(true) {
+
+		// input terminal is in follow of stack top non terminal, discard the non terminal
+		if(F.follow[stack_top_non_terminal][input_stream_terminal] == '1') {
+			pop();
+			break;
+		}
+		
+		// SPECIAL CASE - if input terminal is dollar, then discard symbols
+		// from stack till dollar is in the follow of stack top non terminal
+		else if(input_stream_terminal == DOLLAR) {
+			
+			while (stack->head != NULL) {	
+				if (stack->head->flag == NON_TERMINAL) {
+					stack_top_non_terminal = stack->head->symbol.non_terminal;
+					if (F.follow[stack_top_non_terminal][input_stream_terminal] == '1')
+						break;
+				}
+				
+				pop();
+			}
+			
+			break;
+		}
+		
+		// input terminal is not dollar and not in follow of stack top non terminal
+		// discard current input symbol and get next
+		else{
+			getNextToken(fp, symbol);
+			input_stream_terminal = symbol->token;
+		}
+	}
+
+	return;
+}
+
+
+void populateTreeNodeWithSymbol(struct treeNode *tree_node_ptr, struct symbol symbol) {
+	tree_node_ptr->symbol.terminal.line_no = symbol.line_no;
+
+	if (symbol.token == IDENTIFIER) {
+		strcpy(tree_node_ptr->symbol.terminal.lexeme.str, symbol.lexeme.str);
+	}
+
+	else if (symbol.token == NUM) {
+		tree_node_ptr->symbol.terminal.lexeme.num = symbol.lexeme.num;
+	}
+
+	else if (symbol.token == RNUM) {
+		tree_node_ptr->symbol.terminal.lexeme.rnum = symbol.lexeme.rnum;
+	}
+
+	return;
+}
+
 /* PARSE SOURCE CODE Helper Code - END */
 
 
@@ -559,6 +652,7 @@ void parseInputSourceCode(char *testcaseFile) {
 		exit(0);
 	}
 
+	// Add <program> to root of the parsetree
 	struct treeNode *tree_node_ptr = (struct treeNode *) malloc(sizeof(struct treeNode));
 	tree_node_ptr->symbol.non_terminal = _PROGRAM;
 	tree_node_ptr->flag = NON_TERMINAL;
@@ -569,6 +663,7 @@ void parseInputSourceCode(char *testcaseFile) {
 
     initialiseStack();
 
+    // Add <program> to stack
     struct stackNode *stack_node = (struct stackNode *) malloc(sizeof(struct stackNode));
     stack_node->symbol.non_terminal = _PROGRAM;
     stack_node->flag = NON_TERMINAL;
@@ -576,8 +671,10 @@ void parseInputSourceCode(char *testcaseFile) {
     stack_node->tree_node_ptr = tree_node_ptr;
     push(stack_node);
 
-    struct symbol symbol;
     stack_node = NULL;
+
+    // variables for later use
+    struct symbol symbol;
     enum nonTerminal stack_top_non_terminal;
     enum terminal symbol_terminal;
     int rule_no;
@@ -604,100 +701,37 @@ void parseInputSourceCode(char *testcaseFile) {
 				stack_node->tree_node_ptr->child = addRuleToStackAndTree(&G[rule_no]);
     		}
 
-    		// if no rule, then ERROR state
+    		// SYNTAX ERROR - input TERMINAL not in first of stack top NON TERMINAL
     		else {
-	    		if (symbol.token == IDENTIFIER)
-	    			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
-	    				symbol.line_no, symbol.lexeme.str, "----");
-	    		else if (symbol.token == NUM)
-	    			printf("\nSYNTAX ERROR: %9d %30d %30s\n",
-	    				symbol.line_no, symbol.lexeme.num, "----");
-	    		else if (symbol.token == RNUM)
-	    			printf("\nSYNTAX ERROR: %9d %30f %30s\n",
-	    				symbol.line_no, symbol.lexeme.rnum, "----");
-	    		else
-	    			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
-	    				symbol.line_no, terminalStringRepresentations[symbol.token], "----");
-
-	    		// keep getting next token till that token is in follow(non-terminal)
-	    		while(true) {
-	    			if(F.follow[stack_top_non_terminal][symbol_terminal] == '1') {
-	    				// we pop the non-terminal at the top of stack,discard current token and continue normal parsing
-	    				stack_node = pop();
-	    				break;
-	    			}
-	    			// if the current token isn't in the follow of current non_terminal, we discard the token
-	    			// and generate a new one- do this till the first condition is fulfilled
-	    			else{
-	    				// if DOLLAR was generated, and it wasn't in the follow set of non-terminal(above if condition),
-	    				// then, its the end of file and there are no more characters- we stop
-	    				if(symbol_terminal == DOLLAR)
-	    					break;
-	    				getNextToken(fp,&symbol);
-	    				symbol_terminal = symbol.token;
-	    			}
-	    		}
+    			printSyntaxError(symbol);
+    			syntaxErrorRecovery(fp, &symbol, 0);
+    			symbol_terminal = symbol.token;
     		}
     	}
 
+    	// CASE 2 - stack top is a TERMINAL which matches input TERMINAL
     	else if (stack->head->symbol.terminal == symbol_terminal) {
-    		// pop the terminal
+    		// pop the terminal and update information at tree node
     		stack_node = pop();
-
-    		// update information at tree node
-    		stack_node->tree_node_ptr->symbol.terminal.line_no = symbol.line_no;
-
-    		if (symbol.token == IDENTIFIER) {
-    			strcpy(stack_node->tree_node_ptr->symbol.terminal.lexeme.str, symbol.lexeme.str);
-    		}
-
-    		else if (symbol.token == NUM) {
-    			stack_node->tree_node_ptr->symbol.terminal.lexeme.num = symbol.lexeme.num;
-    		}
-
-    		else if (symbol.token == RNUM) {
-    			stack_node->tree_node_ptr->symbol.terminal.lexeme.rnum = symbol.lexeme.rnum;
-    		}
+    		populateTreeNodeWithSymbol(stack_node->tree_node_ptr, symbol);
 
 			// get the next token
 			getNextToken(fp, &symbol);
 			symbol_terminal = symbol.token;
     	}
 
+    	// CASE 3
+		// SYNTAX ERROR - input TERMINAL not matching stack top TERMINAL
     	else {
-    		// ERROR state
-    		if (symbol.token == IDENTIFIER)
-    			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
-    				symbol.line_no, symbol.lexeme.str, "----");
-    		else if (symbol.token == NUM)
-    			printf("\nSYNTAX ERROR: %9d %30d %30s\n",
-    				symbol.line_no, symbol.lexeme.num, "----");
-    		else if (symbol.token == RNUM)
-    			printf("\nSYNTAX ERROR: %9d %30f %30s\n",
-    				symbol.line_no, symbol.lexeme.rnum, "----");
-    		else
-    			printf("\nSYNTAX ERROR: %9d %30s %30s\n",
-    				symbol.line_no, terminalStringRepresentations[symbol.token], "----");
-
-    		while(stack->head->flag == TERMINAL)
-    			pop();
-
-    		enum nonTerminal stack_non_terminal = stack->head->symbol.non_terminal;
-    		while(true){
-    			if(F.follow[stack_non_terminal][symbol_terminal] == '1'){
-    				pop();
-    				break;
-    			}
-    			else if(symbol_terminal == DOLLAR) {
-					break;
-    			}
-    			else {
-    				getNextToken(fp, &symbol);
-    				symbol_terminal = symbol.token;
-    			}
-    		}
+    		printSyntaxError(symbol);
+			printf("CASE 2\n");
+			syntaxErrorRecovery(fp, &symbol, 1);
+			symbol_terminal = symbol.token;
     	}
     }
+
+    fclose(fp);
+    return;
 }
 
 
