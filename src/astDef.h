@@ -29,8 +29,8 @@ union VarUnion {
 };
 
 union NewExpressionUnion {
-  struct ExpressionUnion expression;
-  struct UNode u_node;
+  union ExpressionUnion expression;
+  struct UNode *u_node;
 };
 
 union FactorUnion {
@@ -104,7 +104,7 @@ struct ModuleNode {
 };
 
 struct InputPlistNode {
-  union DataTypeUnion *ptr1;
+  union DataTypeUnion ptr1;
   enum Nodes type;
   struct LeafNode *ptr2;
   struct InputPlistNode *ptr3;
@@ -131,9 +131,9 @@ struct DynamicRangeNode {
 };
 
 struct StatementNode {
-  union StatementUnion *ptr1;
+  union StatementUnion ptr1;
   enum Nodes type;
-  struct StatementNode *ptr2;
+  struct StatementNode ptr2;
 };
 
 struct InputNode {
@@ -141,7 +141,7 @@ struct InputNode {
 };
 
 struct PrintNode {
-  union ExtendedVarUnion *ptr1;
+  union ExtendedVarUnion ptr1;
 };
 
 struct ArrayNode {
@@ -151,19 +151,19 @@ struct ArrayNode {
 
 struct AssignStmtNode {
   struct LeafNode *ptr1;
-  union WhichStmtUnion *ptr2;
+  union WhichStmtUnion ptr2;
   enum Nodes type;
 };
 
 
 struct LvalueIDNode {
-  union newExpressionUnion *ptr1;
+  union newExpressionUnion ptr1;
   enum Nodes type;
 };
 
 struct LvalueARRNode {
   struct LeafNode *ptr1; //index
-  union newExpressionUnion *ptr1;
+  union newExpressionUnion ptr1;
   enum Nodes type;
 };
 
@@ -180,11 +180,11 @@ struct IdListNode {
 
 struct UNode {
   enum Terminals op;
-  union ExpressionUnion *ptr1;
+  union ExpressionUnion ptr1;
 };
 
 struct N7Node {
-  union ExpressionUnion *ptr1;
+  union ExpressionUnion ptr1;
   enum terminal logicalOp;
   struct N7Node *ptr2;
 };
@@ -192,25 +192,25 @@ struct N7Node {
 struct N8Node {
     struct ArithmeticExprNode *ptr1; /* The inherited attribute. */
     enum terminal relationalOp;
-    struct ArithmeticExprNode *ptr2;
+    union ExpressionUnion ptr2;
 };
 
 struct ArithmeticExprNode {
     struct ArithmeticExprNode *ptr1; /* Sub Arithmetic Expression */
     enum terminal op;
-    union ExpressionUnion *ptr2; /* Term */
+    union ExpressionUnion ptr2; /* Term */
 };
 
 struct TermNode {
     struct TermNode *ptr1; /* Subterm */
     enum terminal op;
-    union FactorUnion *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
+    union FactorUnion ptr2; /* Factor - If TermNode* == NULL then we use this.*/
 };
 
 struct DeclareStmtNode {
-    union DataTypeUnion *ptr1;
+    union DataTypeUnion ptr1;
     enum Nodes type;  /* For the above union. */
-    struct IdListNode * ptr2;
+    struct IdListNode *ptr2;
 };
 
 struct ConditionalStmtNode {
