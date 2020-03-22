@@ -41,6 +41,7 @@ union nodeValue {
 };
 
 struct treeNode {
+	int rule_number;  /* Use this to index into grammar[]. */
 	union nodeValue symbol;
 	enum typeOfSymbol flag;
 	struct treeNode *child;

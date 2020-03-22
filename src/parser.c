@@ -108,21 +108,21 @@ struct rhsNode *newRule(
 
     struct rhsNode *ptr = (struct rhsNode *) malloc(sizeof(struct rhsNode));
     ptr->flag = flag;
-    
+
     if (flag == TERMINAL)
         ptr->symbol.terminal = terminal;
     else
         ptr->symbol.non_terminal = non_terminal;
-    
+
     ptr->next = NULL;
-    
+
     return ptr;
 }
 
 
 struct rhsNode *createRhsNode(const char *val) {
 	struct rhsNode *node = (struct rhsNode *) malloc(sizeof(struct rhsNode)); // TODO: Free this memory
-	
+
 	if (val[0] == '<') {
 		node->flag = NON_TERMINAL;
 		node->symbol.non_terminal = hashMapGet(val, nonTerminalMap);
@@ -235,7 +235,7 @@ void loadGrammar(const char *filename) {
 	free(terminalMap);
 	free(nonTerminalMap);
 	fclose(fp);
-	
+
 	return;
 }
 
@@ -458,7 +458,7 @@ void intializeParseTable() {
 void createParseTable() {
 	for (int i = 0; i < NUM_NON_TERMINALS; i++) {
 		for (int j = 0; j < NUM_TERMINALS; j++) {
-			
+
 			if (F.first[i][j] != -1 && j != EPSILON) {
 				parseTable[i][j] = F.first[i][j];
 			}
@@ -525,9 +525,11 @@ struct rhsNode *reverseRule(struct rhsNode *rhs_node_ptr) {
 	return prev_rhs_node_ptr;
 }
 
-struct treeNode *addRuleToStackAndTree(struct rule *grammar_rule) {
+struct treeNode *addRuleToStackAndTree(int rule_no) {
 	// X -> PQR - we pop non terminal X and push in all elements of RHS of rule- in reverse order- RQP
 	// X has already been popped- if we call this function
+
+    struct rule *grammar_rule = &G[rule_no];
 
 	struct rhsNode *curr_rhs_rule_node = grammar_rule->head;
 	struct rhsNode *last_rhs_rule_node = NULL;
@@ -602,24 +604,24 @@ void syntaxErrorRecovery(FILE *fp, struct symbol *symbol, int which_recovery) {
 			pop();
 			break;
 		}
-		
+
 		// SPECIAL CASE - if input terminal is dollar, then discard symbols
 		// from stack till dollar is in the follow of stack top non terminal
 		else if(input_stream_terminal == DOLLAR) {
-			
-			while (stack->head != NULL) {	
+
+			while (stack->head != NULL) {
 				if (stack->head->flag == NON_TERMINAL) {
 					stack_top_non_terminal = stack->head->symbol.non_terminal;
 					if (F.follow[stack_top_non_terminal][input_stream_terminal] == '1')
 						break;
 				}
-				
+
 				pop();
 			}
-			
+
 			break;
 		}
-		
+
 		// input terminal is not dollar and not in follow of stack top non terminal
 		// discard current input symbol and get next
 		else{
@@ -690,7 +692,7 @@ void parseInputSourceCode(char *testcaseFile) {
 
 	// reinitialize the global line no in lexer
 	line_no = 1;
-	
+
 	getNextToken(fp, &symbol);
 	symbol_terminal = symbol.token;
 
@@ -707,7 +709,8 @@ void parseInputSourceCode(char *testcaseFile) {
     		rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
     		if (rule_no != -1) {
        			stack_node = pop();
-				stack_node->tree_node_ptr->child = addRuleToStackAndTree(&G[rule_no]);
+				stack_node->tree_node_ptr->rule_no = rule_no;
+				stack_node->tree_node_ptr->child = addRuleToStackAndTree(rule_no);
     		}
 
     		// SYNTAX ERROR - input TERMINAL not in first of stack top NON TERMINAL
