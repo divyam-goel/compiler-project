@@ -37,10 +37,49 @@ union FactorUnion {
   union ExpressionUnion;
   union VarUnion;
 };
+
+union ASTNodesUnion {
+  struct *ProgramNode pro;
+  struct *ModuleDeclarationNode mod_dec;
+  struct *OtherModuleNode oth_mod;
+  struct *ModuleNode mod;
+  struct *InputPlistNode inp_pli;
+  struct *OutputPlistNode out_pli;
+  struct *LeafNode lea;
+  struct *ArrayTypeNode arr_typ;
+  struct *DynamicRangeNode dyn_ran;
+  struct *StatementNode sta;
+  struct *InputNode inp;
+  struct *PrintNode pri;
+  struct *ArrayNode arr;
+  struct *AssignStmtNode ass_stm;
+  struct *LvalueIdNode lva_id;
+  struct *LvalueARRNode lva_arr;
+  struct *ModuleReuseStmtNode mod_reu_stm;
+  struct *IdListNode id_lis;
+  struct *UNode u;
+  struct *N7Node n7;
+  struct *N8Node n8;
+  struct *ArithmeticExprNode ari_exp;
+  struct *TermNode ter;
+  struct *DeclareStmtNode dec_stm;
+  struct *ConditionalStmtNode con_stm;
+  struct *CaseStmtNode cas_stm;
+  struct *ForIterativeStmtNode for_ite_stm;
+  struct *WhileIterativeStmtNode whi_ite_stm;
+  struct *RangeNode ran;
+};
+
+union LeafNodeUnion {
+    int num;
+    float rnum;
+    bool boolean;
+    void *entry;  // TEMP: Just until we define SymbolTableNode.
+}
 /* ----- END UNIONS ----- */
 
 /* ----- BEGIN ENUMS ----- */
-enum Nodes {
+enum ASTNodesEnum {
   /* 00 */ PROGRAM_NODE,
   /* 01 */ MODULE_DECLARATION_NODE,
   /* 02 */ OTHER_MODULE_NODE,
@@ -105,7 +144,7 @@ struct ModuleNode {
 
 struct InputPlistNode {
   union DataTypeUnion ptr1;
-  enum Nodes type;
+  enum ASTNodesEnum type;
   struct LeafNode *ptr2;
   struct InputPlistNode *ptr3;
 };
@@ -117,7 +156,8 @@ struct OutputPlistNode {
 };
 
 struct LeafNode {
-
+    enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
+    union LeafNodeUnion val;
 };
 
 struct ArrayTypeNode {
@@ -132,7 +172,7 @@ struct DynamicRangeNode {
 
 struct StatementNode {
   union StatementUnion ptr1;
-  enum Nodes type;
+  enum ASTNodesEnum type;
   struct StatementNode ptr2;
 };
 
@@ -152,19 +192,19 @@ struct ArrayNode {
 struct AssignStmtNode {
   struct LeafNode *ptr1;
   union WhichStmtUnion ptr2;
-  enum Nodes type;
+  enum ASTNodesEnum type;
 };
 
 
 struct LvalueIDNode {
   union newExpressionUnion ptr1;
-  enum Nodes type;
+  enum ASTNodesEnum type;
 };
 
 struct LvalueARRNode {
   struct LeafNode *ptr1; //index
   union newExpressionUnion ptr1;
-  enum Nodes type;
+  enum ASTNodesEnum type;
 };
 
 struct ModuleReuseStmtNode {
@@ -209,7 +249,7 @@ struct TermNode {
 
 struct DeclareStmtNode {
     union DataTypeUnion ptr1;
-    enum Nodes type;  /* For the above union. */
+    enum ASTNodesEnum type;  /* For the above union. */
     struct IdListNode *ptr2;
 };
 
@@ -241,4 +281,9 @@ struct RangeNode {
     struct LeafNode *ptr1;  /* Lower bound */
     struct LeafNode *ptr2; /* Upper bound */
 };
+
+struct Attribute {
+  union ASTNodesUnion node;
+  enum ASTNodesEnum type;
+}
 /* ----- BEGIN STRUCTS ----- */

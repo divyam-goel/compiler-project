@@ -35,7 +35,7 @@ typedef int table[NUM_NON_TERMINALS][NUM_TERMINALS];
 
 struct rhsNode *createRhsNode(const char *val);
 
-union nodeValue {
+	union nodeValue {
 	struct symbol terminal;
 	enum nonTerminal non_terminal;
 };
