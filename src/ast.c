@@ -177,6 +177,7 @@ void case_1(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   prog_node->ptr4 = child_node->syn.node.oth_mod;
 
+  // <program>.syn = new ProgramNode(<moduleDeclarations>.syn, <otherModules>.syn, <driverModule>.syn, <otherModules>1.syn)
   curr_node->syn.node.pro = prog_node;
   curr_node->syn.type = PROGRAM_NODE;
 }
@@ -185,7 +186,7 @@ void case_1(struct treeNode *curr_node) {
 void case_2(struct treeNode *curr_node) {
   // <moduleDeclarations> := <moduleDeclaration> <moduleDeclarations>
 
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   // define and populate structure ModuleDeclarationNode
@@ -212,11 +213,8 @@ void case_3(struct treeNode *curr_node) {
 void case_4(struct treeNode *curr_node) {
   // <moduleDeclaration> := DECLARE MODULE ID SEMICOL
 
-  struct treeNode *child_node = curr_node->child_node;
-  traverseChildren();
-
   // <moduleDeclaration>.syn = new LeafNode(ID, ID.entry)
-  // curr_node->syn.node.lea = newLeafNode(ID, );
+  // TO DO: curr_node->syn.node.lea = newLeafNode(ID, );
   curr_node->syn.type = LEAF_NODE;
 }
 
@@ -224,17 +222,18 @@ void case_4(struct treeNode *curr_node) {
 void case_5(struct treeNode *curr_node) {
   // <otherModules>  := <module> <otherModules>
 
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   // define and populate structure OtherModuleNode
   struct OtherModuleNode *oth_mod_node = (struct OtherModuleNode *) malloc(sizeof(struct OtherModuleNode));
-  oth_mod_node->ptr1 = child_node->syn.mod;
-  child_node = child_node->next;
-  oth_mod_node->ptr1 = child_node->syn.oth_mod;
+  oth_mod_node->ptr1 = child_node->syn.node.mod;
+  child_node = nextNonTerminalNode(child_node);
+  oth_mod_node->ptr1 = child_node->syn.node.oth_mod;
 
   // <otherModules>.syn = new OtherModuleNode(<module>.syn, <otherModules>.syn)
-  curr_node->syn.oth_mod = oth_mod_node;
+  curr_node->syn.node.oth_mod = oth_mod_node;
+  curr_node->syn.type = OTHER_MODULE_NODE;
 }
 
 
@@ -242,26 +241,28 @@ void case_6(struct treeNode *curr_node) {
   // <otherModules>  := EPSILON
 
   // <otherModules>.syn = NULL
-  curr_node->syn.oth_mod = NULL;
+  curr_node->syn.node.oth_mod = NULL;
+  curr_node->syn.type = OTHER_MODULE_NODE;
 }
 
 
 void case_7(struct treeNode *curr_node) {
   // <driverModule> := DRIVERDEF DRIVER PROGRAM DRIVERENDDEF <moduleDef>
 
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren();
 
   child_node = nextNonTerminalNode(child_node);
   // <driverModule>.syn = <moduleDef>.syn
-  curr_node->syn.stm = child_node->syn.stm;
+  curr_node->syn.node.stm = child_node->syn.node.stm;
+  curr_node->syn.type = STATEMENT_NODE;
 }
 
 
 void case_8(struct treeNode *curr_node) {
   // <module> := DEF MODULE ID ENDDEF TAKES INPUT SQBO <input_plist> SQBC SEMICOL <ret> <moduleDef>
 
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren();
 
   // define and populate structure ModuleNode
@@ -269,141 +270,174 @@ void case_8(struct treeNode *curr_node) {
   child_node = child_node->next->next;
   module_node->ptr1 = newLeafNode(ID, child_node);
   child_node = nextNonTerminalNode(child_node);
-  module_node->ptr2 = child_node->syn.inp_pli;
+  module_node->ptr2 = child_node->syn.node.inp_pli;
   child_node = nextNonTerminalNode(child_node);
-  module_node->ptr3 = child_node->syn.out_pli;
+  module_node->ptr3 = child_node->syn.node.out_pli;
   child_node = nextNonTerminalNode(child_node);
-  module_node->ptr4 = child_node->syn.stm;
+  module_node->ptr4 = child_node->syn.node.stm;
 
   // <module>.syn = new ModuleNode(new LeafNode(ID, ID.entry), <input_plist>.syn, <ret>.syn, <moduleDef>.syn)
-  curr_node->syn.mod = module_node;
+  curr_node->syn.node.mod = module_node;
+  curr_node->syn.type = MODULE_NODE;
 }
 
 
 void case_9(struct treeNode *curr_node) {
   // <ret> := RETURNS SQBO <output_plist> SQBC SEMICOL
 
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren();
 
   child_node = nextNonTerminalNode(child_node);
   // <ret>.syn = <output_plist>.syn
-  curr_node->syn.out_pli = child_node->syn.out_pli;
+  curr_node->syn.node.out_pli = child_node->syn.node.out_pli;
+  curr_node->syn.type = OUTPUT_PLIST_NODE;
 }
 
-void case_10(struct treeNode *curr_node) {}
+void case_10(struct treeNode *curr_node) {
+  // <ret> := EPSILON
 
-void case_11(struct treeNode *curr_node) {}
+  // <ret>.syn = NULL
+  curr_node->syn.node.out_pli = NULL;
+  curr_node->syn.type = OUTPUT_PLIST_NODE;
+}
+
+void case_11(struct treeNode *curr_node) {
+  // <input_plist> := ID COLON <dataType> <sub_input_plist>
+
+  struct treeNode *child_node = curr_node->child;
+  traverseChildren();
+
+  // define and populate structure InputPlistNode
+  struct InputPlistNode *input_plist_node = (struct InputPlistNode *) malloc(sizeof(struct InputPlist));
+  child_node = nextNonTerminalNode(child_node);
+  input_plist_node->ptr1 = child_node->syn.node.;
+  input_plist_node->ptr2;
+}
 
 void case_17(struct treeNode *curr_node){
   // <dataType> := INTEGER
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"INT");
 
-  // <dataType>.syn = new LeafNode(TYPE, “INT”)
-  curr_node->syn.lea = leaf_node;
+  // <dataType>.syn= new LeafNode(TYPE, “INT”)
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
 }
 
 void case_18(struct treeNode *curr_node){
   // <dataType> := REAL
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"REAL");
 
-  // <dataType>.syn = new LeafNode(TYPE, "REAL")
-  curr_node->syn.lea = leaf_node;
+  // <dataType>.syn= new LeafNode(TYPE, "REAL")
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
 }
 
 void case_19(struct treeNode *curr_node){
   // <dataType> := BOOLEAN
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"BOOLEAN");
 
-  // <dataType>.syn = new LeafNode(TYPE, "BOOLEAN")
-  curr_node->syn.lea = leaf_node;
+  // <dataType>.syn.node.= new LeafNode(TYPE, "BOOLEAN")
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
+
 }
 
 void case_20(struct treeNode *curr_node){
   // <dataType> := ARRAY SQBO <dynamic_range> SQBC OF <type>
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   // define structure of type ArrayTypeNode
   struct ArrayTypeNode *array_type_node = (struct ArrayTypeNode *) malloc(sizeof(ArrayTypeNode));
   child_node = nextNonTerminalNode(child_node);
-  array_type_node->ptr1 = child_node->syn.lea;
+  array_type_node->ptr1 = child_node->syn.node.lea;
   child_node = nextNonTerminalNode(child_node);
-  array_type_node->ptr2 = child_node->syn.dyn_ran;
+  array_type_node->ptr2 = child_node->syn.node.dyn_ran;
 
-  // <dataType>.syn = new ArrayTypeNode(<type>.syn, <dynamic_range>.syn)
-  curr_node->syn.arr_typ  = array_type_node;
+  // <dataType>.syn= new ArrayTypeNode(<type>.syn <dynamic_range>.syn
+  curr_node->syn.node.arr_typ  = array_type_node;
+  curr_node->syn.type = ARRAY_TYPE_NODE;
+
 
 }
 
 void case_21(struct treeNode *curr_node){
   // <dynamic_range> := <index> RANGEOP <index>
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   // define structure of type DynamicRangeNode
   struct DynamicRangeNode *dynamic_type_node = (struct DynamicRangeNode *) malloc(sizeof(DynamicRangeNode));
-  dynamic_type_node->ptr1 = child_node->syn.lea;
+  dynamic_type_node->ptr1 = child_node->syn.node.lea;
   child_node = nextNonTerminalNode(child_node);
-  dynamic_type_node->ptr2 = child_node->syn.lea;
+  dynamic_type_node->ptr2 = child_node->syn.node.lea;
 
-  // <dynamic_range>.syn = new DynamicRangeNode(<index>1.syn, <index>2.syn)
-  curr_node->syn.dyn_ran  = dynamic_type_node;
+  // <dynamic_range>.syn.node.= new DynamicRangeNode(<index>1.syn.node. <index>2.syn.node.
+  curr_node->syn.node.dyn_ran  = dynamic_type_node;
+  curr_node->syn.type = DYNAMIC_RANGE_NODE;
+
 
 }
 
 void case_22(struct treeNode *curr_node){
   // <type> := INTEGER
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"INT");
 
-  // <type>.syn = new LeafNode(TYPE, “INT”)
-  curr_node->syn.lea = leaf_node;
+  // <type>.syn.node.= new LeafNode(TYPE, “INT”)
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
+
 
 }
 
 void case_23(struct treeNode *curr_node){
   // <type> := REAL
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"REAL");
 
-  // <type>.syn = new LeafNode(TYPE, "REAL")
-  curr_node->syn.lea = leaf_node;
+  // <type>.syn.node.= new LeafNode(TYPE, "REAL")
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
+
 }
 
 void case_24(struct treeNode *curr_node){
   // <type> := BOOLEAN
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   //define leafNode structure by using constructor - TO BE DEFINED
   struct LeafNode *leaf_node = newLeafNode(TYPE,"BOOLEAN");
 
-  // <type>.syn = new LeafNode(TYPE, "BOOLEAN")
-  curr_node->syn.lea = leaf_node;
+  // <type>.syn.node.= new LeafNode(TYPE, "BOOLEAN")
+  curr_node->syn.node.lea = leaf_node;
+  curr_node->syn.type = LEAF_NODE;
+
 }
 
 void case_25(struct treeNode *curr_node){
   // <moduleDef> := START <statements> END
-  struct treeNode *child_node = curr_node->child_node;
+  struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
   child_node = child_node->next;
@@ -415,11 +449,16 @@ void case_25(struct treeNode *curr_node){
 
 void case_103(struct treeNode *curr_node) {
     // <iterativeStmt> := WHILE BO <expression> BC START <statements> END
+    struct treeNode *child_node;
+    struct WhileIterativeStmtNode *new_node;
 
-    struct WhileIterativeStmtNode *new_node = (struct WhileIterativeStmtNode *) malloc(sizeof(WhileIterativeStmtNode));
-    struct treeNode *child_node = curr_node->child_node;
-    nextNonTerminalNode(child_node);
-    new_node->ptr1 =
+    traverseChildren(child_node);
+
+    new_node = (struct WhileIterativeStmtNode *) malloc(sizeof(WhileIterativeStmtNode));
+    child_node = nextNonTerminalNode(curr_node->child);
+    // <iterativeStmt>.syn = new WhileIterativeStmtNode(<expression>.syn, <statements>.syn)
+    if (child_node->syn.node.type == )
+        new_node->ptr1 =
 }
 
 
