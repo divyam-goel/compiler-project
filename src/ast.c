@@ -205,6 +205,7 @@ void case_3(struct treeNode *curr_node) {
 
   // <moduleDeclarations>.syn = NULL
   curr_node->syn.node.mod_dec = NULL;
+  curr_node->syn.type = MODULE_DECLARATION_NODE;
 }
 
 
@@ -214,13 +215,9 @@ void case_4(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child_node;
   traverseChildren();
 
-  // define and populate structure LeafNode
-  struct LeafNode *leaf_node = (struct LeafNode *) malloc(sizeof(struct LeafNode));
-  leaf_node->type = ID;
-  // TO DO: leaf_node->val.entry
-
   // <moduleDeclaration>.syn = new LeafNode(ID, ID.entry)
-  curr_node->syn.lea = leaf_node;
+  // curr_node->syn.node.lea = newLeafNode(ID, );
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
