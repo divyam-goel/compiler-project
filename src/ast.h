@@ -2,7 +2,6 @@
 
 #define AST_H
 
-
 /* All of the case functions used in traverseParseTree. */
 void case_1(struct treeNode *curr_node);
 void case_2(struct treeNode *curr_node);
