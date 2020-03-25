@@ -286,4 +286,5 @@ struct Attribute {
   union ASTNodesUnion node;
   enum ASTNodesEnum type;
 }
+
 /* ----- BEGIN STRUCTS ----- */
