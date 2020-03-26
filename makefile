@@ -11,8 +11,8 @@ memtest: build-test
 driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o
 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
 
-build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o
-	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/tests
+build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o
+	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o -o build/tests
 
 test.o: test/tests.c \
 		src/utils.h \
@@ -38,7 +38,8 @@ lexer.o: src/lexer.c src/lexer.h src/lexerDef.h src/utils.h src/data_structures/
 	$(CC) src/lexer.c -o lib/lexer.o $(OBJ_CFLAGS)
 
 parser.o: src/parser.c src/parser.h src/parserDef.h src/data_structures/stack.h\
-			src/lexer.h src/lexerDef.h src/utils.h src/data_structures/hashMap_str_int.h
+			src/lexer.h src/lexerDef.h src/utils.h src/data_structures/hashMap_str_int.h \
+			src/astDef.h
 	$(CC) src/parser.c -o lib/parser.o $(OBJ_CFLAGS)
 
 hashMap_str_int.o: src/data_structures/hashMap_str_int.c src/data_structures/hashMap_str_int.h \
@@ -51,6 +52,9 @@ str_list.o: src/data_structures/str_list.c src/data_structures/str_list.h src/ut
 stack.o: src/data_structures/stack.c src/data_structures/stack.h src/parserDef.h src/lexer.h src/lexerDef.h src/utils.h \
 			src/data_structures/hashMap_str_int.h
 	$(CC) src/data_structures/stack.c -o lib/stack.o $(OBJ_CFLAGS)
+
+ast.o: src/ast.c src/ast.h src/astDef.h
+	$(CC) src/ast.c -o lib/ast.o $(OBJ_CFLAGS)
 
 clean:
 	find . -type f -name '*.o' -delete

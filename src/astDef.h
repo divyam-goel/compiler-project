@@ -1,3 +1,10 @@
+#ifndef ASTDEF_H
+
+#define ASTDEF_H
+
+#include "grammar.h"
+#include "lexerDef.h"
+
 /* ----- BEGIN UNIONS ----- */
 union DataTypeUnion {
   struct LeafNode *leaf_node;
@@ -34,40 +41,40 @@ union NewExpressionUnion {
 };
 
 union FactorUnion {
-  union ExpressionUnion;
-  union VarUnion;
+  union ExpressionUnion expr;
+  union VarUnion var;
 };
 
 union ASTNodesUnion {
-  struct *ProgramNode pro;
-  struct *ModuleDeclarationNode mod_dec;
-  struct *OtherModuleNode oth_mod;
-  struct *ModuleNode mod;
-  struct *InputPlistNode inp_pli;
-  struct *OutputPlistNode out_pli;
-  struct *LeafNode lea;
-  struct *ArrayTypeNode arr_typ;
-  struct *DynamicRangeNode dyn_ran;
-  struct *StatementNode sta;
-  struct *InputNode inp;
-  struct *PrintNode pri;
-  struct *ArrayNode arr;
-  struct *AssignStmtNode ass_stm;
-  struct *LvalueIdNode lva_id;
-  struct *LvalueARRNode lva_arr;
-  struct *ModuleReuseStmtNode mod_reu_stm;
-  struct *IdListNode id_lis;
-  struct *UNode u;
-  struct *N7Node n7;
-  struct *N8Node n8;
-  struct *ArithmeticExprNode ari_exp;
-  struct *TermNode ter;
-  struct *DeclareStmtNode dec_stm;
-  struct *ConditionalStmtNode con_stm;
-  struct *CaseStmtNode cas_stm;
-  struct *ForIterativeStmtNode for_ite_stm;
-  struct *WhileIterativeStmtNode whi_ite_stm;
-  struct *RangeNode ran;
+  struct ProgramNode *pro;
+  struct ModuleDeclarationNode *mod_dec;
+  struct OtherModuleNode *oth_mod;
+  struct ModuleNode *mod;
+  struct InputPlistNode *inp_pli;
+  struct OutputPlistNode *out_pli;
+  struct LeafNode *lea;
+  struct ArrayTypeNode *arr_typ;
+  struct DynamicRangeNode *dyn_ran;
+  struct StatementNode *stm;
+  struct InputNode *inp;
+  struct PrintNode *pri;
+  struct ArrayNode *arr;
+  struct AssignStmtNode *ass_stm;
+  struct LvalueIdNode *lva_id;
+  struct LvalueARRNode *lva_arr;
+  struct ModuleReuseStmtNode *mod_reu_stm;
+  struct IdListNode *id_lis;
+  struct UNode *u;
+  struct N7Node *n7;
+  struct N8Node *n8;
+  struct ArithmeticExprNode *ari_exp;
+  struct TermNode *ter;
+  struct DeclareStmtNode *dec_stm;
+  struct ConditionalStmtNode *con_stm;
+  struct CaseStmtNode *cas_stm;
+  struct ForIterativeStmtNode *for_ite_stm;
+  struct WhileIterativeStmtNode *whi_ite_stm;
+  struct RangeNode *ran;
 };
 
 union LeafNodeUnion {
@@ -75,7 +82,7 @@ union LeafNodeUnion {
     float rnum;
     bool boolean;
     void *entry;  // TEMP: Just until we define SymbolTableNode.
-}
+};
 /* ----- END UNIONS ----- */
 
 /* ----- BEGIN ENUMS ----- */
@@ -112,8 +119,8 @@ enum ASTNodesEnum {
 };
 
 enum factorEnum {
-    FACTOR_EXPRESSION;
-    FACTOR_VAR;
+    FACTOR_EXPRESSION,
+    FACTOR_VAR
 };
 /* ----- END ENUMS ----- */
 
@@ -143,7 +150,7 @@ struct ModuleNode {
 };
 
 struct InputPlistNode {
-  union DataTypeUnion ptr1;
+  union DataTypeUnion *ptr1;
   enum ASTNodesEnum type;
   struct LeafNode *ptr2;
   struct InputPlistNode *ptr3;
@@ -157,7 +164,7 @@ struct OutputPlistNode {
 
 struct LeafNode {
     enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
-    union LeafNodeUnion val;
+    union LeafNodeUnion value;
 };
 
 struct ArrayTypeNode {
@@ -171,9 +178,9 @@ struct DynamicRangeNode {
 };
 
 struct StatementNode {
-  union StatementUnion ptr1;
+  union StatementUnion *ptr1;
   enum ASTNodesEnum type;
-  struct StatementNode ptr2;
+  struct StatementNode *ptr2;
 };
 
 struct InputNode {
@@ -181,7 +188,7 @@ struct InputNode {
 };
 
 struct PrintNode {
-  union ExtendedVarUnion ptr1;
+  union ExtendedVarUnion *ptr1;
 };
 
 struct ArrayNode {
@@ -191,19 +198,19 @@ struct ArrayNode {
 
 struct AssignStmtNode {
   struct LeafNode *ptr1;
-  union WhichStmtUnion ptr2;
+  union WhichStmtUnion *ptr2;
   enum ASTNodesEnum type;
 };
 
 
 struct LvalueIDNode {
-  union newExpressionUnion ptr1;
+  union newExpressionUnion *ptr1;
   enum ASTNodesEnum type;
 };
 
 struct LvalueARRNode {
   struct LeafNode *ptr1; //index
-  union newExpressionUnion ptr1;
+  union newExpressionUnion *ptr2;
   enum ASTNodesEnum type;
 };
 
@@ -219,7 +226,7 @@ struct IdListNode {
 };
 
 struct UNode {
-  enum Terminals op;
+  enum terminal op;
   union ExpressionUnion ptr1;
 };
 
@@ -268,7 +275,7 @@ struct CaseStmtNode {
 struct ForIterativeStmtNode {
     struct LeafNode *ptr1;
     struct RangeNode *ptr2;
-    struct StatementNode *ptr2;
+    struct StatementNode *ptr3;
 };
 
 struct WhileIterativeStmtNode {
@@ -285,6 +292,33 @@ struct RangeNode {
 struct Attribute {
   union ASTNodesUnion node;
   enum ASTNodesEnum type;
-}
+};
 
 /* ----- BEGIN STRUCTS ----- */
+
+/* ----- BEGIN PARSER STRUCTURES ----- */
+enum typeOfSymbol {
+	TERMINAL,
+	NON_TERMINAL
+};
+
+union nodeValue {
+	struct symbol terminal;
+	enum nonTerminal non_terminal;
+};
+
+struct treeNode {
+	int rule_number;  /* Use this to index into grammar[]. */
+	union nodeValue symbol;
+	enum typeOfSymbol flag;
+	struct treeNode *child;
+	struct treeNode *next;
+  struct Attribute syn;
+};
+
+struct parseTree {
+	struct treeNode *head;
+};
+/* ----- END PARSER STRUCTURES ----- */
+
+#endif

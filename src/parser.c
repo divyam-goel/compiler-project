@@ -709,7 +709,7 @@ void parseInputSourceCode(char *testcaseFile) {
     		rule_no = parseTable[stack_top_non_terminal][symbol_terminal];
     		if (rule_no != -1) {
        			stack_node = pop();
-				stack_node->tree_node_ptr->rule_no = rule_no;
+				stack_node->tree_node_ptr->rule_number = rule_no;
 				stack_node->tree_node_ptr->child = addRuleToStackAndTree(rule_no);
     		}
 
