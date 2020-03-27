@@ -6,45 +6,6 @@
 #include "lexerDef.h"
 
 /* ----- BEGIN UNIONS ----- */
-union DataTypeUnion {
-  struct LeafNode *leaf_node;
-  struct ArrayTypeNode *array_type_node;
-};
-
-union ExtendedVarUnion {
-  struct LeafNode *leaf_node;
-  struct ArrayNode *array_node;
-};
-
-union WhichStmtUnion {
-  struct LvalueIDNode *lvalue_id_node;
-  struct LvalueARRNode *lvalue_arr_node;
-};
-
-union ExpressionUnion { // ---> use when <expression>.syn is involved!
-  struct N7Node *n7_node;
-  struct N8Node *n8_node;
-  struct ArithmeticExprNode *aritimethic_expr_node;
-  struct TermNode *term_node;
-  struct LeafNode *leaf_node;
-  struct ArrayNode *array_node;
-};
-
-union VarUnion {
-    struct LeafNode *ptr_node;
-    struct ArrayNode *arr_node;
-};
-
-union NewExpressionUnion {
-  struct Attribute expression;
-  struct UNode *u_node;
-};
-
-union FactorUnion {
-  union ExpressionUnion expr;
-  union VarUnion var;
-};
-
 union ASTNodesUnion {
   struct ProgramNode *pro;
   struct ModuleDeclarationNode *mod_dec;
@@ -75,7 +36,6 @@ union ASTNodesUnion {
   struct ForIterativeStmtNode *for_ite_stm;
   struct WhileIterativeStmtNode *whi_ite_stm;
   struct RangeNode *ran;
-  union DataTypeUnion *dtu;
 };
 
 union LeafNodeUnion {
@@ -117,12 +77,6 @@ enum ASTNodesEnum {
   /* 26 */ FOR_ITERATIVE_STMT_NODE,
   /* 27 */ WHILE_ITERATIVE_STMT_NODE,
   /* 28 */ RANGE_NODE,
-  /* 29 */ DATATYPE_UNION
-};
-
-enum factorEnum {
-    FACTOR_EXPRESSION,
-    FACTOR_VAR
 };
 /* ----- END ENUMS ----- */
 
@@ -153,13 +107,13 @@ struct ModuleNode {
 
 struct InputPlistNode {
   struct LeafNode *ptr1;
-  struct Attribute ptr2; 
+  struct Attribute *ptr2; 
   struct InputPlistNode *ptr3;
 };
 
 struct OutputPlistNode {
   struct LeafNode *ptr1;
-  struct LeafNode *ptr2;
+  struct Attribute *ptr2;
   struct OutputPlistNode *ptr3;
 };
 
@@ -179,7 +133,7 @@ struct DynamicRangeNode {
 };
 
 struct StatementNode {
-  struct Attribute ptr1;
+  struct Attribute *ptr1;
   struct StatementNode *ptr2;
 };
 
@@ -188,7 +142,7 @@ struct InputNode {
 };
 
 struct PrintNode {
-  struct Attribute ptr1;
+  struct Attribute *ptr1;
 };
 
 struct ArrayNode {
@@ -198,17 +152,17 @@ struct ArrayNode {
 
 struct AssignStmtNode {
   struct LeafNode *ptr1;
-  struct Attribute ptr2;
+  struct Attribute *ptr2;
 };
 
 
 struct LvalueIDNode {
-  struct Attribute ptr1;
+  struct Attribute *ptr1;
 };
 
 struct LvalueARRNode {
   struct LeafNode *ptr1; //index
-  struct Attribute ptr2;
+  struct Attribute *ptr2;
 };
 
 struct ModuleReuseStmtNode {
@@ -224,34 +178,34 @@ struct IdListNode {
 
 struct UNode {
   enum terminal op;
-  struct Attribute ptr1;
+  struct Attribute *ptr1;
 };
 
 struct N7Node {
-  struct Attribute ptr1;
+  struct Attribute *ptr1;
   struct N7Node *ptr2;
 };
 
 struct N8Node {
     struct ArithmeticExprNode *ptr1; /* The inherited attribute. */
     enum terminal relationalOp;
-    struct Attribute ptr2;
+    struct Attribute *ptr2;
 };
 
 struct ArithmeticExprNode {
     struct ArithmeticExprNode *ptr1; /* Sub Arithmetic Expression */
     enum terminal op;
-    struct Attribute ptr2; /* Term */
+    struct Attribute *ptr2; /* Term */
 };
 
 struct TermNode {
     struct TermNode *ptr1; /* Subterm */
     enum terminal op;
-    struct Attribute ptr2; /* Factor - If TermNode* == NULL then we use this.*/
+    struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
 };
 
 struct DeclareStmtNode {
-    struct Attribute ptr1;
+    struct Attribute *ptr1;
     struct IdListNode *ptr2;
 };
 
@@ -289,7 +243,7 @@ struct Attribute {
   enum ASTNodesEnum type;
 };
 
-/* ----- BEGIN STRUCTS ----- */
+/* ----- END STRUCTS ----- */
 
 /* ----- BEGIN PARSER STRUCTURES ----- */
 enum typeOfSymbol {
