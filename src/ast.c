@@ -59,15 +59,45 @@ void traverseParseTree(struct treeNode *curr_node) {
       break;
 
     case 11: // <input_plist> := ID COLON <dataType> <sub_input_plist>
+      case_11(curr_node);
+      break;
+
     case 12: // <sub_input_plist> := COMMA ID COLON <dataType> <sub_input_plist>
+      case_12(curr_node);
+      break;
+
     case 13: // <sub_input_plist> := EPSILON
+      case_13(curr_node);
+      break;
+
     case 14: // <output_plist> := ID COLON <type> <sub_output_plist>
+      case_14(curr_node);
+      break;
+
     case 15: // <sub_output_plist> := COMMA ID COLON <type> <sub_output_plist>
+      case_15(curr_node);
+      break;
+
     case 16: // <sub_output_plist> := EPSILON
+      case_16(curr_node);
+      break;
+
     case 17: // <dataType> := INTEGER
+      case_17(curr_node);
+      break;
+
     case 18: // <dataType> := REAL
+      case_18(curr_node);
+      break;
+
     case 19: // <dataType> := BOOLEAN
+      case_19(curr_node);
+      break;
+
     case 20: // <dataType> := ARRAY SQBO <dynamic_range> SQBC OF <type>
+      case_20(curr_node);
+      break;
+
     case 21: // <dynamic_range> := <index> RANGEOP <index>
     case 22: // <type> := INTEGER
     case 23: // <type> := REAL
@@ -294,6 +324,184 @@ void case_10(struct treeNode *curr_node) {
   /* <ret>.syn = NULL */
   curr_node->syn.node.out_pli = NULL;
   curr_node->syn.type = OUTPUT_PLIST_NODE;
+}
+
+
+void case_11(struct treeNode *curr_node) {
+  /* <input_plist> := ID COLON <dataType> <sub_input_plist> */
+  struct treeNode *child_node = curr_node->child;
+  traverseChildren(child_node);
+
+  struct InputPlistNode *inp_pli = (struct InputPlistNode *) malloc(sizeof(struct InputPlistNode));
+  inp_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
+  child_node = nextNonTerminalNode(child_node);
+  inp_pli->ptr2 = child_node->syn.node.dtu;
+  child_node = nextNonTerminalNode(child_node);
+  inp_pli->ptr3 = child_node->syn.node.inp_pli;
+
+  /* <input_plist>.syn = new InputPlistNode(<dataType>.syn, new LeafNode(ID, ID.entry), <sub_input_plist>.syn) */
+  curr_node->syn.node.inp_pli = inp_pli;
+  curr_node->syn.type = INPUT_PLIST_NODE;
+}
+
+
+void case_12(struct treeNode *curr_node) {
+  /* <sub_input_plist> := COMMA ID COLON <dataType> <sub_input_plist> */
+  struct treeNode *child_node = curr_node->child;
+  traverseChildren(curr_node);
+  
+  struct InputPlistNode *inp_pli = (struct InputPlistNode *) malloc(sizeof(struct InputPlistNode));
+  inp_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
+  child_node = nextNonTerminalNode(child_node);
+  inp_pli->ptr2 = child_node->syn.node.dtu;
+  child_node = nextNonTerminalNode(child_node);
+  inp_pli->ptr3 = child_node->syn.node.inp_pli;
+
+  /* <sub_input_plist>.syn = new InputPlistNode(new LeafNode(ID, ID.entry), <dataType>.syn, <sub_input_plist>1.syn) */
+  curr_node->syn.node.inp_pli = inp_pli;
+  curr_node->syn.type = INPUT_PLIST_NODE;
+}
+
+
+void case_13(struct treeNode *curr_node) {
+  /* <sub_input_plist> := EPSILON */
+
+  /* <sub_input_plist>.syn = NULL */
+  curr_node->syn.node.inp_pli = NULL;
+  curr_node->syn.type = INPUT_PLIST_NODE;
+}
+
+
+void case_14(struct treeNode *curr_node) {
+  /* <output_plist> := ID COLON <type> <sub_output_plist> */
+  struct treeNode *child_node = curr_node->child;
+  traverseChildren(curr_node);
+
+  struct OutputPlistNode *out_pli = (struct OutputPlistNode *) malloc(sizeof(struct OutputPlistNode));
+  out_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
+  child_node = nextNonTerminalNode(child_node);
+  out_pli->ptr2 = child_node->syn.node.dtu;
+  child_node = nextNonTerminalNode(child_node);
+  out_pli->ptr3 = child_node->syn.node.out_pli;
+   
+  /* <output_plist>.syn = new OutputPlistNode(new LeafNode(ID, ID.entry), <type>.syn, <sub_output_plist>.syn) */
+  curr_node->syn.node.out_pli = out_pli;
+  curr_node->syn.type = OUTPUT_PLIST_NODE;
+}
+
+
+void case_15(struct treeNode *curr_node) {
+  /* <sub_output_plist> := COMMA ID COLON <dataType> <sub_output_plist> */
+  struct treeNode *child_node = curr_node->child;
+  traverseChildren(curr_node);
+  
+  struct OutputPlistNode *out_pli = (struct OutputPlistNode *) malloc(sizeof(struct OutputPlistNode));
+  out_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
+  child_node = nextNonTerminalNode(child_node);
+  out_pli->ptr2 = child_node->syn.node.dtu;
+  child_node = nextNonTerminalNode(child_node);
+  out_pli->ptr3 = child_node->syn.node.out_pli;
+
+  /* <sub_output_plist>.syn = new OutputPlistNode(new LeafNode(ID, ID.entry), <dataType>.syn, <sub_output_plist>1.syn) */
+  curr_node->syn.node.out_pli = out_pli;
+  curr_node->syn.type = OUTPUT_PLIST_NODE;
+}
+
+
+void case_16(struct treeNode *curr_node) {
+  /* <sub_out_plist> := EPSILON */
+
+  /* <sub_output_plist>.syn = NULL */
+  curr_node->syn.node.out_pli = NULL;
+  curr_node->syn.type = OUTPUT_PLIST_NODE;
+}
+
+
+void case_17(struct treeNode *curr_node) {
+  /* <dataType> := INTEGER */
+
+  /* <dataType>.syn = new LeafNode(TYPE, “INT”) */
+  curr_node->syn.node.dtu = (union DataTypeUnion *)malloc(sizeof(union DataTypeUnion));
+  curr_node->syn.node.dtu->leaf_node = newLeafNode(NUM, &(curr_node->child->symbol.terminal.lexeme.num));
+}
+
+
+void case_18(struct treeNode *curr_node) {
+  /* <dataType> := REAL */
+
+  /* <dataType>.syn = new LeafNode(TYPE, “REAL”) */
+  curr_node->syn.node.dtu = (union DataTypeUnion *)malloc(sizeof(union DataTypeUnion));
+  curr_node->syn.node.dtu->leaf_node = newLeafNode(RNUM, &(curr_node->child->symbol.terminal.lexeme.rnum));
+}
+
+
+void case_19(struct treeNode *curr_node) {
+  /* <dataType> := BOOLEAN */
+
+  /* <dataType>.syn = new LeafNode(TYPE, “BOOL”) */
+  curr_node->syn.node.dtu = (union DataTypeUnion *)malloc(sizeof(union DataTypeUnion));
+  curr_node->syn.node.dtu->leaf_node = newLeafNode(BOOLEAN_, &(curr_node->child->symbol.terminal.lexeme.boolean));
+}
+
+
+void case_20(struct treeNode *curr_node) {
+  /* <dataType> := ARRAY SQBO <dynamic_range> SQBC OF <type> */ 
+  /* <dataType>.syn = new ArrayTypeNode(<type>.syn, <dynamic_range>.syn) */
+}
+
+
+/* BEGIN : Utility Functions */
+void traverseChildren(struct treeNode *curr_node) {
+  while(curr_node != NULL) {
+    traverseParseTree(curr_node);
+    curr_node = curr_node->next;
+  }
+}
+
+struct treeNode *nextNonTerminalNode(struct treeNode *curr_node) {
+  if (curr_node == NULL)
+    return NULL;
+
+  curr_node = curr_node->next;
+  while(curr_node != NULL) {
+    if (curr_node->flag == NON_TERMINAL) {
+      return curr_node;
+    }
+    curr_node = curr_node->next;
+  }
+
+  return NULL;
+}
+
+struct LeafNode *newLeafNode(int type, void *data) {
+    int datalen = 0;
+    struct LeafNode *new_node = (struct LeafNode *) malloc(sizeof(struct LeafNode));
+    new_node->type = type;
+    switch (new_node->type) {
+        case (BOOLEAN_):
+            memcpy(&(new_node->value.boolean), data, sizeof(bool));
+            break;
+        case (NUM):
+            memcpy(&(new_node->value.num), data, sizeof(int));
+            break;
+        case (RNUM):
+            memcpy(&(new_node->value.rnum), data, sizeof(float));
+            break;
+        case (IDENTIFIER):
+            datalen = strlen(data);
+            new_node->value.entry = malloc(datalen + 1);  /* +1 for the '\0' */
+            strcpy(new_node->value.entry, (char *)data);
+            break;
+        default:
+            free(new_node);
+            die("Invalid node type.\n");
+    }
+    return new_node;
+}
+/* END : Utility Functions */
+
+void createAST() {
+  traverseParseTree(PT.head);
 }
 
 

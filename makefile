@@ -2,11 +2,11 @@ CC = gcc
 CFLAGS = -Wall -g
 OBJ_CFLAGS = $(CFLAGS) -c
 
-test: build-test
-	build/tests
+# test: build-test
+# 	build/tests
 
-memtest: build-test
-	valgrind build/tests
+# memtest: build-test
+# 	valgrind build/tests
 
 driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o
 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver

@@ -75,6 +75,7 @@ union ASTNodesUnion {
   struct ForIterativeStmtNode *for_ite_stm;
   struct WhileIterativeStmtNode *whi_ite_stm;
   struct RangeNode *ran;
+  union DataTypeUnion *dtu;
 };
 
 union LeafNodeUnion {
@@ -115,7 +116,8 @@ enum ASTNodesEnum {
   /* 25 */ CASE_STMT_NODE,
   /* 26 */ FOR_ITERATIVE_STMT_NODE,
   /* 27 */ WHILE_ITERATIVE_STMT_NODE,
-  /* 28 */ RANGE_NODE
+  /* 28 */ RANGE_NODE,
+  /* 29 */ DATATYPE_UNION
 };
 
 enum factorEnum {
@@ -150,9 +152,9 @@ struct ModuleNode {
 };
 
 struct InputPlistNode {
-  union DataTypeUnion *ptr1;
+  struct LeafNode *ptr1;
+  union DataTypeUnion *ptr2;
   enum ASTNodesEnum type;
-  struct LeafNode *ptr2;
   struct InputPlistNode *ptr3;
 };
 

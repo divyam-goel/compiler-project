@@ -28,13 +28,13 @@ Semantic Rules for AST
 10. <ret> := EPSILON
    1. <ret>.syn = NULL
 11. <input_plist> := ID COLON <dataType> <sub_input_plist>
-   1. <input_plist>.syn = new InputPlistNode(<dataType>.syn, new LeafNode(ID, ID.entry), <sub_input_plist>.syn)
+   1. <input_plist>.syn = new InputPlistNode(new LeafNode(ID, ID.entry), <dataType>.syn, <sub_input_plist>.syn)
 12. <sub_input_plist> := COMMA ID COLON <dataType> <sub_input_plist>1
-   1. <sub_input_plist>.syn = new InputPlistNode(<dataType>.syn, new LeafNode(ID, ID.entry), <sub_input_plist>1.syn)
+   1. <sub_input_plist>.syn = new InputPlistNode(new LeafNode(ID, ID.entry), <dataType>.syn, <sub_input_plist>1.syn)
 13. <sub_input_plist> := EPSILON
    1. <sub_input_plist>.syn = NULL
 14. <output_plist> := ID COLON <type> <sub_output_plist>
-   1. <output_plist>.syn = new OutputPlistNode(<type>.syn, new LeafNode(ID, ID.entry), <sub_output_plist>.syn)
+   1. <output_plist>.syn = new OutputPlistNode(new LeafNode(ID, ID.entry), <type>.syn, <sub_output_plist>.syn)
 15. <sub_output_plist> := COMMA ID COLON <type> <sub_output_plist>1
    1. <sub_output_plist>.syn = new OutputPlistNode(<type>.syn, new LeafNode(ID, ID.entry), <sub_output_plist>1.syn)
 16. <sub_output_plist> := EPSILON
