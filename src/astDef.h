@@ -77,6 +77,7 @@ enum ASTNodesEnum {
   /* 26 */ FOR_ITERATIVE_STMT_NODE,
   /* 27 */ WHILE_ITERATIVE_STMT_NODE,
   /* 28 */ RANGE_NODE,
+  /* 29 */ NULL_NODE                  
 };
 /* ----- END ENUMS ----- */
 
@@ -183,25 +184,26 @@ struct UNode {
 
 struct N7Node {
   struct Attribute *ptr1;
-  struct N7Node *ptr2;
+  enum terminal logicalOp;
+  struct Attribute *ptr2;
 };
 
 struct N8Node {
-    struct ArithmeticExprNode *ptr1; /* The inherited attribute. */
-    enum terminal relationalOp;
-    struct Attribute *ptr2;
+  struct Attribute *ptr1; /* The inherited attribute. */
+  enum terminal relationalOp;
+  struct Attribute *ptr2;
 };
 
 struct ArithmeticExprNode {
-    struct ArithmeticExprNode *ptr1; /* Sub Arithmetic Expression */
+    struct Attribute *ptr1; /* Sub Arithmetic Expression */
     enum terminal op;
     struct Attribute *ptr2; /* Term */
 };
 
 struct TermNode {
-    struct TermNode *ptr1; /* Subterm */
-    enum terminal op;
-    struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
+  struct Attribute *ptr1; /* Subterm */
+  enum terminal op;
+  struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
 };
 
 struct DeclareStmtNode {
@@ -263,6 +265,8 @@ struct treeNode {
 	struct treeNode *child;
 	struct treeNode *next;
   struct Attribute syn;
+  struct Attribute inh;
+  enum terminal val;
 };
 
 struct parseTree {
