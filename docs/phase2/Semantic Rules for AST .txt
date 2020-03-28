@@ -83,7 +83,7 @@ Semantic Rules for AST
    1. <extended_var>.syn = <var>.syn
 38. <extended_var> := <boolConstt>
    1. <extended_var>.syn = <boolConstt>.syn
-39. <var> := ID <        d>
+39. <var> := ID <whichId>
    1. IF (<whichId>.syn == NULL) <var>.syn = new LeafNode(ID, ID.entry)
    ELSE <var>.syn = new ArrayNode(new LeafNode(ID, ID.entry), <whichId>.syn)
 40. <var> := NUM

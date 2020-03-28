@@ -20,8 +20,8 @@ union ASTNodesUnion {
   struct InputNode *inp;
   struct PrintNode *pri;
   struct ArrayNode *arr;
-  struct AssignStmtNode *ass_stm;
-  struct LvalueIdNode *lva_id;
+  struct AssignStmtNode *agn_stm;
+  struct LvalueIDNode *lva_id;
   struct LvalueARRNode *lva_arr;
   struct ModuleReuseStmtNode *mod_reu_stm;
   struct IdListNode *id_lis;
@@ -207,8 +207,8 @@ struct TermNode {
 };
 
 struct DeclareStmtNode {
-    struct Attribute *ptr1;
-    struct IdListNode *ptr2;
+    struct IdListNode *ptr1;
+    struct Attribute *ptr2;
 };
 
 struct ConditionalStmtNode {
@@ -230,8 +230,7 @@ struct ForIterativeStmtNode {
 };
 
 struct WhileIterativeStmtNode {
-    struct N7Node *ptr1_0;
-    struct AnyTerm *ptr1_1;  /* If N7Node* == NULL then we use this. */
+    struct Attribute *ptr1;
     struct StatementNode *ptr2;
 };
 
