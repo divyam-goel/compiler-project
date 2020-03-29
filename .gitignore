@@ -8,4 +8,4 @@ test_result_*
 *.out
 src/.*
 *.gdb*
-.vscode/
+.vscode/*
