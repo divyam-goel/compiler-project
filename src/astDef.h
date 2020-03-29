@@ -39,10 +39,10 @@ union ASTNodesUnion {
 };
 
 union LeafNodeUnion {
-    int num;
-    float rnum;
-    bool boolean;
-    void *entry;  // TEMP: Just until we define SymbolTableNode.
+  int num;
+  float rnum;
+  bool boolean;
+  void *entry;  // TEMP: Just until we define SymbolTableNode.
 };
 /* ----- END UNIONS ----- */
 
@@ -119,18 +119,18 @@ struct OutputPlistNode {
 };
 
 struct LeafNode {
-    enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
-    union LeafNodeUnion value;
+  enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
+  union LeafNodeUnion value;
 };
 
 struct ArrayTypeNode {
-    struct LeafNode *ptr1;
-    struct DynamicRangeNode *ptr2;
+  struct LeafNode *ptr1;
+  struct DynamicRangeNode *ptr2;
 };
 
 struct DynamicRangeNode {
-    struct LeafNode *ptr1;  /* Lower bound */
-    struct LeafNode *ptr2; /* Upper bound */
+  struct LeafNode *ptr1;  /* Lower bound */
+  struct LeafNode *ptr2; /* Upper bound */
 };
 
 struct StatementNode {
@@ -173,8 +173,8 @@ struct ModuleReuseStmtNode {
 };
 
 struct IdListNode {
-    struct LeafNode *ptr1;
-    struct IdListNode *ptr2;
+  struct LeafNode *ptr1;
+  struct IdListNode *ptr2;
 };
 
 struct UNode {
@@ -195,9 +195,9 @@ struct N8Node {
 };
 
 struct ArithmeticExprNode {
-    struct Attribute *ptr1; /* Sub Arithmetic Expression */
-    enum terminal op;
-    struct Attribute *ptr2; /* Term */
+  struct Attribute *ptr1; /* Sub Arithmetic Expression */
+  enum terminal op;
+  struct Attribute *ptr2; /* Term */
 };
 
 struct TermNode {
@@ -207,36 +207,36 @@ struct TermNode {
 };
 
 struct DeclareStmtNode {
-    struct IdListNode *ptr1;
-    struct Attribute *ptr2;
+  struct IdListNode *ptr1;
+  struct Attribute *ptr2;
 };
 
 struct ConditionalStmtNode {
-    struct LeafNode *ptr1;
-    struct CaseStmtNode *ptr2;
-    struct StatementNode *ptr3;
+  struct LeafNode *ptr1;
+  struct CaseStmtNode *ptr2;
+  struct StatementNode *ptr3;
 };
 
 struct CaseStmtNode {
-    struct LeafNode *ptr1;
-    struct StatementNode *ptr2;
-    struct CaseStmtNode *ptr3;
+  struct LeafNode *ptr1;
+  struct StatementNode *ptr2;
+  struct CaseStmtNode *ptr3;
 };
 
 struct ForIterativeStmtNode {
-    struct LeafNode *ptr1;
-    struct RangeNode *ptr2;
-    struct StatementNode *ptr3;
+  struct LeafNode *ptr1;
+  struct RangeNode *ptr2;
+  struct StatementNode *ptr3;
 };
 
 struct WhileIterativeStmtNode {
-    struct Attribute *ptr1;
-    struct StatementNode *ptr2;
+  struct Attribute *ptr1;
+  struct StatementNode *ptr2;
 };
 
 struct RangeNode {
-    struct LeafNode *ptr1;  /* Lower bound */
-    struct LeafNode *ptr2; /* Upper bound */
+  struct LeafNode *ptr1;  /* Lower bound */
+  struct LeafNode *ptr2; /* Upper bound */
 };
 
 struct Attribute {
