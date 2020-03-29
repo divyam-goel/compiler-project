@@ -141,7 +141,7 @@ Semantic Rules for AST
    2. IF (<N7>.syn == NULL) <expression>.syn = <AnyTerm>.syn ELSE <expression>.syn = <N7>.syn
 66. <N7> := <logicalOp> <AnyTerm> <N7>1
    1. <N7>1.inh = <AnyTerm>.syn
-   2. IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn)         ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn)
+   2. IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn) ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn)
 67. <N7> := EPSILON
    1. <N7>.syn = NULL
 68. <AnyTerm> := <arithmeticExpr> <N8>

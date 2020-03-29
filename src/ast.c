@@ -255,50 +255,185 @@ void traverseParseTree(struct treeNode *curr_node) {
       break;
 
     case 60: // <new_expression> := <expression>
+      case_60(curr_node);
+      break;
+
     case 61: // <u> := PLUS <sub_u>
+      case_61(curr_node);
+      break;
+
     case 62: // <u> := MINUS <sub_u>
+      case_62(curr_node);
+      break;
+
     case 63: // <sub_u> := BO <arithmeticExpr> BC
+      case_63(curr_node);
+      break;
+
     case 64: // <sub_u> := <var>
+      case_64(curr_node);
+      break;
+
     case 65: // <expression> := <AnyTerm> <N7>
+      case_65(curr_node);
+      break;
+
     case 66: // <N7> := <logicalOp> <AnyTerm> <N7>
+      case_66(curr_node);
+      break;
+
     case 67: // <N7> := EPSILON
+      case_67(curr_node);
+      break;
+
     case 68: // <AnyTerm> := <arithmeticExpr> <N8>
+      case_68(curr_node);
+      break;
+
     case 69: // <AnyTerm> := <boolConstt>
+      case_69(curr_node);
+      break;
+
     case 70: // <N8> := <relationalOp> <arithmeticExpr>
+      case_70(curr_node);
+      break;
+
     case 71: // <N8> := EPSILON
+      case_71(curr_node);
+      break;
+
     case 72: // <arithmeticExpr> := <term> <sub_arithmeticExpr>
+      case_72(curr_node);
+      break;
+
     case 73: // <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>
+      case_73(curr_node);
+      break;
+
     case 74: // <sub_arithmeticExpr> := EPSILON
+      case_74(curr_node);
+      break;
+
     case 75: // <term> :=  <factor> <sub_term>
+      case_75(curr_node);
+      break;
+
     case 76: // <sub_term> := <op2> <factor> <sub_term>
+      case_76(curr_node);
+      break;
+
     case 77: // <sub_term> := EPSILON
+      case_77(curr_node);
+      break;
+
     case 78: // <factor> := BO <expression> BC
+      case_78(curr_node);
+      break;
+
     case 79: // <factor> := <var>
+      case_79(curr_node);
+      break;
+
     case 80: // <op1> := PLUS
+      case_80(curr_node);
+      break;
+
     case 81: // <op1> := MINUS
+      case_81(curr_node);
+      break;
+
     case 82: // <op2> := MUL
+      case_82(curr_node);
+      break;
+
     case 83: // <op2> := DIV
+      case_83(curr_node);
+      break;
+
     case 84: // <logicalOp> := AND
+      case_84(curr_node);
+      break;
+
     case 85: // <logicalOp> := OR
+      case_85(curr_node);
+      break;
+
     case 86: // <relationalOp> := LT
+      case_86(curr_node);
+      break;
+
     case 87: // <relationalOp> := LE
+      case_87(curr_node);
+      break;
+
     case 88: // <relationalOp> := GT
+      case_88(curr_node);
+      break;
+
     case 89: // <relationalOp> := GE
+      case_89(curr_node);
+      break;
+
     case 90: // <relationalOp> := EQ
+      case_90(curr_node);
+      break;
+
     case 91: // <relationalOp> := NE
+      case_91(curr_node);
+      break;
+
     case 92: // <declareStmt> := DECLARE <idList> COLON <dataType> SEMICOL
+      case_92(curr_node);
+      break;
+
     case 93: // <conditionalStmt> := SWITCH BO ID BC START <caseStmt> <default> END
+      case_93(curr_node);
+      break;
+
     case 94: // <caseStmt> := CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>
+      case_94(curr_node);
+      break;
+
     case 95: // <nullableCaseStmt> := CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>1
+      case_95(curr_node);
+      break;
+
     case 96: // <nullableCaseStmt> := EPSILON
+      case_96(curr_node);
+      break;
+
     case 97: // <value> := NUM
+      case_97(curr_node);
+      break;
+
     case 98: // <value> := TRUE
+      case_98(curr_node);
+      break;
+
     case 99: // <value> := FALSE
+      case_99(curr_node);
+      break;
+
     case 100: // <default> := DEFAULT COLON <statements> BREAK SEMICOL
+      case_100(curr_node);
+      break;
+
     case 101: // <default> :=  EPSILON
+      case_101(curr_node);
+      break;
+
     case 102: // <iterativeStmt> := FOR BO ID IN <range> BC START <statements> END
+      case_102(curr_node);
+      break;
+
     case 103: // <iterativeStmt> := WHILE BO <expression> BC START <statements> END
+      case_103(curr_node);
+      break;
+
     case 104: // <range> := NUM RANGEOP NUM
+      case_104(curr_node);
+      break;
+
     default:
       break;  // TEMP
   }
@@ -1299,6 +1434,91 @@ void case_79(struct treeNode *curr_node){
   traverseChildren(child_node);
   /* <factor>.syn  = <var>.syn */
   curr_node->syn = child_node->syn;
+}
+
+
+void case_80(struct treeNode *curr_node) {
+  /* <op1> := PLUS */
+  /* <op1>.val = “PLUS” */
+  curr_node->val = PLUS;
+}
+
+
+void case_81(struct treeNode *curr_node) {
+  /* <op1> := MINUS */
+  /* <op1>.val = “MINUS” */
+  curr_node->val = MINUS;
+}
+
+
+void case_82(struct treeNode *curr_node) {
+  /* <op1> := MUL */
+  /* <op1>.val = “MUL” */
+  curr_node->val = MUL;
+}
+
+
+
+void case_83(struct treeNode *curr_node) {
+  /* <op1> := DIV */
+  /* <op1>.val = “DIV” */
+  curr_node->val = DIV;
+}
+
+
+void case_84(struct treeNode *curr_node) {
+  /* <logicalOp> := AND */
+  /* <logicalOp>.val = “AND” */
+  curr_node->val = AND;
+}
+
+
+void case_85(struct treeNode *curr_node) {
+  /* <logicalOp> := OR */
+  /* <logicalOp>.val = “OR” */
+  curr_node->val = OR;
+}
+
+
+void case_86(struct treeNode *curr_node) {
+  /* <relationalOp> := LT */
+  /* <relationalOp>.val = “LT” */
+  curr_node->val = LT;
+}
+
+
+void case_87(struct treeNode *curr_node) {
+  /* <relationalOp> := LE */
+  /* <relationalOp>.val = “LE” */
+  curr_node->val = LE;
+}
+
+
+void case_88(struct treeNode *curr_node) {
+  /* <relationalOp> := GT */
+  /* <relationalOp>.val = “GT” */
+  curr_node->val = GT;
+}
+
+
+void case_89(struct treeNode *curr_node) {
+  /* <relatio/nalOp> := GE */
+  /* <relationalOp>.val = “GE” */
+  curr_node->val = GE;
+}
+
+
+void case_90(struct treeNode *curr_node) {
+  /* <relationalOp> := EQ */
+  /* <relationalOp>.val = “EQ” */
+  curr_node->val = EQ;
+}
+
+
+void case_91(struct treeNode *curr_node) {
+  /* <relationalOp> := NE */
+  /* <relationalOp>.val = “NE” */
+  curr_node->val = NE;
 }
 
 
