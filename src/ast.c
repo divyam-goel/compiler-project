@@ -666,27 +666,31 @@ void case_16(struct treeNode *curr_node) {
   curr_node->syn.type = OUTPUT_PLIST_NODE;
 }
 
-// TODO:
+
 void case_17(struct treeNode *curr_node) {
   /* <dataType> := INTEGER */
 
   /* <dataType>.syn = new LeafNode(TYPE, “INT”) */
+  curr_node->syn.node.lea = newLeafNode(INTEGER, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
-// TODO:
 void case_18(struct treeNode *curr_node) {
   /* <dataType> := REAL */
 
   /* <dataType>.syn = new LeafNode(TYPE, “REAL”) */
+  curr_node->syn.node.lea = newLeafNode(REAL, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
-// TODO:
 void case_19(struct treeNode *curr_node) {
   /* <dataType> := BOOLEAN */
 
   /* <dataType>.syn = new LeafNode(TYPE, “BOOL”) */
+  curr_node->syn.node.lea = newLeafNode(BOOLEAN_, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
@@ -722,27 +726,30 @@ void case_21(struct treeNode *curr_node) {
 }
 
 
-// TODO:
 void case_22(struct treeNode *curr_node) {
   /* <type> := INTEGER */
   
   /* <type>.syn = new LeafNode(TYPE, “INT”) */
+  curr_node->syn.node.lea = newLeafNode(INTEGER, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
-// TODO:
 void case_23(struct treeNode *curr_node) {
   /* <type> := REAL */
 
   /* <type>.syn = new LeafNode(TYPE, “REAL”) */
+  curr_node->syn.node.lea = newLeafNode(REAL, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
-// TODO:
 void case_24(struct treeNode *curr_node) {
   /* <type> := BOOLEAN */
 
   /* <type>.syn = new LeafNode(TYPE, “BOOL”) */
+  curr_node->syn.node.lea = newLeafNode(BOOLEAN_, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 void case_25(struct treeNode *curr_node) {
@@ -861,19 +868,21 @@ void case_34(struct treeNode *curr_node) {
 }
 
 
-// TODO: This suffers from a similar issue as with dataType and type.
 void case_35(struct treeNode *curr_node) {
   /* <boolConstt> := TRUE */
 
   /* <boolConstt>.syn = new LeafNode(BOOL, “TRUE”) */
+  curr_node->syn.node.lea = newLeafNode(TRUE_, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
-// TODO: This suffers from a similar issue as with dataType and type.
 void case_36(struct treeNode *curr_node) {
   /* <boolConstt> := FALSE */
 
   /* <boolConstt>.syn = new LeafNode(BOOL, “FALSE”) */
+  curr_node->syn.node.lea = newLeafNode(FALSE_, NULL);
+  curr_node->syn.type = LEAF_NODE;
 }
 
 
@@ -1605,7 +1614,7 @@ void case_97(struct treeNode *curr_node) {
 
 
 void case_98(struct treeNode *curr_node) {
-  /* <value> := NUM */
+  /* <value> := TRUE */
 
   /* <value> = new LeafNode(BOOL, "TRUE") */
   bool val = true;
@@ -1615,7 +1624,7 @@ void case_98(struct treeNode *curr_node) {
 
 
 void case_99(struct treeNode *curr_node) {
-  /* <value> := NUM */
+  /* <value> := FALSE */
 
   /* <value> = new LeafNode(BOOL, "FALSE") */
   bool val = false;
@@ -1722,29 +1731,32 @@ struct treeNode *nextNonTerminalNode(struct treeNode *curr_node) {
 }
 
 struct LeafNode *newLeafNode(int type, void *data) {
-    int datalen = 0;
-    struct LeafNode *new_node = (struct LeafNode *) malloc(sizeof(struct LeafNode));
-    new_node->type = type;
-    switch (new_node->type) {
-        case (BOOLEAN_):
-            memcpy(&(new_node->value.boolean), data, sizeof(bool));
-            break;
-        case (NUM):
-            memcpy(&(new_node->value.num), data, sizeof(int));
-            break;
-        case (RNUM):
-            memcpy(&(new_node->value.rnum), data, sizeof(float));
-            break;
-        case (IDENTIFIER):
-            datalen = strlen(data);
-            new_node->value.entry = malloc(datalen + 1);  /* +1 for the '\0' */
-            strcpy(new_node->value.entry, (char *)data);
-            break;
-        default:
-            free(new_node);
-            die("Invalid node type.\n");
-    }
-    return new_node;
+  int datalen = 0;
+  struct LeafNode *new_node = (struct LeafNode *) malloc(sizeof(struct LeafNode));
+  new_node->type = type;
+  switch (new_node->type) {
+    case (NUM):
+      memcpy(&(new_node->value.num), data, sizeof(int));
+      break;
+    case (RNUM):
+      memcpy(&(new_node->value.rnum), data, sizeof(float));
+      break;
+    case (IDENTIFIER):
+      datalen = strlen(data);
+      new_node->value.entry = malloc(datalen + 1);  /* +1 for the '\0' */
+      strcpy(new_node->value.entry, (char *)data);
+      break;
+    case (INTEGER):
+    case (REAL):
+    case (BOOLEAN_):
+    case (TRUE_):
+    case (FALSE_):
+      break;
+    default:
+      free(new_node);
+      die("Invalid node type.\n");
+  }
+  return new_node;
 }
 /* END : Utility Functions */
 
