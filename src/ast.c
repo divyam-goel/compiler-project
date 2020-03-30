@@ -391,11 +391,11 @@ void traverseParseTree(struct treeNode *curr_node) {
       break;
 
     case 94: // <caseStmt> := CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>
-      case_94(curr_node);
+      case_94_95(curr_node);
       break;
 
     case 95: // <nullableCaseStmt> := CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt>1
-      case_95(curr_node);
+      case_94_95(curr_node);
       break;
 
     case 96: // <nullableCaseStmt> := EPSILON
