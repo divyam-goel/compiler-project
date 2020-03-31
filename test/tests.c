@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "../src/lexer.h"
 #include "../src/parser.h"
+#include "../src/ast.h"
 #include "../src/data_structures/stack.h"
 
 void test_removeComments(){
@@ -182,17 +183,29 @@ void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     // printParseTree("test/test_result_parse_tree_output.txt");
 }
 
+void test_createAST(char *grammar_file, char *source_file) {
+    test_parseInputSourceCode(grammar_file, source_file);
+
+    printf("Creating AST ...\n");
+    createAST();
+    
+    printf("Printing AST ...\n");
+    printAST();
+}
+
 int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char source_file[] = "./test/fixtures/stage 1/t4.txt";
-    char source_file[] = "./test/fixtures/stage 1/t6(with_syntax_errors).txt";
+    // char source_file[] = "./test/fixtures/stage 1/t6(with_syntax_errors).txt";
+    char source_file[] = "./test/basic_tests/test_1.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
-    test_parseInputSourceCode(grammar_file, source_file);
+    // test_parseInputSourceCode(grammar_file, source_file);
+    test_createAST(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

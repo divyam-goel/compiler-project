@@ -4,18 +4,29 @@ extern struct parseTree PT;
 struct ProgramNode AST;
 
 /* BEGIN : Function Declarations */
+void traverseParseTree(struct treeNode *curr_node);
 void traverseChildren(struct treeNode *curr_node);
 struct treeNode *nextNonTerminalNode(struct treeNode *curr_node);
 struct LeafNode *newLeafNode(int type, void *data);
 /* END : Function Declarations */
 
+void createAST() {
+  traverseParseTree(PT.head);
+  printf("Finished AST creation ...\n");
+  fflush(stdout);
+  AST.ptr1 = PT.head->syn.node.pro->ptr1;
+  AST.ptr2 = PT.head->syn.node.pro->ptr2;
+  AST.ptr3 = PT.head->syn.node.pro->ptr3;
+  AST.ptr4 = PT.head->syn.node.pro->ptr4;
+}
 
 void traverseParseTree(struct treeNode *curr_node) {
   if (curr_node->flag == TERMINAL) {
     return;
   }
 
-  int rule_num = curr_node->rule_number;
+  int rule_num = curr_node->rule_number + 1;
+  printf("CASE: %d\n", rule_num);
   switch(rule_num) {
 
     case 1: // <program> := <moduleDeclarations> <otherModules> <driverModule> <otherModules>
@@ -1713,6 +1724,7 @@ void traverseChildren(struct treeNode *curr_node)
     traverseParseTree(curr_node);
     curr_node = curr_node->next;
   }
+  printf("Finished traversing children ...\n");
 }
 
 struct treeNode *nextNonTerminalNode(struct treeNode *curr_node) {
@@ -1760,6 +1772,27 @@ struct LeafNode *newLeafNode(int type, void *data) {
 }
 /* END : Utility Functions */
 
-void createAST() {
-  traverseParseTree(PT.head);
+void printAttribute(struct Attribute *attr) {
+  if (attr->type == INPUT_NODE) printf("input stmt\n");
+  else if (attr->type == PRINT_NODE) printf("print stmt\n");
+  else if (attr->type == ASSIGN_STMT_NODE) printf("assign stmt\n");
+  else if (attr->type == MODULE_REUSE_STMT_NODE) printf("module resuse\n");
+  else if (attr->type == DECLARE_STMT_NODE) printf("declare stmt\n");
+  else if (attr->type == CONDITIONAL_STMT_NODE) printf("cond stmt\n");
+  else if (attr->type == FOR_ITERATIVE_STMT_NODE) printf("for stmt\n");
+  else if (attr->type == WHILE_ITERATIVE_STMT_NODE) printf("while stmt\n");
+}
+
+void printAST() {
+  struct ProgramNode *pro = &AST;
+  if (pro->ptr1 != NULL) printf("Mod Dec is not NULL\n");
+  if (pro->ptr2 != NULL) printf("Oth Mod is not NULL\n");
+  if (pro->ptr3 != NULL) printf("Dri Mod is not NULL\n");
+  if (pro->ptr4 != NULL) printf("Oth Mod is not NULL\n");
+
+  struct StatementNode *stm = pro->ptr3;
+  while (stm != NULL) {
+    printAttribute(stm->ptr1);
+    stm = stm->ptr2;
+  }
 }

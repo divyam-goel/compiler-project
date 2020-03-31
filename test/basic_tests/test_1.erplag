@@ -1,0 +1,53 @@
+declare module function;
+
+** **
+<<module sub_routine>>
+takes input [a:real];
+start
+end
+
+<<<driver program>>>
+start
+    ** DECLARE STMT **
+    declare x : integer;
+    
+    ** INPUT STMT **
+    get_value(x);
+    
+    ** PRINT STMT **
+    print(x);
+    
+    ** ASSIGN STMT **
+    x := x + 5;
+
+    ** CONDITIONAL STMT **
+    switch(x)
+    start
+        case 5:
+            print(x);
+            break;
+        default:
+            get_value(x);
+            break;
+    end
+
+    ** FOR ITERATIVE STMT **
+    for(x in 1..5)
+    start
+        print(x);
+    end
+
+    ** WHILE ITERATIVE STMT **
+    while(TRUE)
+    start
+        print(x);
+    end
+end
+
+**
+<<module function>>
+takes input [a:integer, b:integer];
+returns [c:integer];
+start
+end
+**
