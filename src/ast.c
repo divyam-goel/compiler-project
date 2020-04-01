@@ -1014,6 +1014,7 @@ void case_46(struct treeNode *curr_node) {
   struct AssignStmtNode *agn_stm = (struct AssignStmtNode *) malloc(sizeof(struct AssignStmtNode));
   agn_stm->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = child_node->next;
+  traverseChildren(child_node);
   agn_stm->ptr2 = newAttribute(child_node->syn);
 
   curr_node->syn.node.agn_stm = agn_stm;
@@ -1044,11 +1045,13 @@ void case_48(struct treeNode *curr_node) {
 void case_49(struct treeNode *curr_node) {
   /* <lvalueIDStmt> := ASSIGNOP <new_expression> SEMICOL */
   struct treeNode *child_node = curr_node->child;
+  child_node = nextNonTerminalNode(child_node);
   traverseChildren(child_node);
 
   /* <lvalueIDStmt>.syn = new LvalueIDNode(<new_expression>.syn) */
   struct LvalueIDNode *lva_id = (struct LvalueIDNode *) malloc(sizeof(struct LvalueIDNode));
   lva_id->ptr1 = newAttribute(child_node->syn);
+  printf("\n3 -------- %d ----------- 3\n", child_node->syn.type);
 
   curr_node->syn.node.lva_id = lva_id;
   curr_node->syn.type = LVALUE_ID_NODE;
@@ -1188,6 +1191,7 @@ void case_60(struct treeNode *curr_node) {
 
   /* <new_expression>.syn = <expression>.syn */
   curr_node->syn = child_node->syn;
+  printf("\n2 -------- %d ----------- 2\n", curr_node->syn.type);
 }
 
 
@@ -1246,12 +1250,12 @@ void case_64(struct treeNode *curr_node) {
 void case_65(struct treeNode *curr_node) {
   /* <expression> := <AnyTerm> <N7>       --------> Assuming we have inh attribute- type Attribute*/
   struct treeNode *child_node = curr_node->child;
-  traverseParseTree(child_node);
+  traverseChildren(child_node);
 
   /* 1. <N7>.inh = <AnyTerm>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
-  traverseParseTree(next_node);
+  traverseChildren(next_node);
 
   /* 2. IF (<N7>.syn == NULL) <expression>.syn = <AnyTerm>.syn ELSE <expression>.syn = <N7>.syn */
   if(next_node->syn.type == NULL_NODE) {  // checks for NULL using type attr.
@@ -1260,28 +1264,31 @@ void case_65(struct treeNode *curr_node) {
   else {
     curr_node->syn = next_node->syn;
   }
+  printf("\n-------- %d -----------\n", curr_node->syn.type);
 }
 
 
 void case_66(struct treeNode *curr_node) {
   /* <N7> := <logicalOp> <AnyTerm> <N7>1 */
   struct treeNode *child_node = curr_node->child;
+  traverseChildren(child_node);
+  enum terminal val = child_node->val;
   child_node = nextNonTerminalNode(child_node);
-  traverseParseTree(child_node);
+  traverseChildren(child_node);
 
   /* 1. <N7>1.inh = <AnyTerm>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
-  traverseParseTree(next_node);
+  traverseChildren(next_node);
 
   /* 2. */  
   /* IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn) */
   /* ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn) */
   struct N7Node *n7_node = (struct N7Node *)malloc(sizeof(struct N7Node));
   n7_node->ptr1 = newAttribute(curr_node->inh);
-  n7_node->logicalOp = child_node->val;
+  n7_node->logicalOp = val;
   if(next_node->syn.type == NULL_NODE) {
-    n7_node->ptr2 = newAttribute(next_node->syn);
+    n7_node->ptr2 = newAttribute(child_node->syn);
   }
   else {
     n7_node->ptr2 = newAttribute(next_node->syn);
@@ -1304,12 +1311,12 @@ void case_67(struct treeNode *curr_node) {
 void case_68(struct treeNode *curr_node) {
   /* <AnyTerm> := <arithmeticExpr> <N8> */
   struct treeNode *child_node = curr_node->child;
-  traverseParseTree(child_node);
+  traverseChildren(child_node);
 
   /* 1. <N8>.inh = <arithmeticExpr>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
-  traverseParseTree(next_node);
+  traverseChildren(next_node);
 
   /* 2. */
   /* IF (<N8>.syn == NULL) <AnyTerm>.syn = <arithmeticExpr>.syn */
@@ -1343,6 +1350,7 @@ void case_70(struct treeNode *curr_node) {
   n8_node->ptr1 = newAttribute(curr_node->inh);
   n8_node->relationalOp = child_node->val;
   child_node = nextNonTerminalNode(child_node);
+  traverseChildren(child_node);
   n8_node->ptr2 = newAttribute(child_node->syn);
   
   curr_node->syn.node.n8 = n8_node;
@@ -1362,12 +1370,12 @@ void case_71(struct treeNode *curr_node) {
 void case_72(struct treeNode *curr_node){
   /* <arithmeticExpr> := <term> <sub_arithmeticExpr> */
   struct treeNode *child_node = curr_node->child;
-  traverseParseTree(child_node);
+  traverseChildren(child_node);
 
   /* 1. <sub_arithmeticExpr>.inh = <term>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
-  traverseParseTree(next_node);
+  traverseChildren(next_node);
 
   /* 2.
     IF (<sub_arithmeticExpr>.syn == NULL) <arithmeticExpr>.syn = <term>.syn 
@@ -1383,14 +1391,15 @@ void case_72(struct treeNode *curr_node){
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;
-  traverseParseTree(child_node);
-  child_node = nextNonTerminalNode(child_node);
+  traverseChildren(child_node);
+  // struct treeNode *next_node = nextNonTerminalNode(child_node);
 
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
   struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
   arithmetic_expr_node->ptr1 = newAttribute(curr_node->inh);
   arithmetic_expr_node->op = child_node->val;
   child_node = nextNonTerminalNode(child_node);
+  traverseChildren(child_node);
   arithmetic_expr_node->ptr2 = newAttribute(child_node->syn);
 
   curr_node->syn.node.ari_exp = arithmetic_expr_node;
@@ -1398,10 +1407,12 @@ void case_73(struct treeNode *curr_node){
 
   /* 2. <sub_arithmeticExpr>1.inh = <sub_arithmeticExpr>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
-  if (next_node != NULL) {
-    next_node->inh = curr_node->syn;
-    traverseParseTree(next_node);
-  }
+  next_node->inh = curr_node->syn;
+  traverseChildren(next_node);
+  // if (next_node != NULL) {
+  //   next_node->inh = curr_node->syn;
+  //   traverseChildren(next_node);
+  // }
 }
 
 
@@ -1417,12 +1428,12 @@ void case_74(struct treeNode *curr_node){
 void case_75(struct treeNode *curr_node){
   /* <term> :=  <factor> <sub_term> */
   struct treeNode *child_node = curr_node->child;
-  traverseParseTree(child_node);
+  traverseChildren(child_node);
 
   /* 1. <sub_term>.inh = <factor>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
-  traverseParseTree(next_node);
+  traverseChildren(next_node);
 
   /* 2.
     IF (<sub_term>.syn == NULL) <term>.syn = <factor>.syn
@@ -1439,15 +1450,16 @@ void case_75(struct treeNode *curr_node){
 void case_76(struct treeNode *curr_node){
   /* <sub_term> := <op2> <factor> <sub_term>1 */
   struct treeNode *child_node = curr_node->child;
-  child_node = nextNonTerminalNode(child_node);
-  traverseParseTree(child_node);
+  // child_node = nextNonTerminalNode(child_node);
+  traverseChildren(child_node);
 
   /* 1. <sub_term>.syn = new TermNode(<sub_term>.inh, <op2>.val, <factor>.syn) */
   struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
-  child_node = curr_node->child;
+  // child_node = curr_node->child;
   term_node->ptr1 = newAttribute(curr_node->inh);
   term_node->op = child_node->val;
   child_node = nextNonTerminalNode(child_node);
+  traverseChildren(child_node);
   term_node->ptr2 = newAttribute(child_node->syn);
   
   curr_node->syn.node.ter = term_node;
@@ -1456,6 +1468,7 @@ void case_76(struct treeNode *curr_node){
   /* 2. <sub_term>1.inh = <sub_term>.syn */
   child_node = nextNonTerminalNode(child_node);
   child_node->inh = curr_node->syn;
+  traverseChildren(child_node);
 }
 
 
@@ -1748,7 +1761,7 @@ void traverseChildren(struct treeNode *curr_node)
     traverseParseTree(curr_node);
     curr_node = curr_node->next;
   }
-  printf("Finished traversing children ...\n");
+  printf("Finished Traversing Children ...\n");
 }
 
 struct treeNode *nextNonTerminalNode(struct treeNode *curr_node) {
