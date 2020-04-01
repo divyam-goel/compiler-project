@@ -949,9 +949,6 @@ void case_40(struct treeNode *curr_node) {
   /* <var>.syn = new LeafNode(NUM, NUM.val) */
   curr_node->syn.node.lea = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.num));
   curr_node->syn.type = LEAF_NODE;
-  printf("DEBUG: ");
-  printLeaf(curr_node->syn.node.lea);
-  printf("\n");
 }
 
 
@@ -962,9 +959,6 @@ void case_41(struct treeNode *curr_node) {
   /* <var>.syn = new LeafNode(RNUM, RNUM.val) */
   curr_node->syn.node.lea = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.rnum));
   curr_node->syn.type = LEAF_NODE;
-  printf("DEBUG: ");
-  printLeaf(curr_node->syn.node.lea);
-  printf("\n");
 }
 
 
@@ -1103,11 +1097,13 @@ void case_53(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
-  /* <moduleReuseStmt>.syn = new ModuleReuseStmtNode(<optional>.syn, <idList>.syn) */
+  /* <moduleReuseStmt>.syn = new ModuleReuseStmtNode(<optional>.syn, new LeafNode(ID, ID.entry), <idList>.syn) */
   struct ModuleReuseStmtNode *mod_reu_stm = (struct ModuleReuseStmtNode *) malloc(sizeof(struct ModuleReuseStmtNode));
   mod_reu_stm->ptr1 = child_node->syn.node.id_lis;
+  child_node = child_node->next->next->next;
+  mod_reu_stm->ptr2 = newLeafNode(IDENTIFIER, &(child_node->symbol.terminal.lexeme.str));
   child_node = nextNonTerminalNode(child_node);
-  mod_reu_stm->ptr2 = child_node->syn.node.id_lis;
+  mod_reu_stm->ptr3 = child_node->syn.node.id_lis;
 
   curr_node->syn.type = MODULE_REUSE_STMT_NODE;
   curr_node->syn.node.mod_reu_stm = mod_reu_stm;
@@ -1435,9 +1431,6 @@ void case_75(struct treeNode *curr_node){
   else {
     curr_node->syn = next_node->syn;
   }
-  printf("DEBUG: ");
-  printLeaf(curr_node->syn.node.lea);
-  printf("\n");
 }
 
 
@@ -1490,10 +1483,6 @@ void case_79(struct treeNode *curr_node){
  
   /* <factor>.syn  = <var>.syn */
   curr_node->syn = child_node->syn;
-  printf("DEBUG: ");
-  printLeaf(curr_node->syn.node.lea);
-  printf("\n");
-
 }
 
 

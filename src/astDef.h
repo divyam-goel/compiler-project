@@ -168,7 +168,8 @@ struct LvalueARRNode {
 
 struct ModuleReuseStmtNode {
   struct IdListNode *ptr1;
-  struct IdListNode *ptr2;
+  struct LeafNode *ptr2;
+  struct IdListNode *ptr3;
 
 };
 

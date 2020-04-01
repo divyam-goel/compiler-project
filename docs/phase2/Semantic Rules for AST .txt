@@ -113,7 +113,7 @@ Semantic Rules for AST
 52.  <index> := ID
    1. <index>.syn = new LeafNode(ID, ID.entry)
 53. <moduleReuseStmt> := <optional> USE MODULE ID WITH PARAMETERS <idList> SEMICOL
-   1. <moduleReuseStmt>.syn = new ModuleReuseStmtNode(<optional>.syn, <idList>.syn)
+   1. <moduleReuseStmt>.syn = new ModuleReuseStmtNode(<optional>.syn, new LeafNode(ID, ID.entry), <idList>.syn)
 54. <optional> := SQBO <idList> SQBC ASSIGNOP 
    1. <optional>.syn = <idList>.syn
 55. <optional> :=  EPSILON
