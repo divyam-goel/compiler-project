@@ -1383,9 +1383,8 @@ void case_72(struct treeNode *curr_node){
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;
-  child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
-
+  child_node = nextNonTerminalNode(child_node);
 
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
   struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
@@ -1399,8 +1398,10 @@ void case_73(struct treeNode *curr_node){
 
   /* 2. <sub_arithmeticExpr>1.inh = <sub_arithmeticExpr>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
-  next_node->inh = curr_node->syn;
-  traverseParseTree(next_node);
+  if (next_node != NULL) {
+    next_node->inh = curr_node->syn;
+    traverseParseTree(next_node);
+  }
 }
 
 
