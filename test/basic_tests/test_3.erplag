@@ -1,0 +1,7 @@
+** A simple example without any <expression>s **
+
+<<<driver program>>>
+start
+    declare x: integer;
+    declare arr: array[1..5] of integer;
+end
