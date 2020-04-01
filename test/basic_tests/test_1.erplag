@@ -1,4 +1,4 @@
-declare module function;
+declare module function2;
 
 ** **
 <<module sub_routine>>
@@ -19,6 +19,9 @@ start
     
     ** ASSIGN STMT **
     x := x + 5;
+
+    ** MODULE REUSE STMT **
+    [x] := use module function2 with parameters x;
 
     ** CONDITIONAL STMT **
     switch(x)
@@ -44,10 +47,8 @@ start
     end
 end
 
-**
-<<module function>>
-takes input [a:integer, b:integer];
+<<module function2>>
+takes input [a:integer];
 returns [c:integer];
 start
 end
-**
