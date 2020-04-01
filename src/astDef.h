@@ -119,6 +119,7 @@ struct OutputPlistNode {
 };
 
 struct LeafNode {
+  bool nullData;
   enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
   union LeafNodeUnion value;
 };

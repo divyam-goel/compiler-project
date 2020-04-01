@@ -871,6 +871,7 @@ void case_34(struct treeNode *curr_node) {
 
   struct PrintNode *print_node = (struct PrintNode *) malloc(sizeof(struct PrintNode));
   child_node = child_node->next->next;
+  print_node->ptr1 = (struct Attribute *) malloc(sizeof(struct Attribute));
   print_node->ptr1->type = LEAF_NODE;
   print_node->ptr1->node.lea = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
 
@@ -1580,14 +1581,7 @@ void case_92(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   dec_stmt_node->ptr1 = child_node->syn.node.id_lis;
   child_node = nextNonTerminalNode(child_node);
-  if(child_node->syn.type == LEAF_NODE) {
-    dec_stmt_node->ptr2->node.lea = child_node->syn.node.lea;
-    dec_stmt_node->ptr2->type = LEAF_NODE;
-  }
-  else {
-    dec_stmt_node->ptr2->node.arr_typ = child_node->syn.node.arr_typ;
-    dec_stmt_node->ptr2->type = ARRAY_TYPE_NODE;
-  }
+  dec_stmt_node->ptr2 = newAttribute(child_node->syn);
 
   /* <declareStmt>.syn = new DeclareStmtNode(<dataType>.syn, <idList>.syn) */
   curr_node->syn.node.dec_stm = dec_stmt_node;

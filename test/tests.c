@@ -196,7 +196,7 @@ void test_createAST(char *grammar_file, char *source_file) {
 int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/basic_tests/test_3.erplag";
+    char source_file[] = "./test/basic_tests/test_1.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
