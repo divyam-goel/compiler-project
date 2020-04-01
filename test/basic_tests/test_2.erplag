@@ -1,0 +1,11 @@
+<<<driver program>>>
+start
+    declare x: integer;
+    declare arr: array[1..5] of integer;
+
+    ** lvalue ID Stmt **
+    x := 5;
+
+    ** lvalue ARR Stmt **
+    arr[3] := 5;
+end

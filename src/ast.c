@@ -2,18 +2,19 @@
 
 extern struct parseTree PT;
 struct ProgramNode AST;
+extern char terminalStringRepresentations[NUM_TERMINALS][16];
 
 /* BEGIN : Function Declarations */
 void traverseParseTree(struct treeNode *curr_node);
 void traverseChildren(struct treeNode *curr_node);
 struct treeNode *nextNonTerminalNode(struct treeNode *curr_node);
 struct LeafNode *newLeafNode(int type, void *data);
+struct Attribute *newAttribute(struct Attribute attr);
 /* END : Function Declarations */
 
 void createAST() {
   traverseParseTree(PT.head);
   printf("Finished AST creation ...\n");
-  fflush(stdout);
   AST.ptr1 = PT.head->syn.node.pro->ptr1;
   AST.ptr2 = PT.head->syn.node.pro->ptr2;
   AST.ptr3 = PT.head->syn.node.pro->ptr3;
@@ -948,6 +949,9 @@ void case_40(struct treeNode *curr_node) {
   /* <var>.syn = new LeafNode(NUM, NUM.val) */
   curr_node->syn.node.lea = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.num));
   curr_node->syn.type = LEAF_NODE;
+  printf("DEBUG: ");
+  printLeaf(curr_node->syn.node.lea);
+  printf("\n");
 }
 
 
@@ -958,6 +962,9 @@ void case_41(struct treeNode *curr_node) {
   /* <var>.syn = new LeafNode(RNUM, RNUM.val) */
   curr_node->syn.node.lea = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.rnum));
   curr_node->syn.type = LEAF_NODE;
+  printf("DEBUG: ");
+  printLeaf(curr_node->syn.node.lea);
+  printf("\n");
 }
 
 
@@ -1012,10 +1019,10 @@ void case_46(struct treeNode *curr_node) {
   struct AssignStmtNode *agn_stm = (struct AssignStmtNode *) malloc(sizeof(struct AssignStmtNode));
   agn_stm->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = child_node->next;
-  agn_stm->ptr2 = &(child_node->syn);
-  
-  curr_node->syn.type = ASSIGN_STMT_NODE;
+  agn_stm->ptr2 = newAttribute(child_node->syn);
+
   curr_node->syn.node.agn_stm = agn_stm;
+  curr_node->syn.type = ASSIGN_STMT_NODE;
 }
 
 
@@ -1046,7 +1053,7 @@ void case_49(struct treeNode *curr_node) {
 
   /* <lvalueIDStmt>.syn = new LvalueIDNode(<new_expression>.syn) */
   struct LvalueIDNode *lva_id = (struct LvalueIDNode *) malloc(sizeof(struct LvalueIDNode));
-  lva_id->ptr1 = &(child_node->syn);
+  lva_id->ptr1 = newAttribute(child_node->syn);
 
   curr_node->syn.node.lva_id = lva_id;
   curr_node->syn.type = LVALUE_ID_NODE;
@@ -1242,11 +1249,13 @@ void case_64(struct treeNode *curr_node) {
 void case_65(struct treeNode *curr_node) {
   /* <expression> := <AnyTerm> <N7>       --------> Assuming we have inh attribute- type Attribute*/
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  traverseParseTree(child_node);
 
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
   /* 1. <N7>.inh = <AnyTerm>.syn */
-  next_node->inh = child_node->syn;        
+  struct treeNode *next_node = nextNonTerminalNode(child_node);
+  next_node->inh = child_node->syn;
+  traverseParseTree(next_node);
+
   /* 2. IF (<N7>.syn == NULL) <expression>.syn = <AnyTerm>.syn ELSE <expression>.syn = <N7>.syn */
   if(next_node->syn.type == NULL_NODE) {  // checks for NULL using type attr.
     curr_node->syn = child_node->syn;
@@ -1260,25 +1269,27 @@ void case_65(struct treeNode *curr_node) {
 void case_66(struct treeNode *curr_node) {
   /* <N7> := <logicalOp> <AnyTerm> <N7>1 */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
-
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
-  struct treeNode *next_next_node = nextNonTerminalNode(next_node);
+  child_node = nextNonTerminalNode(child_node);
+  traverseParseTree(child_node);
 
   /* 1. <N7>1.inh = <AnyTerm>.syn */
-  next_next_node->inh = next_node->syn;
-  struct N7Node *n7_node = (struct N7Node *)malloc(sizeof(struct N7Node));
-  n7_node->ptr1 = &(curr_node->inh);
-  n7_node->logicalOp = child_node->val;
+  struct treeNode *next_node = nextNonTerminalNode(child_node);
+  next_node->inh = child_node->syn;
+  traverseParseTree(next_node);
 
-  /* 2. IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn)
-        ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn) */
-  if(next_next_node->syn.type == NULL_NODE) {
-    n7_node->ptr2 = &(next_next_node->syn);
+  /* 2. */  
+  /* IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn) */
+  /* ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn) */
+  struct N7Node *n7_node = (struct N7Node *)malloc(sizeof(struct N7Node));
+  n7_node->ptr1 = newAttribute(curr_node->inh);
+  n7_node->logicalOp = child_node->val;
+  if(next_node->syn.type == NULL_NODE) {
+    n7_node->ptr2 = newAttribute(next_node->syn);
   }
   else {
-    n7_node->ptr2 = &(next_node->syn);
+    n7_node->ptr2 = newAttribute(next_node->syn);
   }
+
   curr_node->syn.node.n7 = n7_node;
   curr_node->syn.type = N7_NODE;
 }
@@ -1286,22 +1297,26 @@ void case_66(struct treeNode *curr_node) {
 
 void case_67(struct treeNode *curr_node) {
   /* <N7> := EPSILON */
-  curr_node->syn.type = NULL_NODE;
-  curr_node->syn.node.n7 = NULL;
+
   /* <N7>.syn = NULL */
+  curr_node->syn.node.n7 = NULL;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
 void case_68(struct treeNode *curr_node) {
   /* <AnyTerm> := <arithmeticExpr> <N8> */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  traverseParseTree(child_node);
 
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
   /* 1. <N8>.inh = <arithmeticExpr>.syn */
+  struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
+  traverseParseTree(next_node);
 
-  /* 2. IF (<N8>.syn == NULL) <AnyTerm>.syn = <arithmeticExpr>.syn ELSE <AnyTerm>.syn = <N8>.syn */
+  /* 2. */
+  /* IF (<N8>.syn == NULL) <AnyTerm>.syn = <arithmeticExpr>.syn */
+  /* ELSE <AnyTerm>.syn = <N8>.syn */
   if(next_node->syn.type == NULL_NODE) {
     curr_node->syn = child_node->syn;
   }
@@ -1315,6 +1330,7 @@ void case_69(struct treeNode *curr_node) {
   /* <AnyTerm> := <boolConstt> */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
+
   /* <AnyTerm>.syn = <boolConstt>.syn */
   curr_node->syn = child_node->syn;
 }
@@ -1325,68 +1341,77 @@ void case_70(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
-  struct N8Node *n8_node = (struct N8Node *)malloc(sizeof(struct N8Node));
-  n8_node->ptr1 = &(curr_node->inh);
-  n8_node->relationalOp = child_node->val;
-  n8_node->ptr2 = &(next_node->syn);
   /* <N8>.syn = new N8Node(<N8>.inh, <relationalOp>.val, <arithmeticExpr>.syn) */
-  curr_node->syn.type = N8_NODE;
+  struct N8Node *n8_node = (struct N8Node *)malloc(sizeof(struct N8Node));
+  n8_node->ptr1 = newAttribute(curr_node->inh);
+  n8_node->relationalOp = child_node->val;
+  child_node = nextNonTerminalNode(child_node);
+  n8_node->ptr2 = newAttribute(child_node->syn);
+  
   curr_node->syn.node.n8 = n8_node;
+  curr_node->syn.type = N8_NODE;
 }
 
 
 void case_71(struct treeNode *curr_node) {
   /* <N8> := EPSILON */
-  curr_node->syn.type = NULL_NODE;
-  curr_node->syn.node.n8 = NULL;
+ 
   /* <N8>.syn = NULL */
+  curr_node->syn.node.n8 = NULL;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
 void case_72(struct treeNode *curr_node){
   /* <arithmeticExpr> := <term> <sub_arithmeticExpr> */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  traverseParseTree(child_node);
 
+  /* 1. <sub_arithmeticExpr>.inh = <term>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
-  /* 1. IF (<sub_arithmeticExpr>.syn == NULL) <arithmeticExpr>.syn = <term>.syn 
-        ELSE <arithmeticExpr>.syn = <sub_arithmeticExpr>.syn */
-  if (next_node->syn.type == NULL_NODE)
-  {
+  next_node->inh = child_node->syn;
+  traverseParseTree(next_node);
+
+  /* 2.
+    IF (<sub_arithmeticExpr>.syn == NULL) <arithmeticExpr>.syn = <term>.syn 
+    ELSE <arithmeticExpr>.syn = <sub_arithmeticExpr>.syn */
+  if (next_node->syn.type == NULL_NODE) {
     curr_node->syn = child_node->syn;
   }
-  else
-  {
+  else {
     curr_node->syn = next_node->syn;
   }
-  /* 2. <sub_arithmeticExpr>.inh = <term>.syn */
-  next_node->inh = child_node->syn;
 }
 
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  child_node = nextNonTerminalNode(child_node);
+  traverseParseTree(child_node);
 
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
-  struct treeNode *next_next_node = nextNonTerminalNode(next_node);
-  struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
-  arithmetic_expr_node->ptr1 = &(curr_node->inh);
-  arithmetic_expr_node->op = child_node->val;
-  arithmetic_expr_node->ptr2 = &(next_node->syn);
+
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
-  curr_node->syn.type = ARITHMETIC_EXPR_NODE;
+  struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
+  arithmetic_expr_node->ptr1 = newAttribute(curr_node->inh);
+  arithmetic_expr_node->op = child_node->val;
+  child_node = nextNonTerminalNode(child_node);
+  arithmetic_expr_node->ptr2 = newAttribute(child_node->syn);
+
   curr_node->syn.node.ari_exp = arithmetic_expr_node;
+  curr_node->syn.type = ARITHMETIC_EXPR_NODE;
+
   /* 2. <sub_arithmeticExpr>1.inh = <sub_arithmeticExpr>.syn */
-  next_next_node->inh = curr_node->syn;
+  struct treeNode *next_node = nextNonTerminalNode(child_node);
+  next_node->inh = curr_node->syn;
+  traverseParseTree(next_node);
 }
 
 
 void case_74(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := EPSILON */
-  curr_node->syn.type = NULL_NODE;
+
   curr_node->syn.node.ari_exp = NULL;
+  curr_node->syn.type = NULL_NODE;
   /*1. <sub_arithmeticExpr>.syn = NULL */
 }
 
@@ -1394,46 +1419,56 @@ void case_74(struct treeNode *curr_node){
 void case_75(struct treeNode *curr_node){
   /* <term> :=  <factor> <sub_term> */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  traverseParseTree(child_node);
 
+  /* 1. <sub_term>.inh = <factor>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
-  /* 1. IF (<sub_term>.syn == NULL) <term>.syn = <factor>.syn ELSE <term>.syn = <sub_term>.syn */
-  if (next_node->syn.type == NULL_NODE)
-  {
+  next_node->inh = child_node->syn;
+  traverseParseTree(next_node);
+
+  /* 2.
+    IF (<sub_term>.syn == NULL) <term>.syn = <factor>.syn
+    ELSE <term>.syn = <sub_term>.syn */
+  if (next_node->syn.type == NULL_NODE) {
     curr_node->syn = child_node->syn;
   }
-  else
-  {
+  else {
     curr_node->syn = next_node->syn;
   }
-  /* 2. <sub_term>.inh = <factor>.syn */
-  next_node->inh = child_node->syn;
+  printf("DEBUG: ");
+  printLeaf(curr_node->syn.node.lea);
+  printf("\n");
 }
 
 
 void case_76(struct treeNode *curr_node){
   /* <sub_term> := <op2> <factor> <sub_term>1 */
   struct treeNode *child_node = curr_node->child;
-  traverseChildren(child_node);
+  child_node = nextNonTerminalNode(child_node);
+  traverseParseTree(child_node);
 
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
-  struct treeNode *next_next_node = nextNonTerminalNode(next_node);
-  struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
-  term_node->ptr1 = &(curr_node->inh);
-  term_node->op = child_node->val;
-  term_node->ptr2 = &(next_node->syn);
   /* 1. <sub_term>.syn = new TermNode(<sub_term>.inh, <op2>.val, <factor>.syn) */
-  curr_node->syn.type = TERM_NODE;
+  struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
+  child_node = curr_node->child;
+  term_node->ptr1 = newAttribute(curr_node->inh);
+  term_node->op = child_node->val;
+  child_node = nextNonTerminalNode(child_node);
+  term_node->ptr2 = newAttribute(child_node->syn);
+  
   curr_node->syn.node.ter = term_node;
+  curr_node->syn.type = TERM_NODE;
+  
   /* 2. <sub_term>1.inh = <sub_term>.syn */
-  next_next_node->inh = curr_node->syn;
+  child_node = nextNonTerminalNode(child_node);
+  child_node->inh = curr_node->syn;
 }
 
 
 void case_77(struct treeNode *curr_node){
   /* <sub_term> := EPSILON */
-  curr_node->syn.type = NULL_NODE;
+  
   curr_node->syn.node.ter = NULL;
+  curr_node->syn.type = NULL_NODE;
   /* <sub_term>.syn = NULL */
 }
 
@@ -1442,9 +1477,9 @@ void case_78(struct treeNode *curr_node){
   /* <factor> := BO <expression> BC */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
+  
   /* <factor>.syn  = <expression>.syn */
-  curr_node->syn.node = child_node->syn.node;
-  curr_node->syn.type = child_node->syn.type;
+  curr_node->syn = child_node->syn;
 }
 
 
@@ -1452,8 +1487,13 @@ void case_79(struct treeNode *curr_node){
   /* <factor> := <var> */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
+ 
   /* <factor>.syn  = <var>.syn */
   curr_node->syn = child_node->syn;
+  printf("DEBUG: ");
+  printLeaf(curr_node->syn.node.lea);
+  printf("\n");
+
 }
 
 
@@ -1770,29 +1810,123 @@ struct LeafNode *newLeafNode(int type, void *data) {
   }
   return new_node;
 }
+
+struct Attribute *newAttribute(struct Attribute attr) {
+  struct Attribute *new_attr = (struct Attribute *) malloc(sizeof(struct Attribute));
+  new_attr->node = attr.node;
+  new_attr->type = attr.type;
+  return new_attr;
+}
 /* END : Utility Functions */
+
 
 void printAttribute(struct Attribute *attr) {
   if (attr->type == INPUT_NODE) printf("input stmt\n");
   else if (attr->type == PRINT_NODE) printf("print stmt\n");
   else if (attr->type == ASSIGN_STMT_NODE) printf("assign stmt\n");
-  else if (attr->type == MODULE_REUSE_STMT_NODE) printf("module resuse\n");
+  else if (attr->type == MODULE_REUSE_STMT_NODE) printf("module reuse\n");
   else if (attr->type == DECLARE_STMT_NODE) printf("declare stmt\n");
   else if (attr->type == CONDITIONAL_STMT_NODE) printf("cond stmt\n");
   else if (attr->type == FOR_ITERATIVE_STMT_NODE) printf("for stmt\n");
   else if (attr->type == WHILE_ITERATIVE_STMT_NODE) printf("while stmt\n");
+  else if (attr->type == LVALUE_ID_NODE) printf("lvalue id\n");
+  else if (attr->type == LVALUE_ARR_NODE) printf("lvalue arr\n");
 }
 
-void printAST() {
-  struct ProgramNode *pro = &AST;
-  if (pro->ptr1 != NULL) printf("Mod Dec is not NULL\n");
-  if (pro->ptr2 != NULL) printf("Oth Mod is not NULL\n");
-  if (pro->ptr3 != NULL) printf("Dri Mod is not NULL\n");
-  if (pro->ptr4 != NULL) printf("Oth Mod is not NULL\n");
 
-  struct StatementNode *stm = pro->ptr3;
-  while (stm != NULL) {
-    printAttribute(stm->ptr1);
-    stm = stm->ptr2;
+void printLeaf(struct LeafNode *leaf) {
+  if (leaf->type == NUM) printf("%d ", leaf->value.num);
+  else if (leaf->type == RNUM) printf("%f ", leaf->value.rnum);
+  else if (leaf->type == IDENTIFIER) printf("%s ", (char *)leaf->value.entry);
+  else if (leaf->type == INTEGER) printf("INTEGER ");
+  else if (leaf->type == REAL) printf("REAL ");
+  else if (leaf->type == BOOLEAN_) printf("BOOLEAN ");
+  else if (leaf->type == TRUE_) printf("TRUE ");
+  else if (leaf->type == FALSE_) printf("FALSE ");
+}
+
+
+void printExpression(struct Attribute *expr) {
+  switch(expr->type) {
+    case U_NODE:
+      printf("%s ", terminalStringRepresentations[expr->node.u->op]);
+      printExpression(expr->node.u->ptr1);
+      break;
+
+    case N7_NODE:
+      printExpression(expr->node.n7->ptr1);
+      printf("%s ", terminalStringRepresentations[expr->node.n7->logicalOp]);
+      printExpression(expr->node.n7->ptr2);
+      break;
+
+    case N8_NODE:
+      printExpression(expr->node.n8->ptr1);
+      printf("%s ", terminalStringRepresentations[expr->node.n8->relationalOp]);
+      printExpression(expr->node.n8->ptr2);
+      break;
+
+    case ARITHMETIC_EXPR_NODE:
+      printExpression(expr->node.ari_exp->ptr1);
+      printf("%s ", terminalStringRepresentations[expr->node.ari_exp->op]);
+      printExpression(expr->node.ari_exp->ptr2);
+      break;
+
+    case TERM_NODE:
+      printExpression(expr->node.ter->ptr1);
+      printf("%s ", terminalStringRepresentations[expr->node.ter->op]);
+      printExpression(expr->node.ter->ptr2);
+      break;
+    
+    case ARRAY_TYPE_NODE:
+      printLeaf(expr->node.arr_typ->ptr1);
+      printLeaf(expr->node.arr_typ->ptr2->ptr1);
+      printLeaf(expr->node.arr_typ->ptr2->ptr2);
+    
+    case LEAF_NODE:
+      printLeaf(expr->node.lea);
+    
+    default:
+      printf("ERROR!! Invalid Type %d! ", expr->type);
   }
+}
+
+
+void printAssignStmt(struct AssignStmtNode *assign_stmt) {
+  printf("%s ", (char *)assign_stmt->ptr1->value.entry);
+  if (assign_stmt->ptr2->type == LVALUE_ID_NODE) {
+    printExpression(assign_stmt->ptr2->node.lva_id->ptr1);
+  }
+  else {
+    printf("%d ", assign_stmt->ptr2->node.lva_arr->ptr1->value.num);
+    printExpression(assign_stmt->ptr2->node.lva_arr->ptr2);
+  }
+}
+
+void printStatements(struct StatementNode *stmt_node) {
+  while (stmt_node != NULL) {
+    printAttribute(stmt_node->ptr1);
+    switch (stmt_node->ptr1->type) {
+      case ASSIGN_STMT_NODE:
+        printAssignStmt(stmt_node->ptr1->node.agn_stm);
+        break;
+      default:
+        printf("Not Implemented Statement Type %d ...", stmt_node->ptr1->type);
+        break;
+    }
+    printf("\n");
+    stmt_node = stmt_node->ptr2;
+  }
+}
+
+
+void printAST() {
+  // 
+  struct ProgramNode *pro = &AST;
+  if (pro->ptr1 != NULL) printf("No Module Declarations\n");
+  if (pro->ptr2 != NULL) printf("No Modules Definitions Before Driver\n");
+  if (pro->ptr3 != NULL) printf("No Driver Module\n");
+  if (pro->ptr4 != NULL) printf("No Module Declarations After Driver\n");
+
+  // Print Driver module statements
+  printStatements(pro->ptr3);
 }
