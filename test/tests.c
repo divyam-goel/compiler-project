@@ -3,6 +3,7 @@
 #include "../src/parser.h"
 #include "../src/ast.h"
 #include "../src/data_structures/stack.h"
+#include "../src/st.h"
 
 void test_removeComments(){
     /*
@@ -193,17 +194,24 @@ void test_createAST(char *grammar_file, char *source_file) {
     printAST();
 }
 
+void symbolTableTests() {
+    printf("Running symbol table tests... ");
+    struct SymbolTable *st = newSymbolTable(NULL, NULL);
+    deleteSymbolTable(st);
+}
+
 int main() {
     puts("\nRunning tests...");
-    char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/basic_tests/test_1.erplag";
+    // char grammar_file[] = "./docs/grammar/text/grammar.txt";
+    // char source_file[] = "./test/basic_tests/test_1.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, source_file);
-    test_createAST(grammar_file, source_file);
+    // test_createAST(grammar_file, source_file);
+    symbolTableTests();
     printf("\nTests complete!!!\n");
     return 0;
 }
