@@ -23,19 +23,19 @@ struct VariableEntry {
 };
 
 
-union SymbolTableEntry {
+union SymbolTableValue {
   struct ModuleEntry module;
   struct FunctionEntry function;
   struct VariableEntry variable;
 };
 
-enum SymbolTableEntryType {ST_MODULE, ST_FUNCTION, ST_VARIABLE};
+enum SymbolTableValueType {ST_MODULE, ST_FUNCTION, ST_VARIABLE};
 
-struct SymbolTableValue {
+struct SymbolTableNode {
   char key[ST_KEY_BUFFER_MAX_LEN];
-  union SymbolTableEntry entry;
-  enum SymbolTableEntryType entry_type;
-  struct SymbolTableValue *next;  /* Next value in the same bucket. */
+  union SymbolTableValue value;
+  enum SymbolTableValueType value_type;
+  struct SymbolTableNode *next;  /* Next value in the same bucket. */
 };
 
 typedef int (*SymbolTableHashFunction)(char key[ST_KEY_BUFFER_MAX_LEN],
@@ -47,7 +47,7 @@ struct SymbolTable {
    * preceeding (higher) scope. */
   struct SymbolTable *parent;
   struct str_list *keys;
-  struct SymbolTableValue values[ST_NUMBER_OF_BUCKETS];
+  struct SymbolTableNode nodes[ST_NUMBER_OF_BUCKETS];
   SymbolTableHashFunction hash;
 };
 

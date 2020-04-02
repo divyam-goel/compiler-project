@@ -194,9 +194,83 @@ void test_createAST(char *grammar_file, char *source_file) {
     printAST();
 }
 
+char *st_value_types[] = {"ST_MODULE", "ST_FUNCTION", "ST_VARIABLE"};
+
+void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
+    if (node == NULL)
+        printf("\tValue for %s does not exist.\n", key);
+    else
+        printf("\tValue found, type: %s\n", st_value_types[node->value_type]);
+}
+
 void symbolTableTests() {
-    printf("Running symbol table tests... ");
+    printf("Running symbol table tests... \n");
+    
+    char xkey[ST_KEY_BUFFER_MAX_LEN] = "ac";
+    char ykey[ST_KEY_BUFFER_MAX_LEN] = "y";
+
     struct SymbolTable *st = newSymbolTable(NULL, NULL);
+    struct SymbolTableNode *node;
+
+    union SymbolTableValue xval;
+    enum SymbolTableValueType xtype = ST_FUNCTION;
+    union SymbolTableValue yval;
+    enum SymbolTableValueType ytype;
+    assert(strl_len(st->keys) == 0);
+
+    /* Initial set test */
+    printf("Initial set test:\n");
+    assert(symbolTableSet(st, xkey, xval, xtype, false) == false);
+    node = symbolTableGet(st, xkey);
+    printSymbolTableNode(node, xkey);
+    assert(node->value_type == ST_FUNCTION);
+    node = symbolTableGet(st, ykey);
+    printSymbolTableNode(node, ykey);
+    assert(node == NULL);
+    assert(strl_len(st->keys) == 1);
+
+    /* Test the anti-overwrite guard. */
+    printf("Anti-overwrite guard test:n\n");
+    xtype = ST_VARIABLE;
+    assert(symbolTableSet(st, xkey, xval, xtype, false) == false);
+    node = symbolTableGet(st, xkey);
+    printSymbolTableNode(node, xkey);
+    assert(node->value_type == ST_FUNCTION);
+    node = symbolTableGet(st, ykey);
+    printSymbolTableNode(node, ykey);
+    assert(node == NULL);
+    assert(strl_len(st->keys) == 1);
+
+    /* Test overwritting. */
+    printf("Overwrite test:\n");
+    xtype = ST_VARIABLE;
+    assert(symbolTableSet(st, xkey, xval, xtype, true) == true);
+    node = symbolTableGet(st, xkey);
+    printSymbolTableNode(node, xkey);
+    assert(node->value_type == ST_VARIABLE);
+    node = symbolTableGet(st, ykey);
+    printSymbolTableNode(node, ykey);
+    assert(node == NULL);
+    assert(strl_len(st->keys) == 1);
+
+    /* Now update y and make sure nothing breaks. Also
+     * make sure that the symbolTableSet function is returning
+     * properly. Specify overwrite=true but because the
+     * key does not exist, it should return false. */ 
+    printf("Test overwrite when key does not exist: \n");
+    ytype = ST_MODULE;
+    assert(symbolTableSet(st, ykey, yval, ytype, true) == false);
+    node = symbolTableGet(st, ykey);
+    printSymbolTableNode(node, ykey);
+    assert(node->value_type == ST_MODULE);
+    assert(strl_len(st->keys) == 2);
+
+    /* Chaining implementation can be manually tested by setting the
+     * ST_NUMBER_OF_BUCKETS to a lower value like 3 and then finding
+     * two keys which map to the same value. This could be automated
+     * by changing the code to allow overriding the number of buckets,
+     * and by storing the number of buckets as a property of the symbol
+     * table itself which can then be used in the hash function. */
     deleteSymbolTable(st);
 }
 
