@@ -494,7 +494,7 @@ void case_3(struct treeNode *curr_node) {
 
   /* <moduleDeclarations>.syn = NULL */
   curr_node->syn.node.mod_dec = NULL;
-  curr_node->syn.type = MODULE_DECLARATION_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -530,7 +530,7 @@ void case_6(struct treeNode *curr_node) {
 
   /* <otherModules>.syn = NULL */
   curr_node->syn.node.oth_mod = NULL;
-  curr_node->syn.type = OTHER_MODULE_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -586,7 +586,7 @@ void case_10(struct treeNode *curr_node) {
 
   /* <ret>.syn = NULL */
   curr_node->syn.node.out_pli = NULL;
-  curr_node->syn.type = OUTPUT_PLIST_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -598,7 +598,7 @@ void case_11(struct treeNode *curr_node) {
   struct InputPlistNode *inp_pli = (struct InputPlistNode *) malloc(sizeof(struct InputPlistNode));
   inp_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = nextNonTerminalNode(child_node);
-  inp_pli->ptr2 = &(child_node->syn);
+  inp_pli->ptr2 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   inp_pli->ptr3 = child_node->syn.node.inp_pli;
 
@@ -614,9 +614,10 @@ void case_12(struct treeNode *curr_node) {
   traverseChildren(child_node);
   
   struct InputPlistNode *inp_pli = (struct InputPlistNode *) malloc(sizeof(struct InputPlistNode));
+  child_node = child_node->next;
   inp_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = nextNonTerminalNode(child_node);
-  inp_pli->ptr2 = &(child_node->syn);
+  inp_pli->ptr2 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   inp_pli->ptr3 = child_node->syn.node.inp_pli;
 
@@ -631,7 +632,7 @@ void case_13(struct treeNode *curr_node) {
 
   /* <sub_input_plist>.syn = NULL */
   curr_node->syn.node.inp_pli = NULL;
-  curr_node->syn.type = INPUT_PLIST_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -643,7 +644,7 @@ void case_14(struct treeNode *curr_node) {
   struct OutputPlistNode *out_pli = (struct OutputPlistNode *) malloc(sizeof(struct OutputPlistNode));
   out_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = nextNonTerminalNode(child_node);
-  out_pli->ptr2 = &(child_node->syn);
+  out_pli->ptr2 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   out_pli->ptr3 = child_node->syn.node.out_pli;
    
@@ -659,9 +660,10 @@ void case_15(struct treeNode *curr_node) {
   traverseChildren(child_node);
   
   struct OutputPlistNode *out_pli = (struct OutputPlistNode *) malloc(sizeof(struct OutputPlistNode));
+  child_node = child_node->next;
   out_pli->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = nextNonTerminalNode(child_node);
-  out_pli->ptr2 = &(child_node->syn);
+  out_pli->ptr2 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   out_pli->ptr3 = child_node->syn.node.out_pli;
 
@@ -676,7 +678,7 @@ void case_16(struct treeNode *curr_node) {
 
   /* <sub_output_plist>.syn = NULL */
   curr_node->syn.node.out_pli = NULL;
-  curr_node->syn.type = OUTPUT_PLIST_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -782,7 +784,7 @@ void case_26(struct treeNode *curr_node) {
   traverseChildren(child_node);
 
   struct StatementNode *stm = (struct StatementNode *) malloc(sizeof(struct StatementNode));
-  stm->ptr1 = &(child_node->syn);
+  stm->ptr1 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   stm->ptr2 = child_node->syn.node.stm;
 
@@ -796,7 +798,7 @@ void case_27(struct treeNode *curr_node) {
   /* <statements> := EPSILON */
 
   /* <statements>.syn = NULL */
-  curr_node->syn.type = STATEMENT_NODE;
+  curr_node->syn.type = NULL_NODE;
   curr_node->syn.node.stm = NULL;
 }
 
@@ -1068,7 +1070,7 @@ void case_50(struct treeNode *curr_node) {
   struct LvalueARRNode *lva_arr = (struct LvalueARRNode *) malloc(sizeof(struct LvalueARRNode));
   lva_arr->ptr1 = child_node->syn.node.lea;
   child_node = nextNonTerminalNode(child_node);
-  lva_arr->ptr2 = &(child_node->syn);
+  lva_arr->ptr2 = newAttribute(child_node->syn);
 
   curr_node->syn.type = LVALUE_ARR_NODE,
   curr_node->syn.node.lva_arr = lva_arr;
@@ -1117,10 +1119,10 @@ void case_54(struct treeNode *curr_node) {
   /* <optional> := SQBO <idList> SQBC ASSIGNOP */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
+  child_node = nextNonTerminalNode(child_node);
 
   /* <optional>.syn = <idList>.syn */
-  curr_node->syn.type = child_node->syn.type;
-  curr_node->syn.node = child_node->syn.node;
+  curr_node->syn = child_node->syn;
 }
 
 
@@ -1202,7 +1204,7 @@ void case_61(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   struct UNode *u_node = (struct UNode *)malloc(sizeof(struct UNode));
   u_node->op = PLUS;
-  u_node->ptr1 = &(child_node->syn);
+  u_node->ptr1 = newAttribute(child_node->syn);
   /* < u >.syn = new UNode(“PLUS”, <sub_u>.syn) */
   curr_node->syn.type = U_NODE;
   curr_node->syn.node.u = u_node; 
@@ -1217,7 +1219,7 @@ void case_62(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   struct UNode *u_node = (struct UNode *)malloc(sizeof(struct UNode));
   u_node->op = MINUS;
-  u_node->ptr1 = &(child_node->syn);
+  u_node->ptr1 = newAttribute(child_node->syn);
   /* < u >.syn = new UNode(“MINUS”, <sub_u>.syn) */
   curr_node->syn.type = U_NODE;
   curr_node->syn.node.u = u_node;
@@ -1240,7 +1242,8 @@ void case_64(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
-  child_node = nextNonTerminalNode(child_node);
+  // child_node = nextNonTerminalNode(child_node);
+
   /* <sub_u>.syn = <var>.syn */
   curr_node->syn = child_node->syn;
 }
@@ -1388,7 +1391,7 @@ void case_72(struct treeNode *curr_node){
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;
-
+  
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
   struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
   arithmetic_expr_node->ptr1 = newAttribute(curr_node->inh);
@@ -1476,8 +1479,9 @@ void case_77(struct treeNode *curr_node){
 void case_78(struct treeNode *curr_node){
   /* <factor> := BO <expression> BC */
   struct treeNode *child_node = curr_node->child;
+  child_node = nextNonTerminalNode(child_node);
   traverseChildren(child_node);
-  
+
   /* <factor>.syn  = <expression>.syn */
   curr_node->syn = child_node->syn;
 }
@@ -1639,7 +1643,7 @@ void case_96(struct treeNode *curr_node) {
   
   /* <nullableCaseStmt>.syn = NULL */
   curr_node->syn.node.cas_stm = NULL;
-  curr_node->syn.type = CASE_STMT_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -1677,7 +1681,7 @@ void case_100(struct treeNode *curr_node) {
   /* <default> := DEFAULT COLON <statements> BREAK SEMICOL */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
-
+  child_node = nextNonTerminalNode(child_node);
   /* <default>.syn = <statements>.syn */
   curr_node->syn.node.stm = child_node->syn.node.stm;
   curr_node->syn.type = STATEMENT_NODE;
@@ -1689,7 +1693,7 @@ void case_101(struct treeNode *curr_node) {
 
   /* <default>.syn = NULL */
   curr_node->syn.node.stm = NULL;
-  curr_node->syn.type = STATEMENT_NODE;
+  curr_node->syn.type = NULL_NODE;
 }
 
 
@@ -1720,7 +1724,7 @@ void case_103(struct treeNode *curr_node) {
 
   struct WhileIterativeStmtNode * while_iter_node = (struct WhileIterativeStmtNode *) malloc(sizeof(struct WhileIterativeStmtNode));
   child_node = nextNonTerminalNode(child_node);
-  while_iter_node->ptr1 = &(child_node->syn);
+  while_iter_node->ptr1 = newAttribute(child_node->syn);
   child_node = nextNonTerminalNode(child_node);
   while_iter_node->ptr2 = child_node->syn.node.stm;
 
