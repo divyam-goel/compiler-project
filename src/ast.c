@@ -1046,7 +1046,6 @@ void case_49(struct treeNode *curr_node) {
   /* <lvalueIDStmt> := ASSIGNOP <new_expression> SEMICOL */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
-  child_node = nextNonTerminalNode(child_node);
 
   /* <lvalueIDStmt>.syn = new LvalueIDNode(<new_expression>.syn) */
   struct LvalueIDNode *lva_id = (struct LvalueIDNode *) malloc(sizeof(struct LvalueIDNode));
@@ -1874,7 +1873,10 @@ void printExpression(struct Attribute *expr) {
     case LEAF_NODE:
       printLeaf(expr->node.lea);
       break;
+
+    default:
       printf("ERROR!! Invalid Type %d! ", expr->type);
+      break;
   }
 }
 
