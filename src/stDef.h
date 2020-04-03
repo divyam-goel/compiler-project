@@ -7,6 +7,8 @@
 #define ST_KEY_MAX_LEN 255
 #define ST_KEY_BUFFER_MAX_LEN (ST_KEY_MAX_LEN + 1)
 #define ST_NUMBER_OF_BUCKETS 1009
+#define ST_SCOPE_TAG_MAX_LEN 125
+#define ST_DEFAULT_SCOPE_TAG "null"
 
 struct ModuleEntry {
 
@@ -49,6 +51,10 @@ struct SymbolTable {
   struct str_list *keys;
   struct SymbolTableNode nodes[ST_NUMBER_OF_BUCKETS];
   SymbolTableHashFunction hash;
+  char scope_tag[ST_SCOPE_TAG_MAX_LEN + 1];
+  /* The scope tag is just for better visibility of what's going
+   * on to make debugging easier. E.g. for functions, it's just
+   * the function name.*/
 };
 
 #endif

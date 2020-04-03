@@ -18,6 +18,7 @@ int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
   int lower_bound, int upper_bound);
 
 struct SymbolTable *newSymbolTable(struct SymbolTable *parent,
+  const char *scope_tag,
   SymbolTableHashFunction hash_fn);
 
 void deleteSymbolTable(struct SymbolTable *st);

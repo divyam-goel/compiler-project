@@ -12,6 +12,7 @@ int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
 
 
 struct SymbolTable *newSymbolTable(struct SymbolTable *parent,
+                                   const char *scope_tag,
                                    SymbolTableHashFunction hash_fn) {
   /* Create a new symbol table (memory allocated on the heap) and return
    * it's pointer. If hash_fn is NULL, then the default hash function for
@@ -22,7 +23,18 @@ struct SymbolTable *newSymbolTable(struct SymbolTable *parent,
 
   st->parent = parent;
   st->keys = strl_allocate();
-  
+
+  if (scope_tag == NULL) {
+    strcpy(st->scope_tag, ST_DEFAULT_SCOPE_TAG);
+  } else {
+    if (strlen(scope_tag) > 125) {
+      fprintf(stderr, "Scope tag: <%s> is too long. The current limit is: %d\n",
+        scope_tag, ST_SCOPE_TAG_MAX_LEN);
+      exit(E2BIG);
+    }
+    strcpy(st->scope_tag, scope_tag);
+  }
+
   if (hash_fn == NULL) {
     st->hash = ST_DEFAULT_HASH_FUNCTION;
   } else {

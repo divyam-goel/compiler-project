@@ -208,8 +208,11 @@ void symbolTableTests() {
     
     char xkey[ST_KEY_BUFFER_MAX_LEN] = "ac";
     char ykey[ST_KEY_BUFFER_MAX_LEN] = "y";
+    char scope_tag[] = "<test_scope>";
 
-    struct SymbolTable *st = newSymbolTable(NULL, NULL);
+    struct SymbolTable *st = newSymbolTable(NULL, scope_tag, NULL);
+    assert(strcmp(st->scope_tag, scope_tag) == 0);
+    printf("Created new scope %s\n", st->scope_tag);
     struct SymbolTableNode *node;
 
     union SymbolTableValue xval;
