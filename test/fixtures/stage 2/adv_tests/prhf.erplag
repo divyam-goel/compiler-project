@@ -1,0 +1,49 @@
+** ERPLAG code for implementing the polynomial rolling hash function **
+
+<<<driver program>>>
+start
+
+  declare p, i, hash_value, multiplier, num_buckets : integer;
+  p := 3;
+  i := 0;
+  sum := 0;
+  multiplier := 0;
+  num_buckets := 7;
+
+  ** Since ERPLAG is a *really* simple language that does not support chars,
+  we have to take a hack-ish approach to strings by defining them as an array
+  of integers with each integer representing the ascii value of a char. **
+  declare msg : array[0..6] of integer;
+
+  ** Use this Python snippet if you want to quickly use a different string.
+    msg = "Awesome"
+    for i, c in enumerate(msg):
+      print("msg[%d] := %d;" % (i, ord(c)))
+  **
+  msg[0] := 65;
+  msg[1] := 119;
+  msg[2] := 101;
+  msg[3] := 115;
+  msg[4] := 111;
+  msg[5] := 109;
+  msg[6] := 101;
+
+  for (i in 0..6) start
+    multiplier := multiplier + multiplier * i;
+    sum := sum + msg[i] * multiplier;
+  end
+
+  [hash_value] := use module mod with parameters sum, num_buckets;
+  print(sum);
+
+end
+
+
+<<module mod>>
+takes input [p :integer, q :integer];
+returns [r :integer];
+start
+  declare f :integer;
+  f := p / q;
+  r := p - (f * q);
+end
