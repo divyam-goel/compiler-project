@@ -876,9 +876,9 @@ void case_34(struct treeNode *curr_node) {
   struct PrintNode *print_node = (struct PrintNode *) malloc(sizeof(struct PrintNode));
   child_node = child_node->next->next;
   print_node->ptr1 = (struct Attribute *) malloc(sizeof(struct Attribute));
-  print_node->ptr1->type = LEAF_NODE;
-  print_node->ptr1->node.lea = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str, child_node->symbol.terminal.line_no);
-
+  // print_node->ptr1->type = LEAF_NODE;
+  // print_node->ptr1->node.lea = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str, child_node->symbol.terminal.line_no);
+  print_node->ptr1 = newAttribute(child_node->syn);
   /* <ioStmt>.syn = new PrintNode(<extended_var>.syn) */
   curr_node->syn.node.pri = print_node;
   curr_node->syn.type = PRINT_NODE;
