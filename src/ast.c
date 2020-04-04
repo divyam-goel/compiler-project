@@ -12,6 +12,7 @@ struct treeNode *nextNonTerminalNode(struct treeNode *curr_node);
 struct LeafNode *newLeafNode(int type, void *data, int line_num);
 struct Attribute *newAttribute(struct Attribute attr);
 void printLeaf(struct LeafNode *leaf);
+void printStatements(struct StatementNode *stmt_node);
 /* END : Function Declarations */
 
 void createAST() {
@@ -1406,9 +1407,11 @@ void case_73(struct treeNode *curr_node){
   curr_node->syn.type = ARITHMETIC_EXPR_NODE;
 
   /* 2. <sub_arithmeticExpr>1.inh = <sub_arithmeticExpr>.syn */
-  struct treeNode *next_node = nextNonTerminalNode(child_node);
-  next_node->inh = curr_node->syn;
-  traverseParseTree(next_node);
+  child_node = nextNonTerminalNode(child_node);
+  child_node->inh = curr_node->syn;
+  traverseParseTree(child_node);
+
+  arithmetic_expr_node->ptr3 = newAttribute(child_node->syn);
 }
 
 
@@ -1446,12 +1449,10 @@ void case_75(struct treeNode *curr_node){
 void case_76(struct treeNode *curr_node){
   /* <sub_term> := <op2> <factor> <sub_term>1 */
   struct treeNode *child_node = curr_node->child;
-  // child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
 
   /* 1. <sub_term>.syn = new TermNode(<sub_term>.inh, <op2>.val, <factor>.syn) */
   struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
-  // child_node = curr_node->child;
   term_node->ptr1 = newAttribute(curr_node->inh);
   term_node->op = child_node->val;
   child_node = nextNonTerminalNode(child_node);
@@ -1465,6 +1466,8 @@ void case_76(struct treeNode *curr_node){
   child_node = nextNonTerminalNode(child_node);
   child_node->inh = curr_node->syn;
   traverseParseTree(child_node);
+
+  term_node->ptr3 = newAttribute(child_node->syn);
 }
 
 
@@ -1484,6 +1487,7 @@ void case_78(struct treeNode *curr_node){
   traverseChildren(child_node);
 
   /* <factor>.syn  = <expression>.syn */
+  child_node = nextNonTerminalNode(child_node);
   curr_node->syn = child_node->syn;
 }
 
@@ -1817,28 +1821,28 @@ struct Attribute *newAttribute(struct Attribute attr) {
 
 
 void printAttribute(struct Attribute *attr) {
-  if (attr->type == INPUT_NODE) printf("input stmt\n");
-  else if (attr->type == PRINT_NODE) printf("print stmt\n");
-  else if (attr->type == ASSIGN_STMT_NODE) printf("assign stmt\n");
-  else if (attr->type == MODULE_REUSE_STMT_NODE) printf("module reuse\n");
-  else if (attr->type == DECLARE_STMT_NODE) printf("declare stmt\n");
-  else if (attr->type == CONDITIONAL_STMT_NODE) printf("cond stmt\n");
-  else if (attr->type == FOR_ITERATIVE_STMT_NODE) printf("for stmt\n");
-  else if (attr->type == WHILE_ITERATIVE_STMT_NODE) printf("while stmt\n");
+  if (attr->type == INPUT_NODE) printf("INPUT STATEMENT\n");
+  else if (attr->type == PRINT_NODE) printf("PRINT STATEMENT\n");
+  else if (attr->type == ASSIGN_STMT_NODE) printf("ASSIGNMENT STATEMENT\n");
+  else if (attr->type == MODULE_REUSE_STMT_NODE) printf("MODULE REUSE STATEMENT\n");
+  else if (attr->type == DECLARE_STMT_NODE) printf("DECLARE STATEMENT\n");
+  else if (attr->type == CONDITIONAL_STMT_NODE) printf("CONDITIONAL STATEMENT\n");
+  else if (attr->type == FOR_ITERATIVE_STMT_NODE) printf("FOR ITERATIVE STATEMENT\n");
+  else if (attr->type == WHILE_ITERATIVE_STMT_NODE) printf("WHILE ITERATIVE STATEMENT\n");
   else if (attr->type == LVALUE_ID_NODE) printf("lvalue id\n");
   else if (attr->type == LVALUE_ARR_NODE) printf("lvalue arr\n");
 }
 
 
 void printLeaf(struct LeafNode *leaf) {
-  if (leaf->type == NUM) printf("%d ", leaf->value.num);
-  else if (leaf->type == RNUM) printf("%f ", leaf->value.rnum);
-  else if (leaf->type == IDENTIFIER) printf("%s ", (char *)leaf->value.entry);
-  else if (leaf->type == INTEGER) printf("INTEGER ");
-  else if (leaf->type == REAL) printf("REAL ");
-  else if (leaf->type == BOOLEAN_) printf("BOOLEAN ");
-  else if (leaf->type == TRUE_) printf("TRUE ");
-  else if (leaf->type == FALSE_) printf("FALSE ");
+  if (leaf->type == NUM) printf("%d", leaf->value.num);
+  else if (leaf->type == RNUM) printf("%f", leaf->value.rnum);
+  else if (leaf->type == IDENTIFIER) printf("%s", (char *)leaf->value.entry);
+  else if (leaf->type == INTEGER) printf("INTEGER");
+  else if (leaf->type == REAL) printf("REAL");
+  else if (leaf->type == BOOLEAN_) printf("BOOLEAN");
+  else if (leaf->type == TRUE_) printf("TRUE");
+  else if (leaf->type == FALSE_) printf("FALSE");
 }
 
 
@@ -1862,15 +1866,19 @@ void printExpression(struct Attribute *expr) {
       break;
 
     case ARITHMETIC_EXPR_NODE:
-      printExpression(expr->node.ari_exp->ptr1);
+      if (expr->node.ari_exp->ptr1->type != ARITHMETIC_EXPR_NODE)
+        printExpression(expr->node.ari_exp->ptr1);
       printf("%s ", terminalStringRepresentations[expr->node.ari_exp->op]);
       printExpression(expr->node.ari_exp->ptr2);
+      printExpression(expr->node.ari_exp->ptr3);
       break;
 
     case TERM_NODE:
-      printExpression(expr->node.ter->ptr1);
+      if (expr->node.ter->ptr1->type != TERM_NODE)
+        printExpression(expr->node.ter->ptr1);
       printf("%s ", terminalStringRepresentations[expr->node.ter->op]);
       printExpression(expr->node.ter->ptr2);
+      printExpression(expr->node.ter->ptr3);
       break;
 
     case ARRAY_NODE:
@@ -1880,6 +1888,10 @@ void printExpression(struct Attribute *expr) {
 
     case LEAF_NODE:
       printLeaf(expr->node.lea);
+      printf(" ");
+      break;
+    
+    case NULL_NODE:
       break;
 
     default:
@@ -1890,7 +1902,7 @@ void printExpression(struct Attribute *expr) {
 
 
 void printAssignStmt(struct AssignStmtNode *assign_stmt) {
-  printf("%s ", (char *)assign_stmt->ptr1->value.entry);
+  printf("LHS: %s | RHS: ", (char *)assign_stmt->ptr1->value.entry);
   if (assign_stmt->ptr2->type == LVALUE_ID_NODE) {
     printExpression(assign_stmt->ptr2->node.lva_id->ptr1);
   }
@@ -1901,12 +1913,131 @@ void printAssignStmt(struct AssignStmtNode *assign_stmt) {
 }
 
 
+void printIdList(struct IdListNode *id_list_node) {
+  while(id_list_node != NULL) {
+    printLeaf(id_list_node->ptr1);
+    printf(" ");
+    id_list_node = id_list_node->ptr2;
+  }
+}
+
+
+void printModuleReuseStmt(struct ModuleReuseStmtNode *module_reuse_stmt_node) {
+  printf("Output: ");
+  printIdList(module_reuse_stmt_node->ptr1);
+  if (module_reuse_stmt_node->ptr1 == NULL)
+    printf("NONE ");
+  printf("| Module: ");
+  printLeaf(module_reuse_stmt_node->ptr2);
+  printf(" | Input: ");
+  printIdList(module_reuse_stmt_node->ptr3);
+}
+
+
+void printDeclareStmt(struct DeclareStmtNode *decl_stmt_node) {
+  /* print format: list of identifiers --> data type
+    example: a, b, c --> INTEGER  */
+  printf("Id: ");
+  printIdList(decl_stmt_node->ptr1);
+  printf("| Type: ");
+  struct Attribute *data_type = decl_stmt_node->ptr2;
+  switch(data_type->type) {
+    case ARRAY_TYPE_NODE:
+      printLeaf(data_type->node.arr_typ->ptr1);
+      printf("ARRAY | Start Index: ");
+      printLeaf(data_type->node.arr_typ->ptr2->ptr1);
+      printf("| End Index: ");
+      printLeaf(data_type->node.arr_typ->ptr2->ptr2);
+      break;
+    case LEAF_NODE:
+      printLeaf(data_type->node.lea);
+      break;
+    default:
+      printf("Invalid Declare Statement Node with Type %d", data_type->type);
+      break;
+  }
+}
+
+
+void printConditionalStmt(struct ConditionalStmtNode *cond_stmt_node) {
+  printf("Switch Variable: ");
+  printLeaf(cond_stmt_node->ptr1);
+  printf("\n\n");
+  struct CaseStmtNode *case_stmt_node = cond_stmt_node->ptr2;
+  while(case_stmt_node != NULL) {
+    printf("Case Value: ");
+    printLeaf(case_stmt_node->ptr1);
+    printf("\n\n-- Start Case Statements --\n\n");
+    printStatements(case_stmt_node->ptr2);
+    printf("-- End Case Statements --");
+    case_stmt_node = case_stmt_node->ptr3;
+  }
+  if (cond_stmt_node->ptr3 != NULL) {
+    printf("Default: ");
+    printStatements(cond_stmt_node->ptr3);
+  }
+}
+
+
+void printForIterativeStmt(struct ForIterativeStmtNode *for_stmt_node) {
+ printf("Loop Variable: ");
+ printLeaf(for_stmt_node->ptr1);
+ printf(" | Start Index: ");
+ printLeaf(for_stmt_node->ptr2->ptr1);
+ printf(" | End Index: ");
+ printLeaf(for_stmt_node->ptr2->ptr2);
+ printf("\n\n-- Start For Statements --\n\n");
+ printStatements(for_stmt_node->ptr3);
+ printf("-- End For Statements --");
+}
+
+
+void printWhileIterativeStmt(struct WhileIterativeStmtNode *while_stmt_node) {
+ printf("Loop Expression: ");
+ printExpression(while_stmt_node->ptr1);
+ printf("\n\n-- Start While Statements --\n\n");
+ printStatements(while_stmt_node->ptr2);
+ printf("-- End While Statements --");
+}
+
+
 void printStatements(struct StatementNode *stmt_node) {
   while (stmt_node != NULL) {
     printAttribute(stmt_node->ptr1);
     switch (stmt_node->ptr1->type) {
       case ASSIGN_STMT_NODE:
         printAssignStmt(stmt_node->ptr1->node.agn_stm);
+        break;
+      case MODULE_REUSE_STMT_NODE:
+        printModuleReuseStmt(stmt_node->ptr1->node.mod_reu_stm);
+        break;
+      case DECLARE_STMT_NODE:
+        printDeclareStmt(stmt_node->ptr1->node.dec_stm);
+        break;
+      case PRINT_NODE:
+        if (stmt_node->ptr1->node.pri->ptr1->type == LEAF_NODE) {
+          printf("Output Variable: ");
+          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.lea);
+        }
+        else {
+          printf("Output Array Id: ");
+          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr1);
+          printf(" | Element Index: ");
+          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr2);
+        }
+        break;
+      case INPUT_NODE:
+        printf("Input Variable: ");
+        printLeaf(stmt_node->ptr1->node.inp->ptr1);
+        break;
+      case CONDITIONAL_STMT_NODE:
+        printConditionalStmt(stmt_node->ptr1->node.con_stm);
+        break;
+      case FOR_ITERATIVE_STMT_NODE:
+        printForIterativeStmt(stmt_node->ptr1->node.for_ite_stm);
+        break;
+      case WHILE_ITERATIVE_STMT_NODE:
+        printWhileIterativeStmt(stmt_node->ptr1->node.whi_ite_stm);
         break;
       default:
         printf("Not Implemented Statement Type %d ...", stmt_node->ptr1->type);
@@ -1924,10 +2055,17 @@ void printAST() {
   struct ProgramNode *pro = &AST;
   if (pro->ptr1 == NULL) printf("No Module Declarations\n");
   if (pro->ptr2 == NULL) printf("No Modules Definitions Before Driver\n");
-  if (pro->ptr3 == NULL) printf("No Driver Module\n");
+  if (pro->ptr3 == NULL) printf("No Statments in Driver Module\n");
   if (pro->ptr4 == NULL) printf("No Module Declarations After Driver\n");
   printf("\n");
 
   // Print Driver module statements
+<<<<<<< 86f540f62626a4e1cf90e1b0a5edd89ae508d648
   printStatements(pro->ptr3);
 }
+=======
+  if (pro->ptr2 != NULL) printStatements(pro->ptr2->ptr1->ptr4);
+  if (pro->ptr3 != NULL) printStatements(pro->ptr3);
+  if (pro->ptr4 != NULL) printStatements(pro->ptr4->ptr1->ptr4);
+}
+>>>>>>> Extended Print AST functions

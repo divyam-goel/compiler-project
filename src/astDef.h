@@ -203,12 +203,14 @@ struct ArithmeticExprNode {
   struct Attribute *ptr1; /* Sub Arithmetic Expression */
   enum terminal op;
   struct Attribute *ptr2; /* Term */
+  struct Attribute *ptr3;
 };
 
 struct TermNode {
   struct Attribute *ptr1; /* Subterm */
   enum terminal op;
   struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
+  struct Attribute *ptr3;
 };
 
 struct DeclareStmtNode {
