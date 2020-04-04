@@ -1,11 +1,47 @@
 <<<driver program>>>
 start
-    declare x: integer;
-    declare arr: array[1..5] of integer;
+    ** declare x, y, z: integer;
+    declare u, v, w: boolean;
+    declare arr: array[1..5] of integer; **
 
     ** lvalue ID Stmt **
-    x := 5;
+    ** x := 10 + 20; **
 
     ** lvalue ARR Stmt **
-    arr[3] := 5;
+    ** arr[3] := 5; **
+
+    ** basic arithmetic expressions using variables **
+    ** z := x + y;
+    z := x - y;
+    z := x * y;
+    z := x / y; **
+
+    ** basic arithmetic expressions using arrays **
+    ** z := arr[1] + y;
+    z := x + arr[2];
+    z := arr[1] + arr[2];
+    z := arr[1] * y;
+    z := x * arr[2];
+    z := arr[1] * arr[2]; **
+
+    ** basic relational expressions **
+    ** w := x < y;
+    w := x <= y;
+    w := x >= y;
+    w := x > y;
+    w := x == y;
+    w := x != y; **
+
+    ** basic logical expressions **
+    ** w := TRUE AND FALSE;
+    w := u AND v;
+    w := TRUE OR v;
+    w := u AND FALSE; **
+
+    ** complex expressions **
+    ** z := x + y + z;
+    z := x * y * z;
+    z := x * y + x / y;
+    z := z / (x * y); **
+
 end
