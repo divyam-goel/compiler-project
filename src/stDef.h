@@ -15,6 +15,7 @@
 
 struct ModuleEntry {
   char name[IDENTIFIER_NAME_MAX_LEN + 1];
+  int line_number;
   struct InputPlistNode *inputplist;
   struct OutputPlistNode *outputplist;
 };
@@ -22,6 +23,7 @@ struct ModuleEntry {
 
 struct VariableEntry {
   char name[IDENTIFIER_NAME_MAX_LEN + 1];
+  int line_number;
   union lexeme value;  /* HACK: Reuse; ignore the char[] part.*/
   enum terminal datatype;
   bool isArray;

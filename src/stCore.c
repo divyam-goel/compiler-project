@@ -201,6 +201,7 @@ char *getDataTypeString(struct VariableEntry variable) {
 
 
 void printKey(struct SymbolTable *st, char *key, bool last_key) {
+  int line_num;
   char *comma, *datatype_str;
   struct SymbolTableNode *data;
   
@@ -213,12 +214,15 @@ void printKey(struct SymbolTable *st, char *key, bool last_key) {
     comma = ",";
 
   if (data->value_type == ST_MODULE) {
-    printf("    %s: (Module)%s\n", key, comma);
+    line_num = data->value.module.line_number;
+    printf("    %s: (Module, line: %d)%s\n", key, line_num, comma);
   }
   
   else if (data->value_type == ST_VARIABLE) {
+    line_num = data->value.variable.line_number;
     datatype_str = getDataTypeString(data->value.variable);
-    printf("    %s: (Variable, %s)%s\n", key, datatype_str, comma);
+    printf("    %s: (Variable, line: %d, type: %s)%s\n", key, line_num,
+           datatype_str, comma);
     free(datatype_str);
   }
 
