@@ -1255,7 +1255,6 @@ void case_65(struct treeNode *curr_node) {
   /* <expression> := <AnyTerm> <N7>       --------> Assuming we have inh attribute- type Attribute*/
   struct treeNode *child_node = curr_node->child;
   traverseParseTree(child_node);
-
   /* 1. <N7>.inh = <AnyTerm>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
@@ -1483,7 +1482,6 @@ void case_77(struct treeNode *curr_node){
 void case_78(struct treeNode *curr_node){
   /* <factor> := BO <expression> BC */
   struct treeNode *child_node = curr_node->child;
-  child_node = nextNonTerminalNode(child_node);
   traverseChildren(child_node);
 
   /* <factor>.syn  = <expression>.syn */
