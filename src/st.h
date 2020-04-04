@@ -10,7 +10,7 @@
 #include "string.h"
 #include "stDef.h"
 
-#define POLYNOMIAL_ROLLING_HASH_FACTOR 53
+#define POLYNOMIAL_ROLLING_HASH_FACTOR 17
 #define ST_DEFAULT_HASH_FUNCTION polynomialRollingHashFunction;
 
 
