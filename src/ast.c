@@ -556,7 +556,7 @@ void case_8(struct treeNode *curr_node) {
   /* define and populate structure ModuleNode */
   struct ModuleNode *module_node = (struct ModuleNode *) malloc(sizeof(struct ModuleNode));
   child_node = child_node->next->next;
-  module_node->ptr1 = newLeafNode(IDENTIFIER, child_node);
+  module_node->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str);
   child_node = nextNonTerminalNode(child_node);
   module_node->ptr2 = child_node->syn.node.inp_pli;
   child_node = nextNonTerminalNode(child_node);
