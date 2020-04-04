@@ -221,6 +221,10 @@ void symbolTableTests() {
     enum SymbolTableValueType ytype;
     assert(strl_len(st->keys) == 0);
 
+    strcpy(xval.module.name, "myModule");
+    xval.module.inputplist = NULL;
+    xval.module.outputplist = NULL;
+
     /* Initial set test */
     printf("Initial set test:\n");
     assert(symbolTableSet(st, xkey, xval, xtype, false) == false);
@@ -246,7 +250,16 @@ void symbolTableTests() {
 
     /* Test overwritting. */
     printf("Overwrite test:\n");
+
     xtype = ST_VARIABLE;
+    strcpy(xval.variable.name, "myArr");
+    xval.variable.value.num = 7;
+    xval.variable.datatype = NUM;
+    xval.variable.isArray = true;
+    xval.variable.lower_bound = 1;
+    xval.variable.upper_bound = 10;
+    xval.variable.mem_offset = NULL;
+    
     assert(symbolTableSet(st, xkey, xval, xtype, true) == true);
     node = symbolTableGet(st, xkey);
     printSymbolTableNode(node, xkey);
@@ -268,6 +281,8 @@ void symbolTableTests() {
     assert(node->value_type == ST_MODULE);
     assert(strl_len(st->keys) == 2);
 
+    printSymbolTable(st);
+
     /* Chaining implementation can be manually tested by setting the
      * ST_NUMBER_OF_BUCKETS to a lower value like 3 and then finding
      * two keys which map to the same value. This could be automated
@@ -279,17 +294,17 @@ void symbolTableTests() {
 
 int main() {
     puts("\nRunning tests...");
-    char grammar_file[] = "./docs/grammar/text/grammar.txt";
+    // char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char basic_source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
-    char adv_source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
+    // char adv_source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, adv_source_file);
-    test_createAST(grammar_file, adv_source_file);
-    // symbolTableTests();
+    // test_createAST(grammar_file, adv_source_file);
+    symbolTableTests();
     printf("\nTests complete!!!\n");
     return 0;
 }

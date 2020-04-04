@@ -30,4 +30,6 @@ bool symbolTableSet(struct SymbolTable *st, char key[ST_KEY_BUFFER_MAX_LEN],
   union SymbolTableValue value, enum SymbolTableValueType value_type,
   bool overwrite);
 
+void printSymbolTable(struct SymbolTable *st);
+
 #endif

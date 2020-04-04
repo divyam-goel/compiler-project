@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "st.h"
 
 int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
@@ -173,4 +174,71 @@ bool symbolTableSet(struct SymbolTable *st,
   }
 
   return (overwrite & exists);
+}
+
+
+char *getDataTypeString(struct VariableEntry variable) {
+    char *datatype_str;
+    char *complete_datatype_str = malloc(sizeof(char) * 128);
+    /* Free this string on the user end. */
+
+    if (variable.datatype == NUM)
+      datatype_str = "INT";
+    else if (variable.datatype == RNUM)
+      datatype_str = "REAL";
+    else if (variable.datatype == BOOLEAN_)
+      datatype_str = "BOOL";
+    else
+      datatype_str = "???";
+    
+    if (variable.isArray)
+      sprintf(complete_datatype_str, "%s[%d..%d]", datatype_str,
+              variable.lower_bound, variable.upper_bound);
+    else
+      sprintf(complete_datatype_str, "%s", datatype_str);
+    return complete_datatype_str;
+}
+
+
+void printKey(struct SymbolTable *st, char *key, bool last_key) {
+  char *comma, *datatype_str;
+  struct SymbolTableNode *data;
+  
+  data = symbolTableGet(st, key);
+  assert(data != NULL);
+
+  if (last_key)
+    comma = "";
+  else
+    comma = ",";
+
+  if (data->value_type == ST_MODULE) {
+    printf("    %s: (Module)%s\n", key, comma);
+  }
+  
+  else if (data->value_type == ST_VARIABLE) {
+    datatype_str = getDataTypeString(data->value.variable);
+    printf("    %s: (Variable, %s)%s\n", key, datatype_str, comma);
+    free(datatype_str);
+  }
+
+  else {
+    fprintf(stderr, "printKey: Invalid value_type for key %s.\n", key);
+    exit(EXIT_FAILURE);
+  }
+}
+
+
+void printSymbolTable(struct SymbolTable *st) {
+  char *key;
+  int num_keys = st->keys->filled;
+
+  printf("{\n");
+  for(int i = 0; i < num_keys - 1; ++i) {
+    key = strl_get(st->keys, i);
+    printKey(st, key, false);
+  }
+  key = strl_get(st->keys, num_keys - 1);
+  printKey(st, key, true);
+  printf("}\n");
 }
