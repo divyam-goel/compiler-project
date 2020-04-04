@@ -203,7 +203,7 @@ void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
         printf("\tValue found, type: %s\n", st_value_types[node->value_type]);
 }
 
-void symbolTableTests() {
+void symbolTableCoreTests() {
     printf("Running symbol table tests... \n");
     
     char xkey[ST_KEY_BUFFER_MAX_LEN] = "ac";
@@ -292,11 +292,22 @@ void symbolTableTests() {
     deleteSymbolTable(st);
 }
 
+
+void test_createSymbolTables(char *grammar_file, char *source_file) {
+    extern struct SymbolTable *global_symbol_table;
+    test_createAST(grammar_file, source_file);
+    printf("Greating symbol tables... ");
+    generateSymbolTables();
+    printf("Done.\nPrinting the global symbol table: \n");
+    printSymbolTable(global_symbol_table);
+}
+
+
 int main() {
     puts("\nRunning tests...");
-    // char grammar_file[] = "./docs/grammar/text/grammar.txt";
+    char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char basic_source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
-    // char adv_source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
+    char adv_source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
@@ -304,7 +315,8 @@ int main() {
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, adv_source_file);
     // test_createAST(grammar_file, adv_source_file);
-    symbolTableTests();
+    // symbolTableCoreTests();
+    test_createSymbolTables(grammar_file, adv_source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

@@ -233,6 +233,11 @@ void printSymbolTable(struct SymbolTable *st) {
   char *key;
   int num_keys = st->keys->filled;
 
+  if (num_keys == 0) {
+    printf("{}\n");
+    return;
+  }
+
   printf("{\n");
   for(int i = 0; i < num_keys - 1; ++i) {
     key = strl_get(st->keys, i);

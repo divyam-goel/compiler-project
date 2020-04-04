@@ -32,4 +32,6 @@ bool symbolTableSet(struct SymbolTable *st, char key[ST_KEY_BUFFER_MAX_LEN],
 
 void printSymbolTable(struct SymbolTable *st);
 
+void generateSymbolTables();
+
 #endif

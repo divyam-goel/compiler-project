@@ -11,8 +11,9 @@ OBJ_CFLAGS = $(CFLAGS) -c
 # driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o
 # 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
 
-build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o
-	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o lib/stCore.o -o build/tests $(CFLAGS)
+build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o
+	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
+	lib/stCore.o lib/st.o -o build/tests $(CFLAGS)
 
 test.o: test/tests.c \
 		src/utils.h \
@@ -60,6 +61,10 @@ ast.o: src/ast.c src/ast.h src/astDef.h
 # This actually depends on more header files:
 stCore.o: src/stCore.c src/st.h src/stDef.h
 	$(CC) src/stCore.c -o lib/stCore.o $(OBJ_CFLAGS)
+
+# This actually depends on more header files:
+st.o: src/st.c src/st.h src/stDef.h
+	$(CC) src/st.c -o lib/st.o $(OBJ_CFLAGS)
 
 clean:
 	find . -type f -name '*.o' -delete
