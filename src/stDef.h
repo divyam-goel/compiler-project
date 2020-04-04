@@ -12,7 +12,6 @@
 #define ST_NUMBER_OF_BUCKETS 1009
 #define ST_SCOPE_TAG_MAX_LEN 125
 #define ST_DEFAULT_SCOPE_TAG "null"
-#define IDENTIFIER_NAME_MAX_LEN 20
 
 struct ModuleEntry {
   char name[IDENTIFIER_NAME_MAX_LEN + 1];

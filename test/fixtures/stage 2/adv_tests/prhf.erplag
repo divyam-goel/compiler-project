@@ -1,5 +1,7 @@
 ** ERPLAG code for implementing the polynomial rolling hash function **
 
+declare module mod;
+
 <<<driver program>>>
 start
 

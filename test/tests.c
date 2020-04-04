@@ -287,8 +287,8 @@ int main() {
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
-    test_parseInputSourceCode(grammar_file, adv_source_file);
-    // test_createAST(grammar_file, source_file);
+    // test_parseInputSourceCode(grammar_file, adv_source_file);
+    test_createAST(grammar_file, adv_source_file);
     // symbolTableTests();
     printf("\nTests complete!!!\n");
     return 0;

@@ -1,4 +1,5 @@
 #include "ast.h"
+#include <assert.h>
 
 extern struct parseTree PT;
 struct ProgramNode AST;
@@ -1787,7 +1788,7 @@ struct LeafNode *newLeafNode(int type, void *data) {
       break;
     case (IDENTIFIER):
       datalen = strlen(data);
-      new_node->value.entry = malloc(datalen + 1);  /* +1 for the '\0' */
+      assert(datalen <= 20);
       strcpy(new_node->value.entry, (char *)data);
       break;
     case (INTEGER):

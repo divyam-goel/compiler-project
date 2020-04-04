@@ -5,6 +5,8 @@
 #include "grammar.h"
 #include "lexerDef.h"
 
+#define IDENTIFIER_NAME_MAX_LEN 20
+
 /* ----- BEGIN UNIONS ----- */
 union ASTNodesUnion {
   struct ProgramNode *pro;
@@ -42,7 +44,7 @@ union LeafNodeUnion {
   int num;
   float rnum;
   bool boolean;
-  void *entry;  // TEMP: Just until we define SymbolTableNode.
+  char entry[IDENTIFIER_NAME_MAX_LEN];
 };
 /* ----- END UNIONS ----- */
 
