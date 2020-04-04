@@ -194,7 +194,7 @@ void test_createAST(char *grammar_file, char *source_file) {
     printAST();
 }
 
-char *st_value_types[] = {"ST_MODULE", "ST_FUNCTION", "ST_VARIABLE"};
+char *st_value_types[] = {"ST_MODULE", "ST_MODULE", "ST_VARIABLE"};
 
 void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
     if (node == NULL)
@@ -216,7 +216,7 @@ void symbolTableTests() {
     struct SymbolTableNode *node;
 
     union SymbolTableValue xval;
-    enum SymbolTableValueType xtype = ST_FUNCTION;
+    enum SymbolTableValueType xtype = ST_MODULE;
     union SymbolTableValue yval;
     enum SymbolTableValueType ytype;
     assert(strl_len(st->keys) == 0);
@@ -226,7 +226,7 @@ void symbolTableTests() {
     assert(symbolTableSet(st, xkey, xval, xtype, false) == false);
     node = symbolTableGet(st, xkey);
     printSymbolTableNode(node, xkey);
-    assert(node->value_type == ST_FUNCTION);
+    assert(node->value_type == ST_MODULE);
     node = symbolTableGet(st, ykey);
     printSymbolTableNode(node, ykey);
     assert(node == NULL);
@@ -238,7 +238,7 @@ void symbolTableTests() {
     assert(symbolTableSet(st, xkey, xval, xtype, false) == false);
     node = symbolTableGet(st, xkey);
     printSymbolTableNode(node, xkey);
-    assert(node->value_type == ST_FUNCTION);
+    assert(node->value_type == ST_MODULE);
     node = symbolTableGet(st, ykey);
     printSymbolTableNode(node, ykey);
     assert(node == NULL);

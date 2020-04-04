@@ -28,7 +28,7 @@ union lexeme {
 	char str[21];
 	int num;
 	float rnum;
-    bool boolean;
+  bool boolean;
 };
 
 
