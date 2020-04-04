@@ -2060,12 +2060,7 @@ void printAST() {
   printf("\n");
 
   // Print Driver module statements
-<<<<<<< 86f540f62626a4e1cf90e1b0a5edd89ae508d648
-  printStatements(pro->ptr3);
-}
-=======
   if (pro->ptr2 != NULL) printStatements(pro->ptr2->ptr1->ptr4);
   if (pro->ptr3 != NULL) printStatements(pro->ptr3);
   if (pro->ptr4 != NULL) printStatements(pro->ptr4->ptr1->ptr4);
 }
->>>>>>> Extended Print AST functions
