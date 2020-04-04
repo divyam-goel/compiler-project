@@ -27,13 +27,13 @@ Previously declared on line %d.\n", new_value.module.name, new_value.module.dec_
 existing_node->value.module.dec_line_number);
     exit(EXIT_FAILURE);
   }
-  symbolTableSet(global_symbol_table, new_value.module.name, new_value, ST_MODULE, true);
+  symbolTableSet(global_symbol_table, new_value.module.name, new_value, ST_MODULE, false);
 
   return;
 }
 
 
-void updateModuleEntry(struct ModuleNode *module) {
+void updateModuleEntry(struct ModuleNode *module, bool post_driver) {
   /* If a module was previously declared then an entry would have been created
    * for it in the symbol table already. Now what we need to do is update that
    * existing decleration (the InputPlist and OutputPlist) or raise an error if
@@ -43,15 +43,34 @@ void updateModuleEntry(struct ModuleNode *module) {
 
   existing_node = symbolTableGet(global_symbol_table, module_name);
   if (existing_node == NULL) {
-    fprintf(stderr, "SEMANTIC ERROR: The module decleration for \"%s\" does not exist yet. However \
+    if (post_driver) {
+      fprintf(stderr, "SEMANTIC ERROR: The module decleration for \"%s\" does not exist yet. However \
 a definition was given on line number: %d\n", module_name, module->ptr1->line_number);
-    exit(EXIT_FAILURE);
+      exit(EXIT_FAILURE);
+    } else {
+      /* Create a new node. Then populate everything at once. Ideally we should
+       * avoid duplication of code against addModuleEntry, but due to time
+       * constaints, we'll just accept the duplicated code. Or we should at least
+       * rename this function to represent that it may also create a new entry. */
+      union SymbolTableValue new_value;
+
+      strcpy(new_value.module.name, module->ptr1->value.entry);
+      new_value.module.dec_line_number = module->ptr1->line_number;
+      new_value.module.def_line_number = module->ptr1->line_number;
+      new_value.module.inputplist = module->ptr2;
+      new_value.module.outputplist = module->ptr3;
+
+      symbolTableSet(global_symbol_table, new_value.module.name, new_value, ST_MODULE, false);
+
+      return;
+    }
   }
 
   if (existing_node->value.module.def_line_number != -1) {
     printf("SEMANTIC ERROR: The module \"%s\" was already defined at line number %d, and is being \
 redeclared on line number %d.\n", module_name, existing_node->value.module.def_line_number,
 module->ptr1->line_number);
+    exit(EXIT_FAILURE);
   }
 
   existing_node->value.module.def_line_number = module->ptr1->line_number;
@@ -68,22 +87,22 @@ void generateSymbolTables() {
   global_symbol_table = newSymbolTable(NULL, "<Global>", NULL);
   struct ModuleDeclarationNode *moduleDec = AST.ptr1;
   
-  /* Record each module decleration. */
+  /* Record each pre-driver module decleration. */
   while (moduleDec != NULL) {
     addModuleEntry(moduleDec);
     moduleDec = moduleDec->ptr2;
   }
 
   /* Record each non-driver module's information. The module should have
-   * already been declared though*/
+   * already been declared though. */
   struct OtherModuleNode *omodule = AST.ptr2;
   while (omodule != NULL) {
-    updateModuleEntry(omodule->ptr1);
+    updateModuleEntry(omodule->ptr1, false);
     omodule = omodule->ptr2;
   }
   omodule = AST.ptr4;
   while (omodule != NULL) {
-    updateModuleEntry(omodule->ptr1);
+    updateModuleEntry(omodule->ptr1, true);
     omodule = omodule->ptr2;
   }
 
