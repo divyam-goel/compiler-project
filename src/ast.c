@@ -963,7 +963,7 @@ void case_41(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
 
   /* <var>.syn = new LeafNode(RNUM, RNUM.val) */
-  curr_node->syn.node.lea = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.rnum), child_node->symbol.terminal.line_no);
+  curr_node->syn.node.lea = newLeafNode(RNUM, &(child_node->symbol.terminal.lexeme.rnum), child_node->symbol.terminal.line_no);
   curr_node->syn.type = LEAF_NODE;
 }
 
@@ -1014,7 +1014,7 @@ void case_46(struct treeNode *curr_node) {
   /* <assignmentStmt> := ID <whichStmt> */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
-
+  
   /* <assignmentStmt>.syn = new AssignStmtNode(new LeafNode(ID, ID.entry), <whichStmt>.syn) */
   struct AssignStmtNode *agn_stm = (struct AssignStmtNode *) malloc(sizeof(struct AssignStmtNode));
   agn_stm->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str, child_node->symbol.terminal.line_no);
@@ -1260,6 +1260,7 @@ void case_65(struct treeNode *curr_node) {
   next_node->inh = child_node->syn;
   traverseParseTree(next_node);
 
+  
   /* 2. IF (<N7>.syn == NULL) <expression>.syn = <AnyTerm>.syn ELSE <expression>.syn = <N7>.syn */
   if(next_node->syn.type == NULL_NODE) {  // checks for NULL using type attr.
     curr_node->syn = child_node->syn;
@@ -1267,6 +1268,7 @@ void case_65(struct treeNode *curr_node) {
   else {
     curr_node->syn = next_node->syn;
   }
+
 }
 
 
@@ -1281,14 +1283,16 @@ void case_66(struct treeNode *curr_node) {
   /* 1. <N7>1.inh = <AnyTerm>.syn */
   struct treeNode *next_node = nextNonTerminalNode(child_node);
   next_node->inh = child_node->syn;
+  
   traverseParseTree(next_node);
-
+  
   /* 2. */
   /* IF (<N7>1.syn != NULL) <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <N7>1.syn) */
   /* ELSE <N7>.syn = new N7Node(<N7>.inh, <logicalOp>.val, <AnyTerm>.syn) */
   struct N7Node *n7_node = (struct N7Node *)malloc(sizeof(struct N7Node));
   n7_node->ptr1 = newAttribute(curr_node->inh);
   n7_node->logicalOp = val;
+  
   if(next_node->syn.type == NULL_NODE) {
     n7_node->ptr2 = newAttribute(child_node->syn);
   }
@@ -1485,7 +1489,7 @@ void case_78(struct treeNode *curr_node){
   traverseChildren(child_node);
 
   /* <factor>.syn  = <expression>.syn */
-  child_node = nextNonTerminalNode(child_node);
+  // child_node = nextNonTerminalNode(child_node);
   curr_node->syn = child_node->syn;
 }
 
