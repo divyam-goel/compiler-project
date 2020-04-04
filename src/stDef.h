@@ -15,7 +15,8 @@
 
 struct ModuleEntry {
   char name[IDENTIFIER_NAME_MAX_LEN + 1];
-  int line_number;
+  int dec_line_number;
+  int def_line_number;
   struct InputPlistNode *inputplist;
   struct OutputPlistNode *outputplist;
 };

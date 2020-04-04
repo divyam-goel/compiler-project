@@ -222,6 +222,8 @@ void symbolTableCoreTests() {
     assert(strl_len(st->keys) == 0);
 
     strcpy(xval.module.name, "myModule");
+    xval.module.dec_line_number = 1;
+    xval.module.def_line_number = 10;
     xval.module.inputplist = NULL;
     xval.module.outputplist = NULL;
 
@@ -253,6 +255,8 @@ void symbolTableCoreTests() {
 
     xtype = ST_VARIABLE;
     strcpy(xval.variable.name, "myArr");
+    xval.module.dec_line_number = 2;
+    xval.module.def_line_number = 20;
     xval.variable.value.num = 7;
     xval.variable.datatype = NUM;
     xval.variable.isArray = true;
@@ -275,6 +279,8 @@ void symbolTableCoreTests() {
      * key does not exist, it should return false. */ 
     printf("Test overwrite when key does not exist: \n");
     ytype = ST_MODULE;
+    yval.module.dec_line_number = 5;
+    yval.module.def_line_number = 50;
     assert(symbolTableSet(st, ykey, yval, ytype, true) == false);
     node = symbolTableGet(st, ykey);
     printSymbolTableNode(node, ykey);
@@ -304,6 +310,8 @@ void test_createSymbolTables(char *grammar_file, char *source_file) {
 
 
 int main() {
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char basic_source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
