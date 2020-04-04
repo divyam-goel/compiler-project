@@ -1775,32 +1775,34 @@ struct treeNode *nextNonTerminalNode(struct treeNode *curr_node) {
   return NULL;
 }
 
-struct LeafNode *newLeafNode(int type, void *data,int line_num) {
+struct LeafNode *newLeafNode(int type, void *data, int line_num) {
   int datalen = 0;
   struct LeafNode *new_node = (struct LeafNode *) malloc(sizeof(struct LeafNode));
   new_node->type = type;
   new_node->line_number = line_num;
-  switch (new_node->type) {
-    case (NUM):
-      memcpy(&(new_node->value.num), data, sizeof(int));
-      break;
-    case (RNUM):
-      memcpy(&(new_node->value.rnum), data, sizeof(float));
-      break;
-    case (IDENTIFIER):
-      datalen = strlen(data);
-      assert(datalen <= 20);
-      strcpy(new_node->value.entry, (char *)data);
-      break;
-    case (INTEGER):
-    case (REAL):
-    case (BOOLEAN_):
-    case (TRUE_):
-    case (FALSE_):
-      break;
-    default:
-      free(new_node);
-      die("Invalid node type.\n");
+  if (data != NULL) {
+    switch (new_node->type) {
+      case (NUM):
+        memcpy(&(new_node->value.num), data, sizeof(int));
+        break;
+      case (RNUM):
+        memcpy(&(new_node->value.rnum), data, sizeof(float));
+        break;
+      case (IDENTIFIER):
+        datalen = strlen((char *) data);
+        assert(datalen <= 20);
+        strcpy(new_node->value.entry, (char *)data);
+        break;
+      case (INTEGER):
+      case (REAL):
+      case (BOOLEAN_):
+      case (TRUE_):
+      case (FALSE_):
+        break;
+      default:
+        free(new_node);
+        die("Invalid node type.\n");
+    }
   }
   return new_node;
 }
