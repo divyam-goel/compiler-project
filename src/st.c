@@ -76,29 +76,30 @@ void handleVariablesDecleration(struct DeclareStmtNode *declaration,
   struct Attribute *datatype_node = declaration->ptr2;
 
   current_identifier = declaration->ptr1;
-  identifier_name = current_identifier->ptr1->value.entry;
   line_number = current_identifier->ptr1->line_number;
-  existing_node = symbolTableGet(current_scope, identifier_name);
-  if (existing_node != NULL) {
-    fprintf(stderr, "SEMANTIC ERROR: Detected a redecleration of variable \"%s\" on line %d. \
-Previously declared on line %d.\n", identifier_name, line_number,
-existing_node->value.variable.line_number);
-    exit(EXIT_FAILURE);
-  }
-  
   if (datatype_node->type == ARRAY_TYPE_NODE) {
-    is_array = true;
-    arr_type_node = datatype_node->node.arr_typ;
-    base_datatype = arr_type_node->ptr1->type;
-    dyn_range_node = arr_type_node->ptr2;
-  } else {
-    is_array = false;
-    arr_type_node = NULL;
-    base_datatype = datatype_node->node.lea->type;
-    dyn_range_node = NULL;
-  }
+     is_array = true;
+     arr_type_node = datatype_node->node.arr_typ;
+     base_datatype = arr_type_node->ptr1->type;
+     dyn_range_node = arr_type_node->ptr2;
+   } else {
+     is_array = false;
+     arr_type_node = NULL;
+     base_datatype = datatype_node->node.lea->type;
+     dyn_range_node = NULL;
+   }
 
   while (current_identifier != NULL) {
+
+    identifier_name = current_identifier->ptr1->value.entry;
+    existing_node = symbolTableGet(current_scope, identifier_name);
+    if (existing_node != NULL) {
+      fprintf(stderr, "SEMANTIC ERROR: Detected a redecleration of variable \"%s\" on line %d. \
+Previously declared on line %d.\n", identifier_name, line_number,
+existing_node->value.variable.line_number);
+      exit(EXIT_FAILURE);
+    }
+
     strcpy(new_value.variable.name, identifier_name);
     new_value.variable.line_number = line_number;
     new_value.variable.value = getDefaultValueForType(base_datatype);  // TODO: Rework this for arrays.
@@ -119,6 +120,7 @@ existing_node->value.variable.line_number);
 
     current_identifier->ptr1->current_scope = current_scope;
     current_identifier = current_identifier->ptr2;
+
   }
 }
 
@@ -141,9 +143,11 @@ void handleStatement(struct StatementNode *current_statement,
       while_loop = current_attribute->node.whi_ite_stm;
       inner_statement = while_loop->ptr2;
       walkThoughStatements(inner_statement, inner_scope);
-      if (st_debug_mode)
+      if (st_debug_mode) {
         printf("DEBUG WHILE LOOP SCOPE: \n");
-      printSymbolTable(current_scope);
+        printSymbolTable(current_scope);
+        printf("\n");
+      }
       break;
 
     case FOR_ITERATIVE_STMT_NODE:
@@ -153,9 +157,11 @@ void handleStatement(struct StatementNode *current_statement,
       for_loop = current_attribute->node.for_ite_stm;
       inner_statement = for_loop->ptr3;
       walkThoughStatements(inner_statement, inner_scope);
-      if (st_debug_mode)
+      if (st_debug_mode) {
         printf("DEBUG FOR LOOP SCOPE: \n");
-      printSymbolTable(current_scope);
+        printSymbolTable(current_scope);
+        printf("\n");
+      }
       break;
 
     case DECLARE_STMT_NODE:
@@ -190,9 +196,11 @@ void generateSymbolTableForModule(struct ModuleNode *module) {
     module->ptr1->value.entry, NULL);
   struct StatementNode *current_statement = module->ptr4;
   walkThoughStatements(current_statement, current_scope);
-  if (st_debug_mode)
-    printf("DEBUG MODULE SCOPE:\n");
-  printSymbolTable(current_scope);
+  if (st_debug_mode) {
+    printf("DEBUG MODULE (%s) SCOPE:\n", module->ptr1->value.entry);
+    printSymbolTable(current_scope);
+    printf("\n");
+  }
 }
 
 
@@ -254,22 +262,23 @@ a definition was given on line number: %d\n", module_name, module->ptr1->line_nu
 
       symbolTableSet(global_symbol_table, new_value.module.name, new_value, ST_MODULE, false);
 
-      return;
     }
   }
 
-  if (existing_node->value.module.def_line_number != -1) {
-    printf("SEMANTIC ERROR: The module \"%s\" was already defined at line number %d, and is being \
-redeclared on line number %d.\n", module_name, existing_node->value.module.def_line_number,
-module->ptr1->line_number);
-    exit(EXIT_FAILURE);
+  else {
+    if (existing_node->value.module.def_line_number != -1) {
+      printf("SEMANTIC ERROR: The module \"%s\" was already defined at line number %d, and is being \
+  redeclared on line number %d.\n", module_name, existing_node->value.module.def_line_number,
+  module->ptr1->line_number);
+      exit(EXIT_FAILURE);
+    }
+
+    existing_node->value.module.def_line_number = module->ptr1->line_number;
+    existing_node->value.module.inputplist = module->ptr2;
+    existing_node->value.module.outputplist = module->ptr3;
+
+    symbolTableSet(global_symbol_table, module_name, existing_node->value, existing_node->value_type, true);
   }
-
-  existing_node->value.module.def_line_number = module->ptr1->line_number;
-  existing_node->value.module.inputplist = module->ptr2;
-  existing_node->value.module.outputplist = module->ptr3;
-
-  symbolTableSet(global_symbol_table, module_name, existing_node->value, existing_node->value_type, true);
 
   generateSymbolTableForModule(module);
 
@@ -300,9 +309,11 @@ void generateSymbolTables() {
     "<DriverModule>", NULL);
   if (AST.ptr3 != NULL) {
     walkThoughStatements(AST.ptr3, driver_module_scope);
-    if (st_debug_mode)
+    if (st_debug_mode) {
       printf("DEBUG DRIVER SCOPE:\n");
-    printSymbolTable(driver_module_scope);
+      printSymbolTable(driver_module_scope);
+      printf("\n");
+    }
   }
 
 

@@ -2,10 +2,19 @@
 
 declare module mod;
 
+<<module unused_module>>
+takes input [m : integer];
+start
+  declare x : boolean;
+  declare y : integer;
+  declare z : real;
+end
+
 <<<driver program>>>
 start
 
-  declare p, i, hash_value, multiplier, num_buckets : integer;
+  declare p, i, sum, hash_value :integer;
+  declare multiplier, num_buckets : integer;
   p := 3;
   i := 0;
   sum := 0;
@@ -36,7 +45,7 @@ start
   end
 
   [hash_value] := use module mod with parameters sum, num_buckets;
-  print(sum);
+  print(hash_value);
 
 end
 

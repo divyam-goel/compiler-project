@@ -306,7 +306,7 @@ void test_createSymbolTables(char *grammar_file, char *source_file) {
     test_createAST(grammar_file, source_file);
     printf("Greating symbol tables... \n");
     generateSymbolTables();
-    printf("Done.\nPrinting the global symbol table: \n");
+    printf("Done.\nGlobal Symbol Table: \n");
     printSymbolTable(global_symbol_table);
 }
 
