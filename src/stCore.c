@@ -182,9 +182,9 @@ char *getDataTypeString(struct VariableEntry variable) {
     char *complete_datatype_str = malloc(sizeof(char) * 128);
     /* Free this string on the user end. */
 
-    if (variable.datatype == NUM)
+    if (variable.datatype == INTEGER)
       datatype_str = "INT";
-    else if (variable.datatype == RNUM)
+    else if (variable.datatype == REAL)
       datatype_str = "REAL";
     else if (variable.datatype == BOOLEAN_)
       datatype_str = "BOOL";

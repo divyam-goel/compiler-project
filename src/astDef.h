@@ -125,6 +125,7 @@ struct LeafNode {
   enum terminal type; /* An enum TERMINAL value. One of BOOL, ID, NUM, RNUM. */
   union LeafNodeUnion value;
   int line_number;
+  struct SymbolTable *current_scope;
 };
 
 struct ArrayTypeNode {

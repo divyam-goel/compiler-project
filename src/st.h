@@ -34,4 +34,6 @@ void printSymbolTable(struct SymbolTable *st);
 
 void generateSymbolTables();
 
+void walkThoughStatements(struct StatementNode *current_statement,
+                          struct SymbolTable *current_scope);
 #endif

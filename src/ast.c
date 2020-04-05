@@ -731,9 +731,11 @@ void case_20(struct treeNode *curr_node) {
 void case_21(struct treeNode *curr_node) {
   /* <dynamic_range> := <index> RANGEOP <index> */
   struct treeNode *child_node = curr_node->child;
+  traverseChildren(child_node);
 
   struct DynamicRangeNode *dyn_ran = (struct DynamicRangeNode *) malloc(sizeof(struct DynamicRangeNode));
   dyn_ran->ptr1 = child_node->syn.node.lea;
+
   child_node = nextNonTerminalNode(child_node);
   dyn_ran->ptr2 = child_node->syn.node.lea;
 
@@ -1810,6 +1812,7 @@ struct LeafNode *newLeafNode(int type, void *data, int line_num) {
         die("Invalid node type.\n");
     }
   }
+  new_node->current_scope = NULL;  /* Will be filled when populating the symbol table. */
   return new_node;
 }
 
