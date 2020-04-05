@@ -145,7 +145,7 @@ void handleStatement(struct StatementNode *current_statement,
       walkThoughStatements(inner_statement, inner_scope);
       if (st_debug_mode) {
         printf("DEBUG WHILE LOOP SCOPE: \n");
-        printSymbolTable(current_scope);
+        printSymbolTable(inner_scope);
         printf("\n");
       }
       break;
@@ -159,7 +159,7 @@ void handleStatement(struct StatementNode *current_statement,
       walkThoughStatements(inner_statement, inner_scope);
       if (st_debug_mode) {
         printf("DEBUG FOR LOOP SCOPE: \n");
-        printSymbolTable(current_scope);
+        printSymbolTable(inner_scope);
         printf("\n");
       }
       break;
