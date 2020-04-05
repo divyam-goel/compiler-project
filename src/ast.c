@@ -1812,7 +1812,7 @@ struct LeafNode *newLeafNode(int type, void *data, int line_num) {
         die("Invalid node type.\n");
     }
   }
-  new_node->current_scope = NULL;  /* Will be filled when populating the symbol table. */
+  new_node->scope = NULL;  /* Will be filled when populating the symbol table. */
   return new_node;
 }
 

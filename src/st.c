@@ -1,4 +1,5 @@
 #include "st.h"
+#include <assert.h>
 
 extern struct ProgramNode AST;
 struct SymbolTable *global_symbol_table = NULL;
@@ -62,6 +63,7 @@ int getIndexValue(struct LeafNode *lea, struct SymbolTable *current_scope, int l
 }
 
 
+
 void handleVariablesDecleration(struct DeclareStmtNode *declaration,
                                 struct SymbolTable *current_scope) {
   bool is_array;
@@ -118,7 +120,7 @@ existing_node->value.variable.line_number);
 
     symbolTableSet(current_scope, new_value.variable.name, new_value, ST_VARIABLE, false);
 
-    current_identifier->ptr1->current_scope = current_scope;
+    current_identifier->ptr1->scope = current_scope;
     current_identifier = current_identifier->ptr2;
 
   }
@@ -192,8 +194,8 @@ void walkThoughStatements(struct StatementNode *current_statement,
 void generateSymbolTableForModule(struct ModuleNode *module) {
   /* Run through the module's body of statements and create and populate
    * a new symbol table for each scope. */
-  struct SymbolTable *current_scope = newSymbolTable(global_symbol_table,
-    module->ptr1->value.entry, NULL);
+  struct SymbolTable *current_scope = module->ptr1->scope;
+  assert(current_scope != NULL);
   struct StatementNode *current_statement = module->ptr4;
   walkThoughStatements(current_statement, current_scope);
   if (st_debug_mode) {
@@ -233,6 +235,136 @@ existing_node->value.module.dec_line_number);
 }
 
 
+void handleInputPlistWithDuplicatedCode(struct InputPlistNode *inpl,
+                                        struct SymbolTable *current_scope) {
+  bool is_array;
+  int line_number;
+  char *identifier_name;
+  union SymbolTableValue new_value;
+  struct SymbolTableNode *existing_node;
+  struct Attribute *datatype_node;
+  struct ArrayTypeNode *arr_type_node;
+  struct DynamicRangeNode *dyn_range_node;
+  enum terminal base_datatype;
+
+  while (inpl != NULL) {
+    identifier_name = inpl->ptr1->value.entry;
+    datatype_node = inpl->ptr2;
+
+    if (datatype_node->type == ARRAY_TYPE_NODE) {
+       is_array = true;
+       arr_type_node = datatype_node->node.arr_typ;
+       base_datatype = arr_type_node->ptr1->type;
+       dyn_range_node = arr_type_node->ptr2;
+     } else {
+       is_array = false;
+       arr_type_node = NULL;
+       base_datatype = datatype_node->node.lea->type;
+       dyn_range_node = NULL;
+     }
+
+    existing_node = symbolTableGet(current_scope, identifier_name);
+    if (existing_node != NULL) {
+      fprintf(stderr, "SEMANTIC ERROR: Detected a redecleration of variable \"%s\" on line %d. \
+Previously declared on line %d.\n", identifier_name, line_number,
+existing_node->value.variable.line_number);
+      exit(EXIT_FAILURE);
+    }
+
+    line_number = inpl->ptr1->line_number;
+    strcpy(new_value.variable.name, identifier_name);
+    new_value.variable.line_number = line_number;
+    new_value.variable.value = getDefaultValueForType(base_datatype);  // TODO: Rework this for arrays.
+    new_value.variable.datatype = base_datatype;
+    new_value.variable.isArray = is_array;
+    if (is_array) {
+      new_value.variable.lower_bound = getIndexValue(dyn_range_node->ptr1,
+        current_scope, line_number); 
+      new_value.variable.upper_bound = getIndexValue(dyn_range_node->ptr2,
+        current_scope, line_number); 
+    } else {
+      new_value.variable.lower_bound = 0;
+      new_value.variable.upper_bound = 0;
+    }
+    new_value.variable.mem_offset = NULL; // TODO: Figure out what to do with the memory offset.
+
+    symbolTableSet(current_scope, new_value.variable.name, new_value, ST_VARIABLE, false);
+
+    inpl->ptr1->scope = current_scope;
+    inpl = inpl->ptr3;
+  }
+}
+
+
+void handleOutputPlistWithDuplicatedCode(struct OutputPlistNode *outpl,
+                                         struct SymbolTable *current_scope) {
+  bool is_array;
+  int line_number;
+  char *identifier_name;
+  union SymbolTableValue new_value;
+  struct SymbolTableNode *existing_node;
+  struct Attribute *datatype_node;
+  struct DynamicRangeNode *dyn_range_node;
+  enum terminal base_datatype;
+
+  while (outpl != NULL) {
+    identifier_name = outpl->ptr1->value.entry;
+    datatype_node = outpl->ptr2;
+
+    is_array = false;
+    base_datatype = datatype_node->node.lea->type;
+    dyn_range_node = NULL;
+
+    existing_node = symbolTableGet(current_scope, identifier_name);
+    if (existing_node != NULL) {
+      fprintf(stderr, "SEMANTIC ERROR: Detected a redecleration of variable \"%s\" on line %d. \
+Previously declared on line %d.\n", identifier_name, line_number,
+existing_node->value.variable.line_number);
+      exit(EXIT_FAILURE);
+    }
+
+    line_number = outpl->ptr1->line_number;
+    strcpy(new_value.variable.name, identifier_name);
+    new_value.variable.line_number = line_number;
+    new_value.variable.value = getDefaultValueForType(base_datatype);  // TODO: Rework this for arrays.
+    new_value.variable.datatype = base_datatype;
+    new_value.variable.isArray = is_array;
+    if (is_array) {
+      new_value.variable.lower_bound = getIndexValue(dyn_range_node->ptr1,
+        current_scope, line_number); 
+      new_value.variable.upper_bound = getIndexValue(dyn_range_node->ptr2,
+        current_scope, line_number); 
+    } else {
+      new_value.variable.lower_bound = 0;
+      new_value.variable.upper_bound = 0;
+    }
+    new_value.variable.mem_offset = NULL; // TODO: Figure out what to do with the memory offset.
+
+    symbolTableSet(current_scope, new_value.variable.name, new_value, ST_VARIABLE, false);
+
+    outpl->ptr1->scope = current_scope;
+    outpl = outpl->ptr3;
+  }
+}
+
+
+void addModuleInpOutLists(struct ModuleNode *module) {
+  struct SymbolTable *current_scope = newSymbolTable(global_symbol_table,
+    module->ptr1->value.entry, NULL);
+  module->ptr1->scope = current_scope;
+
+  /* Brace yourself, more duplicated code up ahead. First between what's
+   * below and handleVariablesDeclerations, and then between inpl
+   * and outpl. With more time and preferably a language supporting OOP,
+   * I would have avoided this duplication. But for now, I have to keep
+   * things moving. */
+
+  /* I just moved the atrocities into separate functions */
+  handleInputPlistWithDuplicatedCode(module->ptr2, current_scope);
+  handleOutputPlistWithDuplicatedCode(module->ptr3, current_scope);
+}
+
+
 void updateModuleEntry(struct ModuleNode *module, bool post_driver) {
   /* If a module was previously declared then an entry would have been created
    * for it in the symbol table already. Now what we need to do is update that
@@ -261,7 +393,6 @@ a definition was given on line number: %d\n", module_name, module->ptr1->line_nu
       new_value.module.outputplist = module->ptr3;
 
       symbolTableSet(global_symbol_table, new_value.module.name, new_value, ST_MODULE, false);
-
     }
   }
 
@@ -280,6 +411,7 @@ a definition was given on line number: %d\n", module_name, module->ptr1->line_nu
     symbolTableSet(global_symbol_table, module_name, existing_node->value, existing_node->value_type, true);
   }
 
+  addModuleInpOutLists(module);
   generateSymbolTableForModule(module);
 
   return;
