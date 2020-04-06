@@ -15,7 +15,6 @@ void semanticChecker(struct ProgramNode *AST) {
 
 
 enum terminal leafType(struct LeafNode *leaf) {
-  printf("DEBUG: Checkpoint 1!");
   enum terminal data_type;
   struct SymbolTableNode *symbol_table_entry = NULL;
   
@@ -27,8 +26,8 @@ enum terminal leafType(struct LeafNode *leaf) {
       data_type = REAL;
       break;
     case IDENTIFIER:
-      symbol_table_entry = symbolTableGet(leaf->scope,
-      leaf->value.entry);
+      symbol_table_entry = symbolTableGet(leaf->scope, leaf->value.entry);
+      printf("DEBUG: Checkpoint 1!\n");
       data_type = symbol_table_entry->value.variable.datatype;
       break;
     case TRUE_:
@@ -118,16 +117,9 @@ enum terminal expressionType(struct Attribute *expression) {
   return left_operand_type;
 }
 
-void temp_assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
-  if (assignment_node == NULL);{
-    printf("DEBUG: Help!!.\n");
-    return;
-  }
-}
-
 
 void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
-  if (assignment_node == NULL);{
+  if (assignment_node == NULL) {
     // printf("DEBUG: Don't know what's happening.\n");
     return;
   }
@@ -213,10 +205,8 @@ void statementSemanticChecker(struct StatementNode *statement_node) {
     case ASSIGN_STMT_NODE:
       debug_assignment_node = statement_node->ptr1->node.agn_stm;
       if (debug_assignment_node != NULL)
-        printf("DEBUG: Don't know what's happening.\n"); // LOOK HERE: this is the issue
-        // it prints this debug statement here and then in the function it prints the debug statement there
-        // while the if condition is opposite for both of them
-      temp_assignmentTypeChecker(debug_assignment_node);
+        printf("DEBUG: Don't know what's happening.\n");
+      assignmentTypeChecker(debug_assignment_node);
       break;
     case MODULE_REUSE_STMT_NODE:
       moduleReuseTypeChecker(statement_node->ptr1->node.mod_reu_stm);
