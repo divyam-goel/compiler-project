@@ -29,8 +29,8 @@ void traverseParseTree(struct treeNode *curr_node) {
   }
 
   int rule_num = curr_node->rule_number + 1;
-  printf("CASE: %d\n", rule_num);
-  fflush(stdout);
+  // printf("CASE: %d\n", rule_num);
+  // fflush(stdout);
   switch(rule_num) {
 
     case 1: // <program> := <moduleDeclarations> <otherModules> <driverModule> <otherModules>
@@ -1491,7 +1491,7 @@ void case_78(struct treeNode *curr_node){
   traverseChildren(child_node);
 
   /* <factor>.syn  = <expression>.syn */
-  // child_node = nextNonTerminalNode(child_node);
+  child_node = nextNonTerminalNode(child_node);
   curr_node->syn = child_node->syn;
 }
 
@@ -1725,7 +1725,6 @@ void case_102(struct treeNode *curr_node) {
 }
 
 
-// TO DO:
 void case_103(struct treeNode *curr_node) {
   /* <iterativeStmt> := WHILE BO <expression> BC START <statements> END */
   struct treeNode *child_node = curr_node->child;
@@ -1900,7 +1899,7 @@ void printExpression(struct Attribute *expr) {
       break;
 
     default:
-      printf("ERROR!! Invalid Type %d! ", expr->type);
+      printf("Invalid Expression Type %d! ", expr->type);
       break;
   }
 }
@@ -1978,7 +1977,7 @@ void printConditionalStmt(struct ConditionalStmtNode *cond_stmt_node) {
     case_stmt_node = case_stmt_node->ptr3;
   }
   if (cond_stmt_node->ptr3 != NULL) {
-    printf("Default: ");
+    printf("\n\nDefault: ");
     printStatements(cond_stmt_node->ptr3);
   }
 }

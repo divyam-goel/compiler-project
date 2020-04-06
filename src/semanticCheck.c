@@ -1,19 +1,23 @@
 #include "ast.h"
 #include "st.h"
+#include "semanticCheck.h"
 
 
-void semanticCheckerModuleDefinition(struct StatementNode *statement_node);
-void semanticCheckerModule(struct ModuleNode *module_node);
+void moduleDefinitionSemanticChecker(struct StatementNode *statement_node);
+void modulesSemanticChecker(struct OtherModuleNode *other_module_node);
+
 
 void semanticChecker(struct ProgramNode *AST) {
-  semanticCheckerModule(AST->ptr2);
-  semanticCheckerModuleDefinition(AST->ptr3);
-  semanticCheckerModule(AST->ptr4);
+  modulesSemanticChecker(AST->ptr2);
+  moduleDefinitionSemanticChecker(AST->ptr3);
+  modulesSemanticChecker(AST->ptr4);
 }
 
 
 enum terminal leafType(struct LeafNode *leaf) {
+  printf("DEBUG: Checkpoint 1!");
   enum terminal data_type;
+  struct SymbolTableNode *symbol_table_entry = NULL;
   
   switch (leaf->type) {
     case NUM:
@@ -23,9 +27,8 @@ enum terminal leafType(struct LeafNode *leaf) {
       data_type = REAL;
       break;
     case IDENTIFIER:
-      struct SymbolTableNode *symbol_table_entry;
-      symbol_table_entry = symbolTableGet(leaf->symbol_table,
-        leaf->value.entry);
+      symbol_table_entry = symbolTableGet(leaf->scope,
+      leaf->value.entry);
       data_type = symbol_table_entry->value.variable.datatype;
       break;
     case TRUE_:
@@ -56,6 +59,7 @@ enum terminal attributeType(struct Attribute *attribute) {
 
 
 enum terminal expressionType(struct Attribute *expression) {  
+  printf("DEBUG: Checkpoint 1!\n");
   enum terminal left_operand_type, right_operand_type;
   
   switch (expression->type) {
@@ -114,18 +118,30 @@ enum terminal expressionType(struct Attribute *expression) {
   return left_operand_type;
 }
 
+void temp_assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
+  if (assignment_node == NULL);{
+    printf("DEBUG: Help!!.\n");
+    return;
+  }
+}
+
 
 void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
+  if (assignment_node == NULL);{
+    // printf("DEBUG: Don't know what's happening.\n");
+    return;
+  }
+  
   enum terminal lhs_type, rhs_type;
 
   lhs_type = leafType(assignment_node->ptr1);
     
   struct Attribute *rhs_expression = NULL;
   if (assignment_node->ptr2->type == LVALUE_ID_NODE)
-    rhs_expression = assignment_node->ptr2->node.lva_id;
+    rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;
   else
-    rhs_expression = assignment_node->ptr2->node.lva_arr;
-  rhs_type = expressionTypeChecker(rhs_expression);
+    rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;
+  rhs_type = expressionType(rhs_expression);
 
   if (lhs_type != rhs_type)
     printf("Type Error: \n");
@@ -133,41 +149,52 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
 
 
 void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
+  if (module_reuse_node == NULL) {
+    return;
+  }
+  
   enum terminal module_reuse_type, module_definition_type;
   
-  struct InputPlistNode *input_module_reuse, *input_module_definition;
-  struct OutputPlistNode *output_module_reuse, *output_module_definition;
+  struct InputPlistNode *input_module_definition;
+  struct OutputPlistNode *output_module_definition;
+  struct IdListNode *input_module_reuse, *output_module_reuse;
 
+  // get the first entry for input and output parameter list from module definition
   struct SymbolTableNode *symbol_table_entry;
-  symbol_table_entry = symbolTableGet(module_reuse_node->ptr2->symbol_table,
+  symbol_table_entry = symbolTableGet(module_reuse_node->ptr2->scope,
     module_reuse_node->ptr2->value.entry);
   input_module_definition = symbol_table_entry->value.module.inputplist;
   output_module_definition = symbol_table_entry->value.module.outputplist;
 
+  // get the first entry for input and output identifier list from module reuse
   input_module_reuse = module_reuse_node->ptr3;
   output_module_reuse = module_reuse_node->ptr1;  
 
+  // iterate over input parameter and identifier list from module definition and reuse
+  // respectively, to compare corresponding data types
   while (input_module_definition != NULL && input_module_reuse != NULL) {
     module_definition_type = attributeType(input_module_definition->ptr2);
-    module_reuse_type = attributeType(input_module_reuse->ptr2);
+    module_reuse_type = leafType(input_module_reuse->ptr1);
     if (module_definition_type != module_reuse_type) {
       printf("Type Error: \n");
     }
     input_module_definition = input_module_definition->ptr3;
-    input_module_reuse = input_module_reuse->ptr3;
+    input_module_reuse = input_module_reuse->ptr2;
   }
   if (input_module_definition != NULL || input_module_reuse != NULL) {
     printf("Type Error: \n");
   }
 
+  // iterate over input parameter and identifier list from module definition and reuse
+  // respectively, to compare corresponding data types
   while (output_module_definition != NULL && output_module_reuse != NULL) {
     module_definition_type = attributeType(output_module_definition->ptr2);
-    module_reuse_type = attributeType(output_module_reuse->ptr2);
+    module_reuse_type = leafType(output_module_reuse->ptr1);
     if (module_definition_type != module_reuse_type) {
       printf("Type Error: \n");
     }
     output_module_definition = output_module_definition->ptr3;
-    output_module_reuse = output_module_reuse->ptr3;
+    output_module_reuse = output_module_reuse->ptr2;
   }
   if (output_module_definition != NULL || output_module_reuse != NULL) {
     printf("Type Error: \n");
@@ -175,10 +202,21 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
 }
 
 
-void semanticCheckerStatement(struct StatementNode *statement_node) {
+void statementSemanticChecker(struct StatementNode *statement_node) {
+  if (statement_node == NULL)
+    return;
+  
+  struct AssignStmtNode *debug_assignment_node;
+  printf("DEBUG: Statement Type - %d\n", statement_node->ptr1->type);
+  
   switch (statement_node->ptr1->type) {
     case ASSIGN_STMT_NODE:
-      assignmentStatementTypeChecker(statement_node->ptr1->node.agn_stm);
+      debug_assignment_node = statement_node->ptr1->node.agn_stm;
+      if (debug_assignment_node != NULL)
+        printf("DEBUG: Don't know what's happening.\n"); // LOOK HERE: this is the issue
+        // it prints this debug statement here and then in the function it prints the debug statement there
+        // while the if condition is opposite for both of them
+      temp_assignmentTypeChecker(debug_assignment_node);
       break;
     case MODULE_REUSE_STMT_NODE:
       moduleReuseTypeChecker(statement_node->ptr1->node.mod_reu_stm);
@@ -208,14 +246,20 @@ void semanticCheckerStatement(struct StatementNode *statement_node) {
 }
 
 
-void semanticCheckerModuleDefinition(struct StatementNode *statement_node) {
+void moduleDefinitionSemanticChecker(struct StatementNode *statement_node) {
+  if (statement_node == NULL)
+    return;
+
   while (statement_node->ptr1->type != NULL_NODE) {
-    semanticCheckerStatement(statement_node->ptr1->node.stm);
+    statementSemanticChecker(statement_node);
     statement_node = statement_node->ptr2;
   }
 }
 
 
-void semanticCheckerModule(struct ModuleNode *module_node) {
-  semanticCheckerModuleDefinition(module_node->ptr4);
+void modulesSemanticChecker(struct OtherModuleNode *other_module_node) {
+  while(other_module_node != NULL) {
+    moduleDefinitionSemanticChecker(other_module_node->ptr1->ptr4);
+    other_module_node = other_module_node->ptr2;
+  }
 }

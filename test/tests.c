@@ -4,6 +4,7 @@
 #include "../src/ast.h"
 #include "../src/data_structures/stack.h"
 #include "../src/st.h"
+#include "../src/semanticCheck.h"
 
 void test_removeComments(){
     /*
@@ -190,8 +191,8 @@ void test_createAST(char *grammar_file, char *source_file) {
     printf("Creating AST ...\n");
     createAST();
     
-    printf("Printing AST ...\n");
-    printAST();
+    // printf("Printing AST ...\n");
+    // printAST();
 }
 
 char *st_value_types[] = {"ST_MODULE", "ST_MODULE", "ST_VARIABLE"};
@@ -311,22 +312,32 @@ void test_createSymbolTables(char *grammar_file, char *source_file) {
 }
 
 
+void test_semanticCheck(char *grammar_file, char *source_file) {
+  test_createSymbolTables(grammar_file, source_file);
+  printf("Printing AST ...\n");
+  printAST();
+  extern struct ProgramNode AST;
+  printf("Checking AST for Semantic Errors...\n");
+  semanticChecker(&AST);
+}
+
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
-    char source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
+    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
+    // char source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, adv_source_file);
-    // test_createAST(grammar_file, adv_source_file);
+    // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    test_createSymbolTables(grammar_file, source_file);
+    // test_createSymbolTables(grammar_file, source_file);
+    test_semanticCheck(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }
