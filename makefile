@@ -2,6 +2,8 @@ CC = gcc
 CFLAGS = -Wall -g -lm
 OBJ_CFLAGS = $(CFLAGS) -c
 
+# TODO: Fix and cleanup this makefile.
+
 # test: build-test
 # 	build/tests
 
@@ -11,9 +13,10 @@ OBJ_CFLAGS = $(CFLAGS) -c
 # driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o
 # 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
 
-build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o
+build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
+	semanticRules.o
 	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
-	lib/stCore.o lib/st.o -o build/tests $(CFLAGS)
+	lib/stCore.o lib/st.o lib/semanticRules.o -o build/tests $(CFLAGS)
 
 test.o: test/tests.c \
 		src/utils.h \
@@ -65,6 +68,10 @@ stCore.o: src/stCore.c src/st.h src/stDef.h
 # This actually depends on more header files:
 st.o: src/st.c src/st.h src/stDef.h
 	$(CC) src/st.c -o lib/st.o $(OBJ_CFLAGS)
+
+# This actually depends on more header files:
+semanticRules.o: src/semanticRules.c src/st.h src/stDef.h src/ast.h src/astDef.h
+	$(CC) src/semanticRules.c -o lib/semanticRules.o $(OBJ_CFLAGS)
 
 clean:
 	find . -type f -name '*.o' -delete
