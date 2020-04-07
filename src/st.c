@@ -268,7 +268,7 @@ void handleStatement(struct StatementNode *current_statement,
       break;
 
     case LVALUE_ARR_NODE:
-      index = current_attribute->node.lea;
+      index = current_attribute->node.lva_arr->ptr1;
       index->scope = current_scope;
       handleExpression(current_attribute->node.lva_arr->ptr2, current_scope);
       break;
