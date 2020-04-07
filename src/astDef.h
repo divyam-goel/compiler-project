@@ -92,7 +92,7 @@ struct ProgramNode {
 };
 
 struct ModuleDeclarationNode {
-  struct LeafNode *ptr1;
+  struct LeafNode *ptr1;  /* WARNING: The scope won't be set for this. */
   struct ModuleDeclarationNode *ptr2;
 };
 

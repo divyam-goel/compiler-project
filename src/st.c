@@ -127,16 +127,62 @@ existing_node->value.variable.line_number);
 }
 
 
+void handleExpression(struct Attribute *expression,
+                      struct SymbolTable *current_scope) {
+  /* Deal with updating the scope of every leafnode of the input expression. */
+  switch (expression->type) {
+    case N7_NODE:
+      handleExpression(expression->node.n7->ptr1, current_scope);
+      handleExpression(expression->node.n7->ptr2, current_scope);
+      break;
+    case N8_NODE:
+      handleExpression(expression->node.n8->ptr1, current_scope);
+      handleExpression(expression->node.n8->ptr2, current_scope);
+      break;
+    case ARITHMETIC_EXPR_NODE:
+      handleExpression(expression->node.ari_exp->ptr1, current_scope);
+      handleExpression(expression->node.ari_exp->ptr2, current_scope);
+      handleExpression(expression->node.ari_exp->ptr3, current_scope);
+      break;
+    case TERM_NODE:
+      handleExpression(expression->node.ter->ptr1, current_scope);
+      handleExpression(expression->node.ter->ptr2, current_scope);
+      handleExpression(expression->node.ter->ptr3, current_scope);
+      break;
+    case LEAF_NODE:
+      /* Base Case. */
+      expression->node.lea->scope = current_scope;
+      break;
+    case ARRAY_NODE:
+      /* Also a Base Case. */
+      expression->node.arr->ptr1->scope = current_scope;
+      expression->node.arr->ptr2->scope = current_scope;
+    case NULL_NODE:
+      /* Also a Base Case. */
+      break;
+    default:
+      fprintf(stderr, "Received an unexpected type for expression \
+attribute: %d\n", expression->type);
+      exit(EXIT_FAILURE);
+  }
+}
+
+
 void handleStatement(struct StatementNode *current_statement,
                      struct SymbolTable *current_scope) {
-  /* Handle updating the symbol table for a single given statement. */
+  /* Handle updating the symbol table for a single given statement. We also
+   * handle updating the scope for each leafnode instance of a variable here,
+   * as painful as it might be, it's necessary. */
   struct SymbolTable *inner_scope;
   struct StatementNode *inner_statement;  /* First stmt of the inner scope. */
+  struct LeafNode *index;
   struct Attribute *current_attribute = current_statement->ptr1;
   struct WhileIterativeStmtNode *while_loop;
   struct ForIterativeStmtNode *for_loop;
   struct DeclareStmtNode *declare_stmt;
+  struct ConditionalStmtNode *cond_stmt;
 
+  handleAttribute:
   switch (current_attribute->type) {
     case WHILE_ITERATIVE_STMT_NODE:
       /* Semantic checking of the while loop conditional expression
@@ -171,9 +217,60 @@ void handleStatement(struct StatementNode *current_statement,
       handleVariablesDecleration(declare_stmt, current_scope);
       break;
 
+    case INPUT_NODE:
+      current_attribute->node.inp->ptr1->scope = current_scope;
+      break;
+
+    case PRINT_NODE:
+      switch (current_attribute->node.pri->ptr1->type) {
+        case LEAF_NODE:
+          current_attribute->node.pri->ptr1->node.lea->scope = current_scope;
+          break;
+        case ARRAY_NODE:
+          current_attribute->node.pri->ptr1->node.arr->ptr1->scope = current_scope;
+          break;
+        default:
+          fprintf(stderr, "Invalid case for PrintNode attribute.\n");
+          exit(EXIT_FAILURE);
+          break;
+      }
+      break;
+
+    case ASSIGN_STMT_NODE:
+      current_attribute->node.agn_stm->ptr1->scope = current_scope;
+      current_attribute = current_attribute->node.agn_stm->ptr2; /* One of the last two cases. */
+      goto handleAttribute;  // One of the few times goto is acceptable. Go back to switch.
+      break;
+
     case MODULE_REUSE_STMT_NODE:
+      current_attribute->node.mod_reu_stm->ptr2->scope = current_scope;
+      break;
+
+    case CONDITIONAL_STMT_NODE:
+      inner_scope = newSymbolTable(current_scope, "<Conditional>", NULL);
+      cond_stmt = current_attribute->node.con_stm;
+      inner_statement = cond_stmt->ptr3;
+      walkThoughStatements(inner_statement, inner_scope);
+      if (st_debug_mode) {
+        printf("DEBUG CONDITIONAL STATEMENT SCOPE: \n");
+        printSymbolTable(inner_scope);
+        printf("\n");
+      }
+      break;
+
+    case LVALUE_ARR_NODE:
+      index = current_attribute->node.lea;
+      index->scope = current_scope;
+      handleExpression(current_attribute->node.lva_arr->ptr2, current_scope);
+      break;
+
+    case LVALUE_ID_NODE:
+      handleExpression(current_attribute->node.lva_id->ptr1, current_scope);
+      break;
 
     default:
+      fprintf(stderr, "Invalid case for handling the attribute of a statement.\n");
+      exit(EXIT_FAILURE);
       break;
   }
 
@@ -195,6 +292,7 @@ void generateSymbolTableForModule(struct ModuleNode *module) {
   /* Run through the module's body of statements and create and populate
    * a new symbol table for each scope. */
   struct SymbolTable *current_scope = module->ptr1->scope;
+  module->ptr1->scope = current_scope;
   assert(current_scope != NULL);
   struct StatementNode *current_statement = module->ptr4;
   walkThoughStatements(current_statement, current_scope);
