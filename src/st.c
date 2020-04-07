@@ -63,6 +63,13 @@ int getIndexValue(struct LeafNode *lea, struct SymbolTable *current_scope, int l
 }
 
 
+void updateIdListScope(struct IdListNode *list, struct SymbolTable *current_scope) {
+  while (list != NULL) {
+    list->ptr1->scope = current_scope;
+    list = list->ptr2;
+  }
+}
+
 
 void handleVariablesDecleration(struct DeclareStmtNode *declaration,
                                 struct SymbolTable *current_scope) {
@@ -244,6 +251,8 @@ void handleStatement(struct StatementNode *current_statement,
 
     case MODULE_REUSE_STMT_NODE:
       current_attribute->node.mod_reu_stm->ptr2->scope = current_scope;
+      updateIdListScope(current_attribute->node.mod_reu_stm->ptr1, current_scope);
+      updateIdListScope(current_attribute->node.mod_reu_stm->ptr3, current_scope);
       break;
 
     case CONDITIONAL_STMT_NODE:
