@@ -3,6 +3,7 @@
 #include "semanticCheck.h"
 
 
+extern struct SymbolTable *global_symbol_table;
 void moduleDefinitionSemanticChecker(struct StatementNode *statement_node);
 void modulesSemanticChecker(struct OtherModuleNode *other_module_node);
 
@@ -153,7 +154,7 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
 
   // get the first entry for input and output parameter list from module definition
   struct SymbolTableNode *symbol_table_entry;
-  symbol_table_entry = symbolTableGet(module_reuse_node->ptr2->scope,
+  symbol_table_entry = symbolTableGet(global_symbol_table,
     module_reuse_node->ptr2->value.entry);
   input_module_definition = symbol_table_entry->value.module.inputplist;
   output_module_definition = symbol_table_entry->value.module.outputplist;
