@@ -194,6 +194,7 @@ void handleStatement(struct StatementNode *current_statement,
     case WHILE_ITERATIVE_STMT_NODE:
       /* Semantic checking of the while loop conditional expression
         * will not be handled at this step. */
+      handleExpression(current_attribute->node.whi_ite_stm->ptr1, current_scope);
       inner_scope = newSymbolTable(current_scope, "<WhileLoop>", NULL);
       while_loop = current_attribute->node.whi_ite_stm;
       inner_statement = while_loop->ptr2;
@@ -208,6 +209,7 @@ void handleStatement(struct StatementNode *current_statement,
     case FOR_ITERATIVE_STMT_NODE:
       /* Semantic checking of the for loop conditional expression
         * will not be handled at this step. */
+      current_attribute->node.for_ite_stm->ptr1->scope = current_scope;
       inner_scope = newSymbolTable(current_scope, "<ForLoop>", NULL);
       for_loop = current_attribute->node.for_ite_stm;
       inner_statement = for_loop->ptr3;
