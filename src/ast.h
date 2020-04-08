@@ -5,6 +5,9 @@
 #include "astDef.h"
 
 void createAST();
+void printLeaf(struct LeafNode *leaf);
+void printStatement(struct StatementNode *stmt_node);
+void printStatementList(struct StatementNode *statement_node);
 void printAST();
 
 /* All of the case functions used in traverseParseTree. */

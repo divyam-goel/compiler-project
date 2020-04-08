@@ -11,8 +11,6 @@ void traverseChildren(struct treeNode *curr_node);
 struct treeNode *nextNonTerminalNode(struct treeNode *curr_node);
 struct LeafNode *newLeafNode(int type, void *data, int line_num);
 struct Attribute *newAttribute(struct Attribute attr);
-void printLeaf(struct LeafNode *leaf);
-void printStatements(struct StatementNode *stmt_node);
 /* END : Function Declarations */
 
 void createAST() {
@@ -1067,11 +1065,10 @@ void case_50(struct treeNode *curr_node) {
   /* <lvalueARRStmt> := SQBO <index> SQBC ASSIGNOP <new_expression> SEMICOL */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
-  child_node = nextNonTerminalNode(child_node);
-
 
   /* <lvalueARRStmt>.syn = new LvalueARRNode(<index>.syn, <new_expression>.syn) */
   struct LvalueARRNode *lva_arr = (struct LvalueARRNode *) malloc(sizeof(struct LvalueARRNode));
+  child_node = nextNonTerminalNode(child_node);
   lva_arr->ptr1 = child_node->syn.node.lea;
   child_node = nextNonTerminalNode(child_node);
   lva_arr->ptr2 = newAttribute(child_node->syn);
@@ -1527,7 +1524,6 @@ void case_82(struct treeNode *curr_node) {
 }
 
 
-
 void case_83(struct treeNode *curr_node) {
   /* <op1> := DIV */
   /* <op1>.val = “DIV” */
@@ -1625,6 +1621,7 @@ void case_93(struct treeNode *curr_node) {
   curr_node->syn.node.con_stm = cond_stmt_node;
   curr_node->syn.type = CONDITIONAL_STMT_NODE;
 }
+
 
 void case_94_95(struct treeNode *curr_node) {
   /* 94 -  <caseStmt> := CASE <value> COLON <statements> BREAK SEMICOL <nullableCaseStmt> */
@@ -1887,7 +1884,9 @@ void printExpression(struct Attribute *expr) {
 
     case ARRAY_NODE:
       printLeaf(expr->node.arr->ptr1);
+      printf(" ");
       printLeaf(expr->node.arr->ptr2);
+      printf(" ");
       break;
 
     case LEAF_NODE:
@@ -1906,12 +1905,14 @@ void printExpression(struct Attribute *expr) {
 
 
 void printAssignStmt(struct AssignStmtNode *assign_stmt) {
-  printf("LHS: %s | RHS: ", (char *)assign_stmt->ptr1->value.entry);
+  printf("LHS: %s", (char *)assign_stmt->ptr1->value.entry);
   if (assign_stmt->ptr2->type == LVALUE_ID_NODE) {
+    printf(" | RHS: ");
     printExpression(assign_stmt->ptr2->node.lva_id->ptr1);
   }
   else {
-    printf("%d ", assign_stmt->ptr2->node.lva_arr->ptr1->value.num);
+    printf(" %d", assign_stmt->ptr2->node.lva_arr->ptr1->value.num);
+    printf(" | RHS: ");
     printExpression(assign_stmt->ptr2->node.lva_arr->ptr2);
   }
 }
@@ -1948,7 +1949,7 @@ void printDeclareStmt(struct DeclareStmtNode *decl_stmt_node) {
   switch(data_type->type) {
     case ARRAY_TYPE_NODE:
       printLeaf(data_type->node.arr_typ->ptr1);
-      printf("ARRAY | Start Index: ");
+      printf(" ARRAY | Start Index: ");
       printLeaf(data_type->node.arr_typ->ptr2->ptr1);
       printf("| End Index: ");
       printLeaf(data_type->node.arr_typ->ptr2->ptr2);
@@ -1972,13 +1973,13 @@ void printConditionalStmt(struct ConditionalStmtNode *cond_stmt_node) {
     printf("Case Value: ");
     printLeaf(case_stmt_node->ptr1);
     printf("\n\n-- Start Case Statements --\n\n");
-    printStatements(case_stmt_node->ptr2);
+    printStatementList(case_stmt_node->ptr2);
     printf("-- End Case Statements --");
     case_stmt_node = case_stmt_node->ptr3;
   }
   if (cond_stmt_node->ptr3 != NULL) {
     printf("\n\nDefault: ");
-    printStatements(cond_stmt_node->ptr3);
+    printStatementList(cond_stmt_node->ptr3);
   }
 }
 
@@ -1991,7 +1992,7 @@ void printForIterativeStmt(struct ForIterativeStmtNode *for_stmt_node) {
  printf(" | End Index: ");
  printLeaf(for_stmt_node->ptr2->ptr2);
  printf("\n\n-- Start For Statements --\n\n");
- printStatements(for_stmt_node->ptr3);
+ printStatementList(for_stmt_node->ptr3);
  printf("-- End For Statements --");
 }
 
@@ -2000,55 +2001,61 @@ void printWhileIterativeStmt(struct WhileIterativeStmtNode *while_stmt_node) {
  printf("Loop Expression: ");
  printExpression(while_stmt_node->ptr1);
  printf("\n\n-- Start While Statements --\n\n");
- printStatements(while_stmt_node->ptr2);
+ printStatementList(while_stmt_node->ptr2);
  printf("-- End While Statements --");
 }
 
 
-void printStatements(struct StatementNode *stmt_node) {
-  while (stmt_node != NULL) {
-    printAttribute(stmt_node->ptr1);
-    switch (stmt_node->ptr1->type) {
-      case ASSIGN_STMT_NODE:
-        printAssignStmt(stmt_node->ptr1->node.agn_stm);
-        break;
-      case MODULE_REUSE_STMT_NODE:
-        printModuleReuseStmt(stmt_node->ptr1->node.mod_reu_stm);
-        break;
-      case DECLARE_STMT_NODE:
-        printDeclareStmt(stmt_node->ptr1->node.dec_stm);
-        break;
-      case PRINT_NODE:
-        if (stmt_node->ptr1->node.pri->ptr1->type == LEAF_NODE) {
-          printf("Output Variable: ");
-          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.lea);
-        }
-        else {
-          printf("Output Array Id: ");
-          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr1);
-          printf(" | Element Index: ");
-          printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr2);
-        }
-        break;
-      case INPUT_NODE:
-        printf("Input Variable: ");
-        printLeaf(stmt_node->ptr1->node.inp->ptr1);
-        break;
-      case CONDITIONAL_STMT_NODE:
-        printConditionalStmt(stmt_node->ptr1->node.con_stm);
-        break;
-      case FOR_ITERATIVE_STMT_NODE:
-        printForIterativeStmt(stmt_node->ptr1->node.for_ite_stm);
-        break;
-      case WHILE_ITERATIVE_STMT_NODE:
-        printWhileIterativeStmt(stmt_node->ptr1->node.whi_ite_stm);
-        break;
-      default:
-        printf("Not Implemented Statement Type %d ...", stmt_node->ptr1->type);
-        break;
-    }
-    printf("\n\n");
-    stmt_node = stmt_node->ptr2;
+void printStatement(struct StatementNode *stmt_node) {
+  printAttribute(stmt_node->ptr1);
+  switch (stmt_node->ptr1->type) {
+    case ASSIGN_STMT_NODE:
+      printAssignStmt(stmt_node->ptr1->node.agn_stm);
+      break;
+    case MODULE_REUSE_STMT_NODE:
+      printModuleReuseStmt(stmt_node->ptr1->node.mod_reu_stm);
+      break;
+    case DECLARE_STMT_NODE:
+      printDeclareStmt(stmt_node->ptr1->node.dec_stm);
+      break;
+    case PRINT_NODE:
+      if (stmt_node->ptr1->node.pri->ptr1->type == LEAF_NODE) {
+        printf("Output Variable: ");
+        printLeaf(stmt_node->ptr1->node.pri->ptr1->node.lea);
+      }
+      else {
+        printf("Output Array Id: ");
+        printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr1);
+        printf(" | Element Index: ");
+        printLeaf(stmt_node->ptr1->node.pri->ptr1->node.arr->ptr2);
+      }
+      break;
+    case INPUT_NODE:
+      printf("Input Variable: ");
+      printLeaf(stmt_node->ptr1->node.inp->ptr1);
+      break;
+    case CONDITIONAL_STMT_NODE:
+      printConditionalStmt(stmt_node->ptr1->node.con_stm);
+      break;
+    case FOR_ITERATIVE_STMT_NODE:
+      printForIterativeStmt(stmt_node->ptr1->node.for_ite_stm);
+      break;
+    case WHILE_ITERATIVE_STMT_NODE:
+      printWhileIterativeStmt(stmt_node->ptr1->node.whi_ite_stm);
+      break;
+    default:
+      printf("Not Implemented Statement Type %d ...", stmt_node->ptr1->type);
+      break;
+  }
+  printf("\n\n");
+  stmt_node = stmt_node->ptr2;
+}
+
+
+void printStatementList(struct StatementNode *statement_node) {
+  while (statement_node != NULL) {
+    printStatement(statement_node);
+    statement_node = statement_node->ptr2;
   }
 }
 
@@ -2064,7 +2071,7 @@ void printAST() {
   printf("\n");
 
   // Print Driver module statements
-  if (pro->ptr2 != NULL) printStatements(pro->ptr2->ptr1->ptr4);
-  if (pro->ptr3 != NULL) printStatements(pro->ptr3);
-  if (pro->ptr4 != NULL) printStatements(pro->ptr4->ptr1->ptr4);
+  if (pro->ptr2 != NULL) printStatementList(pro->ptr2->ptr1->ptr4);
+  if (pro->ptr3 != NULL) printStatementList(pro->ptr3);
+  if (pro->ptr4 != NULL) printStatementList(pro->ptr4->ptr1->ptr4);
 }
