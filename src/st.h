@@ -32,18 +32,27 @@ void printSymbolTable(struct SymbolTable *st);
 
 void generateSymbolTables();
 void stAddModuleDeclerations(struct ModuleDeclarationNode *declaration_ll);
-void stAddModuleDefinitions(struct OtherModuleNode *module_ll,
-  bool requires_prior_declaration);
+void stAddModuleDefinitions(struct OtherModuleNode *module_ll, bool requires_prior_declaration);
 union SymbolTableValue stCreateSymbolTableValueForModule(
   char *name, int dec_line_no, int def_line_no,
   struct InputPlistNode *ipl, struct OutputPlistNode *opl);
 union SymbolTableValue stCreateSymbolTableValueForVariable(
   struct LeafNode *varnode, struct Attribute *dtnode,
   struct SymbolTable *scope);
-void stAddInputPlistToScope (struct InputPlistNode *plist_ll,
-  struct SymbolTable *scope);
-void stAddOutputPlistToScope (struct OutputPlistNode *plist_ll,
-  struct SymbolTable *scope);
+void stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *scope);
+void stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *scope);
 void stAddDriverModuleDefinition(struct StatementNode *statements_ll);
+void stWalkThroughStatements (struct StatementNode *statement_ll, struct SymbolTable *scope);
+struct ModuleEntry *resolveModule (char *module_name);
+struct VariableEntry *resolveVariable(char *variable_name, struct SymbolTable *scope);
+void stHandleInputStatement(struct InputNode *input_stmt, struct SymbolTable *scope);
+void stHandlePrintStatement(struct PrintNode *pri_stmt, struct SymbolTable *scope);
+void stHandleAssignmentStatement(struct AssignStmtNode *agn_stmt, struct SymbolTable *scope);
+void stHandleModuleReuseStatement(struct ModuleReuseStmtNode *mr_stmt, struct SymbolTable *scope);
+void stHandleDeclareStatement(struct DeclareStmtNode *dec_stm, struct SymbolTable *scope);
+void stHandleConditionalStatement(struct ConditionalStmtNode *con_stm, struct SymbolTable *scope);
+void stHandleForLoop(struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope);
+void stHandleWhileLoop(struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope);
+void stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope);
 
 #endif

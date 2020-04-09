@@ -2,6 +2,7 @@
 #include <assert.h>
 
 bool st_debug_mode = false;
+int semantic_error_count = 0;
 extern struct ProgramNode AST;
 struct SymbolTable *global_symbol_table = NULL;
 
@@ -13,6 +14,11 @@ char *module_missing_declaration_error_message = "Semantic Error: Module \"%s\" 
 number %d but it has not been declared.\n";
 char *variable_redecleration_error_message = "Semantic Error: Redeclaration of variable \"%s\" on line number %d \
 (originally declared on line number %d)\n";
+char *variable_undeclared_error_message = "Semantic Error: Variable \"%s\" used on line number %d has not been \
+declared.\n";
+char *incorrectly_used_as_array_error_message = "Semantic Error: Variable \"%s\" is declared on line %d, but not \
+as an array. On line number %d it is being used as an array.\n";
+
 
 /**
  * This is the compiler's entrypoint into the rest of the symbol table code.
@@ -57,6 +63,7 @@ stAddModuleDeclerations (struct ModuleDeclarationNode *declaration_ll)
           original_line_no = existing_node->value.module.dec_line_number;
           fprintf(stderr, module_redecleration_error_message, module_name,
                   current_line_no, original_line_no);
+          semantic_error_count += 1;
         }
       else
         {
@@ -113,12 +120,16 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
               original_line_no = existing_node->value.module.dec_line_number;
               fprintf(stderr, module_redefinition_error_message, module_name,
                       current_line_no, original_line_no);
+              semantic_error_count += 1;
             }
         }
        else
         {
           if (requires_prior_declaration)
+            {
               fprintf(stderr, module_missing_declaration_error_message, module_name, current_line_no);
+              semantic_error_count += 1;
+            }
           else
             {
               new_value = stCreateSymbolTableValueForModule(module_name,
@@ -130,7 +141,7 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
       module_scope = newSymbolTable(global_symbol_table, module_name, NULL);
       stAddInputPlistToScope(module->ptr2, module_scope);
       stAddOutputPlistToScope(module->ptr3, module_scope);
-      // TODO: Handle the statements
+      stWalkThroughStatements(module->ptr4, module_scope);
       if (st_debug_mode)
         {
           fprintf(stdout, "Module %s's symbol table:\n", module_name);
@@ -258,8 +269,11 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
       variable_name = variable_node->value.entry;
       existing_node = symbolTableGet(scope, variable_name);
       if (existing_node)
-        fprintf(stderr, variable_redecleration_error_message, variable_name,
-                new_value.variable.line_number, existing_node->value.variable.line_number);
+        {
+          fprintf(stderr, variable_redecleration_error_message, variable_name,
+                  new_value.variable.line_number, existing_node->value.variable.line_number);
+          semantic_error_count += 1;
+        }
       else
         {
           new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope);
@@ -291,8 +305,11 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
       variable_name = variable_node->value.entry;
       existing_node = symbolTableGet(scope, variable_name);
       if (existing_node)
-        fprintf(stderr, variable_redecleration_error_message, variable_name,
-                new_value.variable.line_number, existing_node->value.variable.line_number);
+        {
+          fprintf(stderr, variable_redecleration_error_message, variable_name,
+                  new_value.variable.line_number, existing_node->value.variable.line_number);
+          semantic_error_count += 1;
+        }
       else
         {
           new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope);
@@ -312,4 +329,271 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
 void
 stAddDriverModuleDefinition (struct StatementNode *statements_ll)
 {
+  struct SymbolTable *driver_scope = newSymbolTable(global_symbol_table, "Driver", NULL);
+  stWalkThroughStatements(statements_ll, driver_scope);
+  if (st_debug_mode)
+    {
+      fprintf(stdout, "Module %s's symbol table:\n", driver_scope->scope_tag);
+      printSymbolTable(driver_scope);
+      printf("\n");
+    }
+}
+
+
+/**
+ * Walk though each statement (and contained expressions) starting from this
+ * statement and appropriately ensure that each LeafNode has it's scope
+ * variable set and that all variable declarations are aptly added to the 
+ * specified scope.
+ * @param   statement   The first statement to begin walking from. Should ideally
+ *                      be the first statement of the module.
+ * @param   scope       The symbol table / scope of the module itself (it's internal
+ *                      scope).
+ */
+void
+stWalkThroughStatements (struct StatementNode *statement_ll, struct SymbolTable *scope)
+{
+  enum ASTNodesEnum statement_type;
+  while (statement_ll != NULL)
+    {
+      union ASTNodesUnion statement = statement_ll->ptr1->node;
+      statement_type = statement_ll->ptr1->type;
+      switch (statement_type)
+        {
+          case INPUT_NODE:
+            stHandleInputStatement(statement.inp, scope);
+            break;
+          case PRINT_NODE:
+            stHandlePrintStatement(statement.pri, scope);
+            break;
+          case ASSIGN_STMT_NODE:
+            stHandleAssignmentStatement(statement.agn_stm, scope);
+            break;
+          case MODULE_REUSE_STMT_NODE:
+            stHandleModuleReuseStatement(statement.mod_reu_stm, scope);
+            break;
+          case DECLARE_STMT_NODE:
+            stHandleDeclareStatement(statement.dec_stm, scope);
+            break;
+          case CONDITIONAL_STMT_NODE:
+            stHandleConditionalStatement(statement.con_stm, scope);
+            break;
+          case FOR_ITERATIVE_STMT_NODE:
+            stHandleForLoop(statement.for_ite_stm, scope);
+            break;
+          case WHILE_ITERATIVE_STMT_NODE:
+            stHandleWhileLoop(statement.whi_ite_stm, scope);
+            break;
+          default:
+            fprintf(stderr, "Detected statement with illegal type: %d\n", statement_type);
+            exit(EXIT_FAILURE);
+        }
+      statement_ll = statement_ll->ptr2;
+    }
+}
+
+
+/**
+ * Given a module name, walk through the symbol tables (moving
+ * from child to parent) the find the correct module.
+ * NOTE: for variable, use resolveVariable instead.
+ */
+struct ModuleEntry *
+resolveModule (char *module_name)
+{
+  /* We only need to check the global scope because ERPLAG
+   * is single-file based and does not allow nesting of
+   * modules/method/functions. */
+  struct ModuleEntry *module = NULL;
+  struct SymbolTableNode *st_node;
+  st_node = symbolTableGet(global_symbol_table, module_name);
+  if (st_node != NULL)
+    assert(st_node->value_type == ST_VARIABLE);
+  module = &(st_node->value.module);
+  return module;
+}
+
+
+/**
+ * Given a variable name, walk through the symbol tables (moving
+ * from child to parent) the find the correct variable.
+ * NOTE: for modules, use resolveModule instead.
+ */
+struct VariableEntry *
+resolveVariable (char *variable_name, struct SymbolTable *scope)
+{
+  /* NOTE: Since ERPLAG does not support global variables we can
+   * stop at the global_symbol_table scope. */
+  struct VariableEntry *variable = NULL;
+  struct SymbolTableNode *st_node;
+  while (scope != global_symbol_table)
+    {
+      st_node = symbolTableGet(scope, variable_name);
+      if (st_node == NULL)
+        {
+          scope = scope->parent;
+          continue;
+        }
+      assert(st_node->value_type == ST_VARIABLE);
+      variable = &(st_node->value.variable);
+      break;
+    }
+  return variable;
+}
+
+
+/**
+ * Take an input statement such as
+ *  `get_value(x);`
+ * and update the AST leaf node scope value for the variable appropriately.
+ * @param   input_stmt    The input statement node from the AST.
+ * @param   scope         The scope that this statement belongs to.
+ */
+void
+stHandleInputStatement (struct InputNode *input_stmt, struct SymbolTable *scope)
+{
+  struct LeafNode *variable = input_stmt->ptr1;
+  variable->scope = scope;
+}
+
+
+/**
+ * Take a print statement such as
+ *  `print(x);`
+ * and update the AST leaf node scope value for the variable appropriately.
+ * @param   pri_stmt      The print statement node from the AST.
+ * @param   scope         The scope that this statement belongs to.
+ */
+void
+stHandlePrintStatement (struct PrintNode *pri_stmt, struct SymbolTable *scope)
+{
+  struct LeafNode *variable, *index;
+  assert(pri_stmt->ptr1->type == LEAF_NODE || pri_stmt->ptr1->type == ARRAY_NODE);
+  if (pri_stmt->ptr1->type == LEAF_NODE)
+    variable = pri_stmt->ptr1->node.lea;
+  else
+    {
+      variable = pri_stmt->ptr1->node.arr->ptr1;
+      index = pri_stmt->ptr1->node.arr->ptr2;
+      index->scope = scope;
+    }
+  variable->scope = scope;
+}
+
+
+/**
+ * Assignment statements look something like:
+ *  `x[1] := x[2] + 5 - 2 * y` for example.
+ * The grammar rules around expressions are:
+ * <assignmentStmt>  ->      ID <whichStmt>
+ * <whichStmt>       ->      <lvalueIDStmt> | <lvalueARRStmt>
+ * <lvalueIDStmt>    ->      ASSIGNOP <new_expression> SEMICOL
+ * <lvalueARRStmt>   ->      SQBO <index> SQBC ASSIGNOP <new_expression> SEMICOL 
+ * Though they are better understood as:
+ * <assignmentStmt>  ->      ID <arrayPart> ASSIGNOP <new_expression> SEMICOL
+ * <arrayPart>       ->      SQBO <index> SQBC | EPSILON
+ * Which is what they should have been in the first place (but now it's too late).
+ * We can break up the above example as (approximately - just for understanding):
+ * AssignStmtNode[LvalueARRNode->ptr1] := LvalueARRNode->ptr2 (which is an Attribute)
+ * @param   agn_stmt    The assignment statement to parse.
+ * @param   scope       The scope that this statement belongs to.
+ */
+void
+stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable *scope)
+{
+  struct LeafNode *variable_instance = agn_stmt->ptr1;
+  struct VariableEntry *resolved_variable;
+  assert(variable_instance->type == IDENTIFIER);
+  char *variable_name = variable_instance->value.entry;
+  resolved_variable = resolveVariable(variable_name, scope);
+  if (resolved_variable == NULL)
+    {
+      fprintf(stderr, variable_undeclared_error_message, variable_name, variable_instance->line_number);
+      semantic_error_count += 1;
+      /* Don't even bother parsing the ensuing expression. */
+      return;
+    }
+  assert(agn_stmt->ptr2->type == LVALUE_ARR_NODE || agn_stmt->ptr2->type == LVALUE_ID_NODE);
+  if (agn_stmt->ptr2->type == LVALUE_ARR_NODE)
+    {
+      if (resolved_variable->isArray == false)
+        {
+          fprintf(stderr, incorrectly_used_as_array_error_message, variable_name,
+                  resolved_variable->line_number, variable_instance->line_number);
+          semantic_error_count += 1;
+          return;
+        }
+      agn_stmt->ptr2->node.lva_arr->ptr1->scope = scope;  /* This refers to the array index. */
+      // TODO: Implement the isStatic boolean flag.
+      stWalkThroughExpression(agn_stmt->ptr2->node.lva_arr->ptr2, scope);
+    }
+  else
+    stWalkThroughExpression(agn_stmt->ptr2->node.lva_id->ptr1, scope);
+  variable_instance->scope = scope;
+}
+
+
+/**
+ * Walk through the parts of a module reuse statement and do two things:
+ * 1. Resolve the variables and modules involved, making sure that they exist.
+ * 2. Set scopes for all leafnodes.
+ */
+void
+stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct SymbolTable *scope)
+{
+
+}
+
+
+
+/**
+ * 
+ */
+void
+stHandleDeclareStatement (struct DeclareStmtNode *dec_stm, struct SymbolTable *scope)
+{
+
+}
+
+
+
+/**
+ * 
+ */
+void
+stHandleConditionalStatement (struct ConditionalStmtNode *con_stm, struct SymbolTable *scope)
+{
+
+}
+
+
+
+/**
+ * 
+ */
+void
+stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope)
+{
+
+}
+
+
+
+/**
+ * 
+ */
+void
+stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope)
+{
+
+}
+
+
+/**
+ * 
+ */
+void
+stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope)
+{
+  // TODO.
 }
