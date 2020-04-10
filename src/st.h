@@ -49,8 +49,8 @@ void stHandleInputStatement(struct InputNode *input_stmt, struct SymbolTable *sc
 void stHandlePrintStatement(struct PrintNode *pri_stmt, struct SymbolTable *scope);
 void stHandleAssignmentStatement(struct AssignStmtNode *agn_stmt, struct SymbolTable *scope);
 void stHandleModuleReuseStatement(struct ModuleReuseStmtNode *mr_stmt, struct SymbolTable *scope);
-void stHandleDeclareStatement(struct DeclareStmtNode *dec_stm, struct SymbolTable *scope);
-void stHandleConditionalStatement(struct ConditionalStmtNode *con_stm, struct SymbolTable *scope);
+void stHandleDeclareStatement(struct DeclareStmtNode *dec_stmt, struct SymbolTable *scope);
+void stHandleConditionalStatement(struct ConditionalStmtNode *con_stmt, struct SymbolTable *scope);
 void stHandleForLoop(struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope);
 void stHandleWhileLoop(struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope);
 void stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope);

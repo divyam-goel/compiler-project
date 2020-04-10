@@ -18,6 +18,8 @@ char *variable_undeclared_error_message = "Semantic Error: Variable \"%s\" used 
 declared.\n";
 char *incorrectly_used_as_array_error_message = "Semantic Error: Variable \"%s\" is declared on line %d, but not \
 as an array. On line number %d it is being used as an array.\n";
+char *module_undeclared_error_message = "Semantic Error: Module \"%s\" used on line number %d has not been \
+declared.\n";
 
 
 /**
@@ -32,6 +34,7 @@ generateSymbolTables ()
   global_symbol_table = newSymbolTable(NULL, "Global", NULL);
   stAddModuleDeclerations(AST.ptr1);
   stAddModuleDefinitions(AST.ptr2, false);
+  stAddDriverModuleDefinition(AST.ptr3);
   stAddModuleDefinitions(AST.ptr4, true);
   if (st_debug_mode)
     {
@@ -354,6 +357,7 @@ void
 stWalkThroughStatements (struct StatementNode *statement_ll, struct SymbolTable *scope)
 {
   enum ASTNodesEnum statement_type;
+  struct SymbolTable *inner_scope;
   while (statement_ll != NULL)
     {
       union ASTNodesUnion statement = statement_ll->ptr1->node;
@@ -376,13 +380,16 @@ stWalkThroughStatements (struct StatementNode *statement_ll, struct SymbolTable 
             stHandleDeclareStatement(statement.dec_stm, scope);
             break;
           case CONDITIONAL_STMT_NODE:
-            stHandleConditionalStatement(statement.con_stm, scope);
+            inner_scope = newSymbolTable(scope, "Conditional Stmt", NULL);
+            stHandleConditionalStatement(statement.con_stm, inner_scope);
             break;
           case FOR_ITERATIVE_STMT_NODE:
-            stHandleForLoop(statement.for_ite_stm, scope);
+            inner_scope = newSymbolTable(scope, "For Loop", NULL);
+            stHandleForLoop(statement.for_ite_stm, inner_scope);
             break;
           case WHILE_ITERATIVE_STMT_NODE:
-            stHandleWhileLoop(statement.whi_ite_stm, scope);
+            inner_scope = newSymbolTable(scope, "While Loop", NULL);
+            stHandleWhileLoop(statement.whi_ite_stm, inner_scope);
             break;
           default:
             fprintf(stderr, "Detected statement with illegal type: %d\n", statement_type);
@@ -408,7 +415,7 @@ resolveModule (char *module_name)
   struct SymbolTableNode *st_node;
   st_node = symbolTableGet(global_symbol_table, module_name);
   if (st_node != NULL)
-    assert(st_node->value_type == ST_VARIABLE);
+    assert(st_node->value_type == ST_MODULE);
   module = &(st_node->value.module);
   return module;
 }
@@ -459,7 +466,7 @@ stHandleInputStatement (struct InputNode *input_stmt, struct SymbolTable *scope)
 
 /**
  * Take a print statement such as
- *  `print(x);`
+ *    print(x);
  * and update the AST leaf node scope value for the variable appropriately.
  * @param   pri_stmt      The print statement node from the AST.
  * @param   scope         The scope that this statement belongs to.
@@ -483,7 +490,8 @@ stHandlePrintStatement (struct PrintNode *pri_stmt, struct SymbolTable *scope)
 
 /**
  * Assignment statements look something like:
- *  `x[1] := x[2] + 5 - 2 * y` for example.
+ *    x[1] := x[2] + 5 - 2 * y
+ * for example.
  * The grammar rules around expressions are:
  * <assignmentStmt>  ->      ID <whichStmt>
  * <whichStmt>       ->      <lvalueIDStmt> | <lvalueARRStmt>
@@ -510,18 +518,15 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
     {
       fprintf(stderr, variable_undeclared_error_message, variable_name, variable_instance->line_number);
       semantic_error_count += 1;
-      /* Don't even bother parsing the ensuing expression. */
-      return;
     }
   assert(agn_stmt->ptr2->type == LVALUE_ARR_NODE || agn_stmt->ptr2->type == LVALUE_ID_NODE);
   if (agn_stmt->ptr2->type == LVALUE_ARR_NODE)
     {
-      if (resolved_variable->isArray == false)
+      if (resolved_variable != NULL && resolved_variable->isArray == false)
         {
           fprintf(stderr, incorrectly_used_as_array_error_message, variable_name,
                   resolved_variable->line_number, variable_instance->line_number);
           semantic_error_count += 1;
-          return;
         }
       agn_stmt->ptr2->node.lva_arr->ptr1->scope = scope;  /* This refers to the array index. */
       // TODO: Implement the isStatic boolean flag.
@@ -537,55 +542,200 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
  * Walk through the parts of a module reuse statement and do two things:
  * 1. Resolve the variables and modules involved, making sure that they exist.
  * 2. Set scopes for all leafnodes.
+ * example: 
+ *    [x, y] := use module foo with parameters p1, p2;
+ *  
+ * @param   mr_stmt     The module reuse statement to handle.
+ * @param   scope       The scope that this statement belongs to.
  */
 void
 stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct SymbolTable *scope)
 {
+  int line_number;
+  char *module_name;
+  struct IdListNode *inputs_ll, *outputs_ll;
+  assert(mr_stmt->ptr2->type == IDENTIFIER);
+  module_name = mr_stmt->ptr2->value.entry;
+  line_number = mr_stmt->ptr2->line_number;
+  inputs_ll = mr_stmt->ptr3;
+  outputs_ll = mr_stmt->ptr1;
 
+  if (resolveModule(module_name) == NULL)
+    {
+      fprintf(stderr, module_undeclared_error_message, module_name, line_number);
+      semantic_error_count += 1;
+    }
+  mr_stmt->ptr2->scope = global_symbol_table;
+  while (inputs_ll != NULL)
+    {
+      inputs_ll->ptr1->scope = scope;
+      inputs_ll = inputs_ll->ptr2;
+    }
+  while (outputs_ll != NULL)
+    {
+      outputs_ll->ptr1->scope = scope;
+      outputs_ll = outputs_ll->ptr2;
+    }
 }
 
 
 
 /**
- * 
+ * Handle a new variable declerations. In a single declare statement, multiple
+ * variables of the same type can be declared. We need to ensure that there are
+ * no re-declerations and that each leafnode for each variable name is tied to
+ * the appropriate scope.
+ * @param   dec_stmt    The declare statement to handle.
+ * @param   scope       The scope that this statement belongs to.
  */
 void
-stHandleDeclareStatement (struct DeclareStmtNode *dec_stm, struct SymbolTable *scope)
+stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *scope)
 {
-
+  char *variable_name;
+  struct Attribute *dtnode = dec_stmt->ptr2;
+  struct IdListNode *variable_ll = dec_stmt->ptr1;
+  union SymbolTableValue new_value;
+  struct SymbolTableNode *existing_node;
+  while (variable_ll != NULL)
+    {
+      assert(variable_ll->ptr1->type == IDENTIFIER);
+      variable_name = variable_ll->ptr1->value.entry;
+      /* Set it's scope. */
+      variable_ll->ptr1->scope = scope;
+      /* Make sure that the variable does not already exist in this scope. */
+      existing_node = symbolTableGet(scope, variable_name);
+      if (existing_node != NULL)
+        {
+          fprintf(stderr, variable_redecleration_error_message, variable_name,
+                  variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
+          semantic_error_count += 1;
+        }
+      /* If the variable does not already exist in this scope, add it to
+       * the symbol table / scope. */
+       else
+        {
+          assert(dtnode != NULL);
+          new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope);
+          symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
+        }
+        variable_ll = variable_ll->ptr2;
+    }
+  
 }
 
 
 
 /**
- * 
+ * A conditional statment in ERPLAG is basically a switch statement. So for each case we
+ * need to create a new scope and then walk through all of the inner statements.
+ * @param   con_stmt    The conditional statement to handle.
+ * @param   scope       The scope that this statement belongs to.
  */
 void
-stHandleConditionalStatement (struct ConditionalStmtNode *con_stm, struct SymbolTable *scope)
+stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct SymbolTable *scope)
 {
+  char *conditional_variable_name;
+  struct LeafNode *conditional_variable = con_stmt->ptr1;
+  struct CaseStmtNode *cases_ll = con_stmt->ptr2;
+  struct StatementNode *default_case_statements = con_stmt->ptr3;
+  struct SymbolTable *case_scope;
 
+  assert(conditional_variable->type == IDENTIFIER);
+  conditional_variable_name = conditional_variable->value.entry;
+  conditional_variable->scope = scope;
+  if (resolveVariable(conditional_variable_name, scope) == NULL)
+    {
+      fprintf(stderr, variable_undeclared_error_message, conditional_variable_name,
+              conditional_variable->line_number);
+      semantic_error_count += 1;
+    }
+  while (cases_ll != NULL)
+    {
+      cases_ll->ptr1->scope = scope;
+      case_scope = newSymbolTable(scope, "case", NULL);
+      stWalkThroughStatements(cases_ll->ptr2, case_scope);
+      cases_ll = cases_ll->ptr3;  
+      if (st_debug_mode)
+        {
+          fprintf(stdout, "Case symbol table:\n");
+          printSymbolTable(case_scope);
+          printf("\n");
+        }
+    }
+  case_scope = newSymbolTable(scope, "default case", NULL);
+  stWalkThroughStatements(default_case_statements, case_scope);
+  if (st_debug_mode)
+    {
+      fprintf(stdout, "Defualt case symbol table:\n");
+      printSymbolTable(case_scope);
+      printf("\n");
+    }
 }
 
 
 
 /**
- * 
+ * Create a new scope for the for loop and then walk through it's statements using
+ * this new loop. After resolving the loop variable, point it's scope towards the
+ * the scope encapsulating the for loop.
+ * @param   for_loop    The for loop's statement node.
+ * @param   scope       The scope that this statement belongs to.
  */
 void
 stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope)
 {
+  char *loop_variable_name;
+  struct LeafNode *loop_variable = for_loop->ptr1;
+  struct StatementNode *loop_body = for_loop->ptr3;
+  struct SymbolTable *loop_scope = newSymbolTable(scope, "for loop", NULL);
 
+  for_loop->ptr2->ptr1->scope = scope;
+  for_loop->ptr2->ptr2->scope = scope;
+  loop_variable->scope = scope;
+
+  /* This loop variable must have already been declared before the for loop. */
+  loop_variable_name = loop_variable->value.entry;
+  if (resolveVariable(loop_variable_name, scope) == NULL)
+    {
+      fprintf(stderr, variable_undeclared_error_message, loop_variable_name,
+              loop_variable->line_number);
+      semantic_error_count += 1;
+    }
+  /* Checking the type of the loop variable and making sure that it is an integer type will
+   * be left to later stages of semantic checking. */
+
+  stWalkThroughStatements(loop_body, loop_scope);
+
+  if (st_debug_mode)
+    {
+      fprintf(stdout, "For loop symbol table after generation of symbol tables:\n");
+      printSymbolTable(loop_scope);
+      printf("\n");
+    }
 }
 
 
 
 /**
- * 
+ * Create a new scope for the body of the while loop and walk through it. Also
+ * walk through the body of the whlie loop under the context of a new (inner) scope.
+ * @param   while_loop    The while loop node to parse.
+ * @param   scope         The scope that this statement belongs to.
  */
 void
 stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope)
 {
-
+  struct Attribute *conditional_expression = while_loop->ptr1;
+  struct StatementNode *loop_body = while_loop->ptr2;
+  struct SymbolTable *loop_scope = newSymbolTable(scope, "for loop", NULL);
+  stWalkThroughExpression(conditional_expression, scope);
+  stWalkThroughStatements(loop_body, loop_scope);
+  if (st_debug_mode)
+    {
+      fprintf(stdout, "While loop symbol table after generation of symbol tables:\n");
+      printSymbolTable(loop_scope);
+      printf("\n");
+    }
 }
 
 
@@ -595,5 +745,5 @@ stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable
 void
 stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope)
 {
-  // TODO.
+
 }
