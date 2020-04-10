@@ -54,5 +54,6 @@ void stHandleConditionalStatement(struct ConditionalStmtNode *con_stmt, struct S
 void stHandleForLoop(struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope);
 void stHandleWhileLoop(struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope);
 void stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope);
+void stUpdateLeafNode(struct LeafNode *lea, struct SymbolTable *scope);
 
 #endif

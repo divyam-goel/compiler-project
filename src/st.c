@@ -20,6 +20,8 @@ char *incorrectly_used_as_array_error_message = "Semantic Error: Variable \"%s\"
 as an array. On line number %d it is being used as an array.\n";
 char *module_undeclared_error_message = "Semantic Error: Module \"%s\" used on line number %d has not been \
 declared.\n";
+char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
+may be detected after resolving the above).\n";
 
 
 /**
@@ -41,6 +43,11 @@ generateSymbolTables ()
       fprintf(stdout, "Global symbol table after generation of symbol tables:\n");
       printSymbolTable(global_symbol_table);
       printf("\n");
+    }
+  if (semantic_error_count > 0)
+    {
+      fprintf(stderr, semantic_errors_detected_message, semantic_error_count);
+      exit(EXIT_FAILURE);
     }
 }
 
@@ -740,10 +747,67 @@ stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable
 
 
 /**
- * 
+ * Walk through an expression and make sure that every variable has been declared
+ * before and then assign the given scope to each variable.
  */
 void
 stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope)
 {
+  switch (expression->type)
+    {
+      case U_NODE:
+        stWalkThroughExpression(expression->node.u->ptr1, scope);
+        break;
+      case N7_NODE:
+        stWalkThroughExpression(expression->node.n7->ptr1, scope);
+        stWalkThroughExpression(expression->node.n7->ptr2, scope);
+        break;
+      case N8_NODE:
+        stWalkThroughExpression(expression->node.n8->ptr1, scope);
+        stWalkThroughExpression(expression->node.n8->ptr2, scope);
+        break;
+      case ARITHMETIC_EXPR_NODE:
+        stWalkThroughExpression(expression->node.ari_exp->ptr1, scope);
+        stWalkThroughExpression(expression->node.ari_exp->ptr2, scope);
+        stWalkThroughExpression(expression->node.ari_exp->ptr3, scope);
+        break;
+      case TERM_NODE:
+        stWalkThroughExpression(expression->node.ter->ptr1, scope);
+        stWalkThroughExpression(expression->node.ter->ptr2, scope);
+        stWalkThroughExpression(expression->node.ter->ptr3, scope);
+        break;
+      case ARRAY_NODE:
+        stUpdateLeafNode(expression->node.arr->ptr1, scope);
+        stUpdateLeafNode(expression->node.arr->ptr2, scope);
+        break;
+      case LEAF_NODE:
+        stUpdateLeafNode(expression->node.lea, scope);
+        break;
+      case NULL_NODE:
+        break;
+      default:
+        fprintf(stderr, "Detected expression with illegal type: %d\n", expression->type);
+        exit(EXIT_FAILURE);
+    }
+}
 
+
+/**
+ * Given an AST leafnode, if it is a variable, resolve assign it the scope.
+ * @param   lea     The leafnode.
+ * @param   scope   Scope which the statment/expression the leafnode belongs to.
+*/
+void
+stUpdateLeafNode (struct LeafNode *lea, struct SymbolTable *scope)
+{
+  if (lea->type == IDENTIFIER)
+    {
+      if (resolveVariable(lea->value.entry, scope) == NULL)
+        {
+          fprintf(stderr, variable_undeclared_error_message, lea->value.entry,
+                  lea->line_number);
+          semantic_error_count += 1;
+        }
+    }
+  lea->scope = scope;
 }
