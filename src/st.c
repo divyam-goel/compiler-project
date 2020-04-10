@@ -207,9 +207,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
                                      struct SymbolTable *scope)
 {
   char *name;
-  bool is_array;
+  bool is_array, is_static;
   enum terminal basetype;
-  int line_number, lower_bound, upper_bound;
+  int line_number;
+  struct LeafNode *lower_bound, *upper_bound;
   
   assert(varnode != NULL);
   assert(varnode->type == IDENTIFIER);
@@ -224,8 +225,12 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       assert(dtnode->node.arr_typ->ptr2->ptr2->type == NUM);
       is_array = true;
       basetype = dtnode->node.arr_typ->ptr1->type;
-      lower_bound = dtnode->node.arr_typ->ptr2->ptr1->value.num;
-      upper_bound = dtnode->node.arr_typ->ptr2->ptr2->value.num;
+      lower_bound = dtnode->node.arr_typ->ptr2->ptr1;
+      upper_bound = dtnode->node.arr_typ->ptr2->ptr2;
+      if (lower_bound->type == IDENTIFIER || upper_bound->type == IDENTIFIER)
+        is_static = false;
+      else
+        is_static = true;
       if (scope != NULL)
         {
           dtnode->node.arr_typ->ptr1->scope = scope;
@@ -239,8 +244,8 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       assert(dtnode->node.lea->nullData == true);
       is_array = false;
       basetype = dtnode->node.lea->type;
-      lower_bound = -1;
-      upper_bound = -1;
+      lower_bound = NULL;
+      upper_bound = NULL;
     }
 
   union SymbolTableValue new_value;
@@ -248,6 +253,7 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   assert(strlen(name) <= IDENTIFIER_NAME_MAX_LEN);
   strcpy(new_value.variable.name, name);
   new_value.variable.isArray = is_array;
+  new_value.variable.isStatic = is_static;
   new_value.variable.datatype = basetype;
   new_value.variable.line_number = line_number;
   new_value.variable.lower_bound = lower_bound;

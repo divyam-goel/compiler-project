@@ -254,19 +254,27 @@ void symbolTableCoreTests() {
     /* Test overwritting. */
     printf("Overwrite test:\n");
 
+    struct LeafNode lower_bound, upper_bound;
+    lower_bound.type = NUM;
+    lower_bound.value.num = 1;
+    upper_bound.type = IDENTIFIER;
+    strcpy(upper_bound.value.entry, "v");
+
     xtype = ST_VARIABLE;
     strcpy(xval.variable.name, "myArr");
     xval.module.dec_line_number = 2;
     xval.module.def_line_number = 20;
     xval.variable.value.num = 7;
-    xval.variable.datatype = NUM;
+    xval.variable.datatype = INTEGER;
     xval.variable.isArray = true;
-    xval.variable.lower_bound = 1;
-    xval.variable.upper_bound = 10;
+    xval.variable.lower_bound = &lower_bound;
+    xval.variable.upper_bound = &upper_bound;
     xval.variable.mem_offset = NULL;
     
     assert(symbolTableSet(st, xkey, xval, xtype, true) == true);
     node = symbolTableGet(st, xkey);
+    assert(node->value.variable.isArray == true);
+    assert(node->value.variable.isStatic == false);
     printSymbolTableNode(node, xkey);
     assert(node->value_type == ST_VARIABLE);
     node = symbolTableGet(st, ykey);
@@ -332,8 +340,8 @@ int main() {
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, adv_source_file);
     // test_createAST(grammar_file, source_file);
-    // symbolTableCoreTests();
-    test_createSymbolTables(grammar_file, source_file);
+    symbolTableCoreTests();
+    // test_createSymbolTables(grammar_file, source_file);
     // test_semanticCheck(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
