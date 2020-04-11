@@ -1,0 +1,58 @@
+declare module function2;
+
+**
+<<module sub_routine>>
+takes input [a:real];
+start
+end
+**
+
+<<<driver program>>>
+start
+    ** DECLARE STMT **
+    declare x, y : integer;
+    declare z : real;
+    declare w : boolean;
+    
+    ** INPUT STMT **
+    get_value(x);
+    
+    ** PRINT STMT **
+    print(x);
+    
+    ** ASSIGN STMT **
+    x := x + 5;
+
+    ** MODULE REUSE STMT **
+    [x] := use module function2 with parameters x;
+
+    ** CONDITIONAL STMT **
+    switch(z)
+    start
+        case 5:
+            print(x);
+            break;
+        default:
+            get_value(x);
+            break;
+    end
+
+    ** FOR ITERATIVE STMT **
+    for(x in 1..5)
+    start
+        print(x);
+    end
+
+    ** WHILE ITERATIVE STMT **
+    while(x >= 10 AND x < 12)
+    start
+        print(x);
+    end
+end
+
+<<module function2>>
+takes input [a:integer];
+returns [c:integer];
+start
+    c := a;
+end
