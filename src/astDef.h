@@ -4,6 +4,7 @@
 
 #include "grammar.h"
 #include "lexerDef.h"
+#include "intCodeDef.h"
 
 #define IDENTIFIER_NAME_MAX_LEN 20
 
