@@ -747,6 +747,9 @@ void parseInputSourceCode(char *testcaseFile) {
     if(no_errors == 1){
     	printf("Syntax Analysis completed successfully! No errors found.\n");
     }
+	else{
+		exit(EXIT_FAILURE);
+	}
     return;
 }
 
