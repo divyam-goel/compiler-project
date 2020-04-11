@@ -20,6 +20,7 @@ void test_removeComments(){
     llog("Success!!!\n");
 }
 
+
 void test_getStream(char *file_name) {
     FILE * fp = fopen(file_name, "r");
     if (fp == NULL) {
@@ -39,6 +40,7 @@ void test_getStream(char *file_name) {
         num_bytes = getNumBytes();
     }
 }
+
 
 void test_getNextToken(char *file_name) {
     FILE * fp = fopen(file_name, "r");
@@ -86,10 +88,12 @@ void test_getNextToken(char *file_name) {
     fclose(fp);
 }
 
+
 void test_loadGrammar(char *file_name) {
     loadGrammar(file_name);
     printGrammar();
 }
+
 
 void test_computeFirstAndFollow(char *file_name) {
     extern struct firstAndFollow F;
@@ -153,6 +157,7 @@ void test_computeFirstAndFollow(char *file_name) {
     // }
 }
 
+
 void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     printf("Loading grammar ...\n");
     loadGrammar(grammar_file);
@@ -185,6 +190,7 @@ void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     printParseTree("test/test_result_parse_tree_output.txt");
 }
 
+
 void test_createAST(char *grammar_file, char *source_file) {
     test_parseInputSourceCode(grammar_file, source_file);
 
@@ -195,6 +201,7 @@ void test_createAST(char *grammar_file, char *source_file) {
     // printAST();
 }
 
+
 char *st_value_types[] = {"ST_MODULE", "ST_MODULE", "ST_VARIABLE"};
 
 void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
@@ -203,6 +210,7 @@ void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
     else
         printf("\tValue found, type: %s\n", st_value_types[node->value_type]);
 }
+
 
 void symbolTableCoreTests() {
     printf("Running symbol table tests... \n");
@@ -319,19 +327,18 @@ void test_createSymbolTables(char *grammar_file, char *source_file) {
 
 void test_semanticCheck(char *grammar_file, char *source_file) {
   test_createSymbolTables(grammar_file, source_file);
-  printf("Printing AST ...\n");
-  printAST();
   extern struct ProgramNode AST;
   printf("Checking AST for Semantic Errors...\n");
   semanticChecker(&AST);
 }
+
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_1.erplag";
+    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_5.erplag";
     // char source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
