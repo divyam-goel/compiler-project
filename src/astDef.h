@@ -127,6 +127,7 @@ struct LeafNode {
   union LeafNodeUnion value;
   int line_number;
   struct SymbolTable *scope;
+  ICAddr addr;
 };
 
 struct ArrayTypeNode {
@@ -155,50 +156,58 @@ struct PrintNode {
 struct ArrayNode {
   struct LeafNode *ptr1;
   struct LeafNode *ptr2;
+  ICAddr addr;
 };
 
 struct AssignStmtNode {
   struct LeafNode *ptr1;
   struct Attribute *ptr2;
+  ICAddr addr;
 };
 
 
 struct LvalueIDNode {
   struct Attribute *ptr1;
+  ICAddr addr;
 };
 
 struct LvalueARRNode {
   struct LeafNode *ptr1; //index
   struct Attribute *ptr2;
+  ICAddr addr;
 };
 
 struct ModuleReuseStmtNode {
   struct IdListNode *ptr1;
   struct LeafNode *ptr2;
   struct IdListNode *ptr3;
-
+  ICAddr addr;
 };
 
 struct IdListNode {
   struct LeafNode *ptr1;
   struct IdListNode *ptr2;
+  ICAddr addr;
 };
 
 struct UNode {
   enum terminal op;
   struct Attribute *ptr1;
+  ICAddr addr;
 };
 
 struct N7Node {
   struct Attribute *ptr1;
   enum terminal logicalOp;
   struct Attribute *ptr2;
+  ICAddr addr;
 };
 
 struct N8Node {
   struct Attribute *ptr1; /* The inherited attribute. */
   enum terminal relationalOp;
   struct Attribute *ptr2;
+  ICAddr addr;
 };
 
 struct ArithmeticExprNode {
@@ -206,6 +215,7 @@ struct ArithmeticExprNode {
   enum terminal op;
   struct Attribute *ptr2; /* Term */
   struct Attribute *ptr3;
+  ICAddr addr;
 };
 
 struct TermNode {
@@ -213,6 +223,7 @@ struct TermNode {
   enum terminal op;
   struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
   struct Attribute *ptr3;
+  ICAddr addr;
 };
 
 struct DeclareStmtNode {
@@ -251,6 +262,7 @@ struct RangeNode {
 struct Attribute {
   union ASTNodesUnion node;
   enum ASTNodesEnum type;
+  ICAddr addr;
 };
 
 /* ----- END STRUCTS ----- */

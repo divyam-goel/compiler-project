@@ -8,6 +8,9 @@ typedef enum IntermediateCodeOperation {
   /* arithmetic */
   icADD, icSUB, icMUL, icDIV,
 
+  /* utility arithmetic */
+  icINC, icDEC,
+
   /* logic */
   icAND, icOR,
 
@@ -21,7 +24,7 @@ typedef enum IntermediateCodeOperation {
   icCOPY, icLOAD, icSTORE,
 
   /* control */
-  icGOTO, icCALL,
+  icJUMP, icTJUMP, icFJUMP, icCALL,
 
   /* others */
   icLABEL
