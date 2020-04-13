@@ -31,7 +31,6 @@ struct VariableEntry {
   bool isStatic;
   struct LeafNode *lower_bound;  /* Only valid when isArray == true */
   struct LeafNode *upper_bound;  /* Only valid when isArray == true */
-  bool is_static;   /* for arrays, if either of the bounds are dynamic, set to true.*/
   void *mem_offset;
 };
 
