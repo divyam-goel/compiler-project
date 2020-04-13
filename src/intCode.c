@@ -1,5 +1,89 @@
 #include "intCode.h"
 
+// to be removed- just added here for testing code
+// actual code is in codeGen.c
+void cg_ADD_SUB(ICInstr *ic_instr)
+{
+  char instr[100] = ""; //final instruction -temporary max length as 100
+
+  char addr1[30];
+  char store_reg1[50] = "\nMOV\tEAX , ";
+  char addr2[30];
+  char store_reg2[50] = "\nMOV\tEBX , ";
+  // for addr1
+  switch ((ic_instr->addr1).type)
+  {
+  case NUM:
+    sprintf(addr1, "%d", (ic_instr->addr1).value.num);
+    break;
+  case RNUM:
+    sprintf(addr1, "%f", (ic_instr->addr1).value.rnum);
+    break;
+  case BOOLEAN_:
+    if ((ic_instr->addr1).value.boolean == true)
+      sprintf(addr1, "True");
+    else
+      sprintf(addr1, "False");
+    break;
+  case IDENTIFIER:
+    sprintf(addr1, "mem(%s)", (char *)(ic_instr->addr1).value.symbol);
+    break;
+  default:
+    sprintf(addr1, "NULL");
+    break;
+  }
+  // for addr2
+  switch ((ic_instr->addr2).type)
+  {
+  case NUM:
+    sprintf(addr2, "%d", (ic_instr->addr2).value.num);
+    break;
+  case RNUM:
+    sprintf(addr2, "%f", (ic_instr->addr2).value.rnum);
+    break;
+  case BOOLEAN_:
+    if ((ic_instr->addr2).value.boolean == true)
+      sprintf(addr2, "True");
+    else
+      sprintf(addr2, "False");
+    break;
+  case IDENTIFIER:
+    sprintf(addr2, "mem(%s)", (char *)(ic_instr->addr2).value.symbol);
+    break;
+  default:
+    sprintf(addr2, "NULL");
+    break;
+  }
+  // store instr
+  strcat(store_reg1,addr1);
+  strcat(store_reg2,addr2);
+  // into code
+  strcat(instr, store_reg1);
+  strcat(instr, store_reg2);
+
+  switch (ic_instr->op){
+  case icADD:
+    strcat(instr, "\nADD\t");
+    break;
+  case icSUB:
+    strcat(instr, "\nSUB\t");
+    break;
+  default:
+    strcat(instr, "BLAH\t");
+  }
+  // operation
+  strcat(instr,"EAX , EBX");
+  // next is addr3- move the result in EAX to mem
+  strcat(instr,"\nMOV\tEAX, ");
+  strcat(instr, "mem(");
+  strcat(instr, (char *)(ic_instr->addr3).value.symbol);
+  strcat(instr, ")\t");
+
+  // print out result
+  printf("%s", instr);
+}
+
+
 
 ICInstr *start_global_ic_instr = NULL;
 ICInstr *global_ic_instr = NULL;
@@ -536,28 +620,32 @@ void printICAddress(ICAddr ic_addr) {
 void printICInstruction(ICInstr *ic_instr) {
   switch (ic_instr->op) {
     case icADD:
-      printf("ADD\t");
-      printICAddress(ic_instr->addr3);
-      printICAddress(ic_instr->addr1);
-      printICAddress(ic_instr->addr2);
+      // printf("ADD\t");
+      // printICAddress(ic_instr->addr3);
+      // printICAddress(ic_instr->addr1);
+      // printICAddress(ic_instr->addr2);
+      cg_ADD_SUB(ic_instr);
       break;
     case icSUB:
-      printf("SUB\t");
-      printICAddress(ic_instr->addr3);
-      printICAddress(ic_instr->addr1);
-      printICAddress(ic_instr->addr2);
+      // printf("SUB\t");
+      // printICAddress(ic_instr->addr3);
+      // printICAddress(ic_instr->addr1);
+      // printICAddress(ic_instr->addr2);
+      cg_ADD_SUB(ic_instr);
       break;
     case icMUL:
       printf("MUL\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
+
       break;
     case icDIV:
       printf("DIV\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
+      // cg_ADD_SUB_DIV_MUL(ic_instr);
       break;
     case icINC:
       printf("INC\t");
@@ -637,6 +725,7 @@ void printICInstruction(ICInstr *ic_instr) {
       printf("STORE\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
+      // cgSTORE(ic_instr);
       break;
     case icJUMP:
       printf("JUMP\t");
