@@ -38,37 +38,43 @@ void cgICAddr(char *addr, ICAddr *ic_addr) {
   }
 }
 
-void loadConstReg(char *instr_list, char *reg1, int num){
-  char asm_instr[50];
-  char op[] = "MOV";
+void addLabel(char *instr_list, char *label){
+  strcat(instr_list,label);
+  strcat(instr_list, ":\n");
+}
+
+void loadConstReg(char *instr_list, char *reg1, int num)
+{
+  char asm_instr[50] = "";
   char num_string[50];
   itoa(num,num_string, 10);
 
-  strcat(asm_instr, op);
+  strcat(asm_instr, "MOV");
   strcat(asm_instr, "\t");
   
   strcat(asm_instr, reg1);
   strcat(asm_instr, " , ");
   strcat(asm_instr, num_string);
+  strcat(asm_instr,"\n");
 
   strcat(instr_list, asm_instr);
 }
 
 void instrOneOperand(char *instr_list, char *op, char *reg1) {
-  char asm_instr[50];
+  char asm_instr[50] = "";
 
   strcat(asm_instr, op);
   strcat(asm_instr, "\t");
   
   strcat(asm_instr, reg1);
-  strcat(asm_instr, " , ");
+  strcat(asm_instr, "\n");
   
   strcat(instr_list, asm_instr);
 }
 
 
 void instrTwoOperand(char *instr_list, char *op, char *reg1, char *reg2) {
-  char asm_instr[50];
+  char asm_instr[50] = "";
 
   strcat(asm_instr, op);
   strcat(asm_instr, "\t");
@@ -129,7 +135,6 @@ void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) {
 
 void cgADD_SUB_INT(ICInstr *ic_instr) {
   char instr_list[100] = "";
-  char *asm_instr[50];
   char *op[10] = "";
 
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
@@ -156,7 +161,6 @@ void cgADD_SUB_INT(ICInstr *ic_instr) {
 
 void cgADD_SUB_REAL(ICInstr *ic_instr) {
   char instr_list[100] = "";
-  char *asm_instr[50];
   char *op[10] = "";
 
   cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
@@ -184,15 +188,12 @@ void cgADD_SUB_REAL(ICInstr *ic_instr) {
 void cgMUL_INT(ICInstr *ic_instr){ //---> so far only int
   char instr_list[100] = ""; //final instruction -temporary max length as 100
 
-  char *asm_instr1[50];
-  char *asm_instr2[50];
-
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
 
   strcat(instr_list,"IMUL\tAX , CX\n");
-  // The result of this MUL goes into DX:AX- for now we just store EAX
-  cgStoreINT(instr_list, reg_eax, &(ic_instr->addr3));
+  // The result of this MUL goes into DX:AX- for now we just store AX
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
 
   // print out result
   printf("%s", instr_list);
@@ -242,17 +243,17 @@ void cgDIV_REAL(ICInstr *ic_instr){
 
 void cgINC(ICInstr *ic_instr) {
   char instr_list[100];
-  cgLoadReg(instr_list, reg_eax, &(ic_instr->addr1));
-  strcat(instr_list, "INC\tEAX\n");
-  cgStoreMem(instr_list, reg_eax, &(ic_instr->addr1));
+  cgLoadReg(instr_list, reg_ax, &(ic_instr->addr1));
+  strcat(instr_list, "INC\tAX\n");
+  cgStoreMem(instr_list, reg_ax, &(ic_instr->addr1));
 }
 
 
 void cgDEC(ICInstr *ic_instr) {
   char instr_list[100];
-  cgLoadReg(instr_list, reg_eax, &(ic_instr->addr1));
-  strcat(instr_list, "DEC\tEAX\n");
-  cgStoreMem(instr_list, reg_eax, &(ic_instr->addr1));
+  cgLoadReg(instr_list, reg_ax, &(ic_instr->addr1));
+  strcat(instr_list, "DEC\tAX\n");
+  cgStoreMem(instr_list, reg_ax, &(ic_instr->addr1));
 }
 
 
@@ -275,30 +276,67 @@ void cgSTORE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements 
 }
 
 
-void cgLT(ICInstr *ic_instr) {
+void cgRelationalOp(ICInstr *ic_instr) {
+  // for now, using 1 as truth value, 0 as false value:
   char instr_list[100] = ""; //final instruction -temporary max length as 100
+  char label1[] = "L1";
+  char label2[] = "L2";
+  char operator[] = "";
 
+  switch (ic_instr->op){
+  case icEQ:
+    strcat(operator, "JE");
+    break;
+  case icNE:
+    strcat(operator, "JNE");
+    break;
+  case icLT:
+    strcat(operator,"JL");
+    break;
+  case icGT:
+    strcat(operator, "JG");
+    break;
+  case icLE:
+    strcat(operator, "JLE");
+    break;
+  case icGE:
+    strcat(operator, "JGE");
+    break;
+  default:
+    strcat(operator, "BLAH1");
+    break;
+  }
+  
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
 
   instrTwoOperand(instr_list,"CMP",reg_ax,reg_bx);
-  // for now, using 1 as truth value, 0 as false value:
-  // also, need to implement label  properly
-  strcat(instr_list,"L1: ");
-  instrTwoOperand(instr_list,)
+  //instr eg -> "JLE L1"
+  instrOneOperand(instr_list,operator,label1); 
+  //this runs if above condition isnt true
+  loadConstReg(instr_list, reg_cx, 0); //false
+  instrOneOperand(instr_list, "JMP", label2); //jump to label2
 
+  addLabel(instr_list,label1); //true => it comes here
+  loadConstReg(instr_list, reg_cx, 1); //true
+
+  addLabel(instr_list,label2); // if false, the other condition jumps here
+  // store value in addr3
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
 }
 
+
+/* Those with '-' next to them have been implemented*/
 // -void cgINC(ICInstr *ic_instr) {}
 // -void cgDEC(ICInstr *ic_instr) {}
 // void cgAND(ICInstr *ic_instr) {}
 // void cgOR(ICInstr *ic_instr) {}
-// void cgEQ(ICInstr *ic_instr) {}
-// void cgNE(ICInstr *ic_instr) {}
-// void cgLT(ICInstr *ic_instr) {}
-// void cgGT(ICInstr *ic_instr) {}
-// void cgLE(ICInstr *ic_instr) {}
-// void cgGE(ICInstr *ic_instr) {}
+// -void cgEQ(ICInstr *ic_instr) {}
+// -void cgNE(ICInstr *ic_instr) {}
+// -void cgLT(ICInstr *ic_instr) {}
+// -void cgGT(ICInstr *ic_instr) {}
+// -void cgLE(ICInstr *ic_instr) {}
+// -void cgGE(ICInstr *ic_instr) {}
 // void cgPLUS(ICInstr *ic_instr) {}
 // void cgMINUS(ICInstr *ic_instr) {}
 
