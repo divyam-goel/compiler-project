@@ -1388,6 +1388,7 @@ void case_72(struct treeNode *curr_node){
     curr_node->syn = child_node->syn;
   }
   else {
+    next_node->syn.node.ari_exp->is_first = true;
     curr_node->syn = next_node->syn;
   }
 }
@@ -1399,6 +1400,7 @@ void case_73(struct treeNode *curr_node){
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
   struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
   arithmetic_expr_node->ptr1 = newAttribute(curr_node->inh);
+  arithmetic_expr_node->is_first = false;
   traverseParseTree(child_node);
   arithmetic_expr_node->op = child_node->val;
   child_node = nextNonTerminalNode(child_node);
@@ -1443,6 +1445,7 @@ void case_75(struct treeNode *curr_node){
     curr_node->syn = child_node->syn;
   }
   else {
+    next_node->syn.node.ter->is_first = true;
     curr_node->syn = next_node->syn;
   }
 }
@@ -1456,6 +1459,7 @@ void case_76(struct treeNode *curr_node){
   /* 1. <sub_term>.syn = new TermNode(<sub_term>.inh, <op2>.val, <factor>.syn) */
   struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
   term_node->ptr1 = newAttribute(curr_node->inh);
+  term_node->is_first = false;
   term_node->op = child_node->val;
   child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
@@ -1748,6 +1752,7 @@ void case_104(struct treeNode *curr_node) {
   range_node->ptr1 = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.num), child_node->symbol.terminal.line_no);
   child_node = child_node->next->next;
   range_node->ptr2 = newLeafNode(NUM, &(child_node->symbol.terminal.lexeme.num), child_node->symbol.terminal.line_no);
+  range_node->ptr2->value.num += 1;
 
   /* <range>.syn = new RangeNode(new LeafNode(NUM1, NUM1.val), new LeafNode(NUM2, NUM2.val)) */
   curr_node->syn.node.ran = range_node;
@@ -1869,7 +1874,7 @@ void printExpression(struct Attribute *expr) {
       break;
 
     case ARITHMETIC_EXPR_NODE:
-      if (expr->node.ari_exp->ptr1->type != ARITHMETIC_EXPR_NODE)
+      if (expr->node.ari_exp->is_first)
         printExpression(expr->node.ari_exp->ptr1);
       printf("%s ", terminalStringRepresentations[expr->node.ari_exp->op]);
       printExpression(expr->node.ari_exp->ptr2);
@@ -1877,7 +1882,7 @@ void printExpression(struct Attribute *expr) {
       break;
 
     case TERM_NODE:
-      if (expr->node.ter->ptr1->type != TERM_NODE)
+      if (expr->node.ter->is_first)
         printExpression(expr->node.ter->ptr1);
       printf("%s ", terminalStringRepresentations[expr->node.ter->op]);
       printExpression(expr->node.ter->ptr2);

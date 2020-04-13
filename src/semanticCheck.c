@@ -31,8 +31,6 @@ enum terminal leafType(struct LeafNode *leaf) {
       data_type = REAL;
       break;
     case IDENTIFIER:
-      // printf("leaf value: %s\n", (char *)leaf->value.entry);
-      // printSymbolTable(leaf->scope);
       symbol_table_entry = symbolTableGet(leaf->scope, leaf->value.entry);
       if (symbol_table_entry == NULL) {
         printf("Type Error: Undeclared variable %s\n", (char *)leaf->value.entry);
@@ -57,6 +55,38 @@ enum terminal leafType(struct LeafNode *leaf) {
 }
 
 
+// enum terminal arrayType(struct ArrayNode *array) {
+//   enum terminal data_type_var, data_type_idx;
+//   struct SymbolTableNode *symbol_table_entry = NULL;
+
+//   symbol_table_entry = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
+//   if (symbol_table_entry == NULL) {
+//     printf("Type Error: Undeclared variable %s\n", (char *)array->ptr1->value.entry);
+//     return EPSILON;
+//   }
+
+//   data_type_var = symbol_table_entry->value.variable.datatype;
+//   data_type_idx = leafType(array->ptr2);
+
+//   if (data_type_idx != INTEGER) {
+//     printf("Type Error: Array index should be of type INTEGER, found %s\n",
+//     terminalStringRepresentations[data_type_idx]);
+//   }
+
+//   if (symbol_table_entry->value.variable.isStatic && array->ptr2->type == NUM) {
+//     int lower_bound, upper_bound, index;
+//     lower_bound = symbol_table_entry->value.variable.lower_bound;
+//     upper_bound = symbol_table_entry->value.variable.upper_bound;
+//     index = array->ptr2->value.num;
+//     if (index < lower_bound || index > upper_bound) {
+//       printf("Semantic Error: Array out of bounds\n");
+//     }
+//   }
+
+//   return data_type_var;
+// }
+
+
 enum terminal attributeType(struct Attribute *attribute) {
   switch (attribute->type) {
     case ARRAY_TYPE_NODE:
@@ -73,8 +103,6 @@ enum terminal attributeType(struct Attribute *attribute) {
 
 enum terminal expressionType(struct Attribute *expression) {
   enum terminal left_operand_type, right_operand_type;
-
-  // printf("DEBUG: expression type in expressionType: %d\n", expression->type);
   
   switch (expression->type) {
     case U_NODE:
@@ -91,7 +119,7 @@ enum terminal expressionType(struct Attribute *expression) {
       break;
     case ARITHMETIC_EXPR_NODE:
       right_operand_type = expressionType(expression->node.ari_exp->ptr2);
-      if (expression->node.ari_exp->ptr1->type == LEAF_NODE || expression->node.ari_exp->ptr1->type == ARRAY_NODE) {
+      if (expression->node.ari_exp->is_first) {
         left_operand_type = expressionType(expression->node.ari_exp->ptr1);
         if (left_operand_type != right_operand_type) {
           printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
@@ -105,7 +133,7 @@ enum terminal expressionType(struct Attribute *expression) {
       break;
     case TERM_NODE:
       right_operand_type = expressionType(expression->node.ter->ptr2);
-      if (expression->node.ter->ptr1->type == LEAF_NODE || expression->node.ter->ptr1->type == ARRAY_NODE) {
+      if (expression->node.ter->is_first) {
         left_operand_type = expressionType(expression->node.ter->ptr1);
         if (left_operand_type != right_operand_type) {
           printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
@@ -118,20 +146,15 @@ enum terminal expressionType(struct Attribute *expression) {
       }
       break;
     case ARRAY_NODE:
-      // add bounds checking
       return leafType(expression->node.arr->ptr1);
       break;
     case LEAF_NODE:
-      // printf("DEBUG: Checkpoint\n");
       return leafType(expression->node.lea);
       break;
     default:
       printf("Invalid Expression Type %d!\n", expression->type);
       break;
   }
-
-  // printf("DEBUG: left op type: %d\n", left_operand_type);
-  // printf("DEBUG: right op type: %d\n", right_operand_type);
 
   if (left_operand_type == EPSILON || right_operand_type == EPSILON)
     return EPSILON;
@@ -154,16 +177,13 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
   enum terminal lhs_type, rhs_type;
 
   lhs_type = leafType(assignment_node->ptr1);
-  // printf("DEBUG: lhs type: %d\n", lhs_type);
     
   struct Attribute *rhs_expression = NULL;
   if (assignment_node->ptr2->type == LVALUE_ID_NODE)
     rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;
   else
     rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;
-  // printf("DEBUG: expression type: %d\n", rhs_expression->type);
   rhs_type = expressionType(rhs_expression);
-  // printf("DEBUG: rhs type: %d\n", rhs_type);
 
   if (lhs_type != EPSILON && rhs_type != EPSILON && lhs_type != rhs_type)
     printf("Type Error: expression evaluates to type %s, expected %s\n",
@@ -329,6 +349,13 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
 
   // check to see if one of the variables in above expression is in LHS of one of the statements
   // in the while block
+  // struct StatementNode *statement_node = while_iter_node->ptr2;
+  // while (statement_node != NULL) {
+  //   if (statement_node->ptr1->type == ASSIGN_STMT_NODE) {
+  //     statement_node->ptr1->node.agn_stm->ptr1->value.entry;
+  //   }
+  //   statement_node = statement_node->ptr2;
+  // }
 
   statementListSemanticChecker(while_iter_node->ptr2);
 }
@@ -337,9 +364,6 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
 void statementSemanticChecker(struct StatementNode *statement_node) {
   if (statement_node == NULL)
     return;
-  
-  // printf("DEBUG: ");
-  // printStatement(statement_node);
   
   switch (statement_node->ptr1->type) {
     case ASSIGN_STMT_NODE:

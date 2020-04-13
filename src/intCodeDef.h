@@ -24,7 +24,7 @@ typedef enum IntermediateCodeOperation {
   icCOPY, icLOAD, icSTORE,
 
   /* control */
-  icJUMP, icTJUMP, icFJUMP, icCALL,
+  icJUMP, icJUMPZ, icJUMPNZ, icCALL,
 
   /* others */
   icLABEL

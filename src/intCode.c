@@ -1,19 +1,14 @@
 #include "intCode.h"
 
 
+ICInstr *start_global_ic_instr = NULL;
 ICInstr *global_ic_instr = NULL;
 int temporary_count = 0;
 
 
-void generateIntermediateCode(struct ProgramNode *AST) {
-  icStatementList(AST->ptr3);
-  // icModuleList(AST->ptr2);
-  // icModuleList(AST->ptr4);
-}
-
-
 ICInstr * newICInstruction() {
   ICInstr *ic_instr = (ICInstr *) malloc(sizeof(ICInstr));
+  ic_instr->next = NULL;
   return ic_instr;
 }
 
@@ -21,8 +16,8 @@ ICInstr * newICInstruction() {
 ICAddr newTemporary() {
   ICAddr ic_addr;
   ic_addr.type = IDENTIFIER;
-  ic_addr.value.symbol = malloc(sizeof(char) * 9);
-  strcpy(ic_addr.value.symbol, "TEMP IDX");
+  ic_addr.value.symbol = malloc(sizeof(char) * 5);
+  strcpy(ic_addr.value.symbol, "TEMP");
   return ic_addr;
 }
 
@@ -30,13 +25,13 @@ ICAddr newTemporary() {
 ICAddr newLabel() {
   ICAddr ic_addr;
   ic_addr.type = IDENTIFIER;
-  ic_addr.value.symbol = malloc(sizeof(char) * 10);
-  strcpy(ic_addr.value.symbol, "LABEL IDX");
+  ic_addr.value.symbol = malloc(sizeof(char) * 6);
+  strcpy(ic_addr.value.symbol, "LAB");
   return ic_addr;
 }
 
 
-void icLeafNode(struct LeafNode *leaf) {
+void icLeaf(struct LeafNode *leaf) {
   ICAddr ic_addr;
   ICInstr *ic_instr = NULL;
   
@@ -58,11 +53,11 @@ void icLeafNode(struct LeafNode *leaf) {
       ic_addr.type = BOOLEAN_;
       break;
     case IDENTIFIER:
-      // ic_addr->value.symbol = symbolTableGet(leaf->scope, leaf->value.entry);
+      // ic_addr.value.symbol = symbolTableGet(leaf->scope, leaf->value.entry);
       ic_addr.value.symbol = leaf->value.entry;
       ic_addr.type = IDENTIFIER;
-      // ic_instr = newICInstruction();
-      // ic_instr->addr1 = 
+    default:
+      break;
   }
   leaf->addr = ic_addr;
 
@@ -73,7 +68,27 @@ void icLeafNode(struct LeafNode *leaf) {
 }
 
 
-void icUnaryExpr(struct UNode *unary_expression) {
+// void icArray(struct ArrayNode *array) {
+//   ICInstr *ic_instr = NULL;
+  
+//   icLeaf(array->ptr1);
+//   icLeaf(array->ptr2);
+
+//   struct VariableEntry *array_symbol;
+//   array_symbol = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
+//   if (!array_symbol->isStatic) {
+//     // dynamically check array bounds
+//   }
+
+//   ic_instr = newICInstruction();
+//   ic_instr->addr1 = ic_addr;
+//   ic_instr->addr2 = ic_addr;
+//   ic_instr->addr3 = newTemporary();
+//   ic_instr->op = icLOAD;
+// }
+
+
+void icUnaryExpression(struct UNode *unary_expression) {
   icExpression(unary_expression->ptr1);
   
   ICInstr *ic_instr = newICInstruction();
@@ -85,6 +100,8 @@ void icUnaryExpr(struct UNode *unary_expression) {
       break;
     case MINUS:
       ic_instr->op = icMINUS;
+      break;
+    default:
       break;
   }
   unary_expression->addr = ic_instr->addr3;
@@ -108,6 +125,8 @@ void icLogicalExpression(struct N7Node *logical_expression) {
       break;
     case OR:
       ic_instr->op = icOR;
+      break;
+    default:
       break;
   }
   logical_expression->addr = ic_instr->addr3;
@@ -145,6 +164,8 @@ void icRelationalExpression(struct N8Node *relational_expression) {
     case GE:
       ic_instr->op = icGE;
       break;
+    default:
+      break;
   }
   relational_expression->addr = ic_instr->addr3;
 
@@ -153,8 +174,8 @@ void icRelationalExpression(struct N8Node *relational_expression) {
 }
 
 
-void icArithmeticlExpression(struct ArithmeticExprNode *arithmetic_expression) {
-  if (arithmetic_expression->ptr1->type == LEAF_NODE) {
+void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
+  if (arithmetic_expression->is_first) {
     icExpression(arithmetic_expression->ptr1);
   }
   icExpression(arithmetic_expression->ptr2);
@@ -170,6 +191,8 @@ void icArithmeticlExpression(struct ArithmeticExprNode *arithmetic_expression) {
     case MINUS:
       ic_instr->op = icSUB;
       break;
+    default:
+      break;
   }
 
   global_ic_instr->next = ic_instr;
@@ -183,7 +206,7 @@ void icArithmeticlExpression(struct ArithmeticExprNode *arithmetic_expression) {
 
 
 void icTermExpression(struct TermNode *term_expression) {
-  if (term_expression->ptr1->type == LEAF_NODE) {
+  if (term_expression->is_first) {
     icExpression(term_expression->ptr1);
   }
   icExpression(term_expression->ptr2);
@@ -198,6 +221,9 @@ void icTermExpression(struct TermNode *term_expression) {
       break;
     case DIV:
       ic_instr->op = icDIV;
+      break;
+    default:
+      printf("Default term\n");
       break;
   }
 
@@ -239,13 +265,28 @@ void icExpression(struct Attribute *expression) {
       icLeaf(expression->node.lea);
       expression->addr = expression->node.lea->addr;
       break;
+    default:
+      printf("Default expression: %d\n", expression->type);
+      break;
   }
 }
 
 
 void icAssignmentStatement(struct AssignStmtNode *assignment) {
-  icLeaf(assignment->ptr1);
-  icExpression(assignment->ptr2);
+  switch (assignment->ptr2->type) {
+    case LVALUE_ID_NODE:
+      icLeaf(assignment->ptr1);
+      icExpression(assignment->ptr2->node.lva_id->ptr1);
+      assignment->ptr2->addr = assignment->ptr2->node.lva_id->ptr1->addr;
+      break;
+    case LVALUE_ARR_NODE:
+      // icLeaf(assignment->ptr1);
+      // icExpression(assignment->ptr2);
+      break;
+    default:
+      break;
+  }
+  printf("\n");
 
   ICInstr *ic_instr = newICInstruction();
   ic_instr->op = icSTORE;
@@ -272,6 +313,7 @@ void icConditionalStatement(struct ConditionalStmtNode *conditional) {
     label_test = newLabel();
 
     /* test counter */
+    icLeaf(case_statement->ptr1);
     ic_instr = newICInstruction();
     ic_instr->addr1 = conditional->ptr1->addr;
     ic_instr->addr2 = case_statement->ptr1->addr;
@@ -284,12 +326,12 @@ void icConditionalStatement(struct ConditionalStmtNode *conditional) {
     ic_instr = newICInstruction();
     ic_instr->addr1 = temporary;
     ic_instr->addr2 = label_test;
-    ic_instr->op = icFJUMP;
+    ic_instr->op = icJUMPZ;
     global_ic_instr->next = ic_instr;
     global_ic_instr = ic_instr;
 
     /* case body */
-    icStatementList(case_statement->ptr3);
+    icStatementList(case_statement->ptr2);
 
     /* unconditional jump */
     ic_instr = newICInstruction();
@@ -356,6 +398,7 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration) {
   global_ic_instr = ic_instr;
 
   /* test counter */
+  icLeaf(for_iteration->ptr2->ptr2);
   temporary = newTemporary();
   ic_instr = newICInstruction();
   ic_instr->addr1 = for_iteration->ptr1->addr;
@@ -369,7 +412,7 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration) {
   ic_instr = newICInstruction();
   ic_instr->addr1 = temporary;
   ic_instr->addr2 = label;
-  ic_instr->op = icFJUMP;
+  ic_instr->op = icJUMPNZ;
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
 }
@@ -393,7 +436,8 @@ void icWhileIterativeStatement(struct WhileIterativeStmtNode *while_iteration) {
   /* conditional jump */
   ic_instr = newICInstruction();
   ic_instr->addr1 = while_iteration->ptr1->addr;
-  ic_instr->op = icFJUMP;
+  ic_instr->addr2 = label_end;
+  ic_instr->op = icJUMPZ;
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
   
@@ -425,21 +469,23 @@ void icStatement(struct Attribute *attribute_node) {
       // return icModuleReuseStatement(attribute_node->node.mod_reu_stm);
       break;
     case INPUT_NODE:
-      // return icInputStatement(attribute_node->node.mod_reu_stm);
+      // return icInputStatement(attribute_node->node.inp);
       break;
     case PRINT_NODE:
-      // return icPrintStatement(attribute_node->node.mod_reu_stm);
+      // return icPrintStatement(attribute_node->node.pri);
       break;
     case DECLARE_STMT_NODE:
       break;
     case CONDITIONAL_STMT_NODE:
-      // return icConditionalStatement(attribute_node->node.mod_reu_stm);
+      return icConditionalStatement(attribute_node->node.con_stm);
       break;
     case FOR_ITERATIVE_STMT_NODE:
-      // return icForIterativeStatement(attribute_node->node.mod_reu_stm);
+      return icForIterativeStatement(attribute_node->node.for_ite_stm);
       break;
     case WHILE_ITERATIVE_STMT_NODE:
-      // return icWhileIterativeStatement(attribute_node->node.mod_reu_stm);
+      return icWhileIterativeStatement(attribute_node->node.whi_ite_stm);
+      break;
+    default:
       break;
   }
 }
@@ -450,6 +496,17 @@ void icStatementList(struct StatementNode *statement_node) {
     icStatement(statement_node->ptr1);
     statement_node = statement_node->ptr2;
   }
+}
+
+
+void generateIntermediateCode(struct ProgramNode *AST) {
+  global_ic_instr = newICInstruction();
+  global_ic_instr->addr1 = newLabel();
+  global_ic_instr->op = icLABEL;
+  start_global_ic_instr = global_ic_instr;
+  icStatementList(AST->ptr3);
+  // icModuleList(AST->ptr2);
+  // icModuleList(AST->ptr4);
 }
 
 
@@ -470,6 +527,8 @@ void printICAddress(ICAddr ic_addr) {
     case IDENTIFIER:
       printf("%s\t", (char *)ic_addr.value.symbol);
       break;
+    default:
+      break;
   }
 }
 
@@ -485,8 +544,8 @@ void printICInstruction(ICInstr *ic_instr) {
     case icSUB:
       printf("SUB\t");
       printICAddress(ic_instr->addr3);
-      printICAddress(ic_instr->addr2);
       printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
       break;
     case icMUL:
       printf("MUL\t");
@@ -584,14 +643,14 @@ void printICInstruction(ICInstr *ic_instr) {
       printf("\t");
       printICAddress(ic_instr->addr1);
       break;
-    case icTJUMP:
-      printf("TJUMP\t");
+    case icJUMPNZ:
+      printf("JUMPNZ\t");
       printf("\t");
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
       break;
-    case icFJUMP:
-      printf("FJUMP\t");
+    case icJUMPZ:
+      printf("JUMPZ\t");
       printf("\t");
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
@@ -600,8 +659,10 @@ void printICInstruction(ICInstr *ic_instr) {
     //   printf("CALL\t\t\t");
     //   break;
     case icLABEL:
-      printf("\t");
+      printf("LABEL\t");
       printICAddress(ic_instr->addr1);
+      break;
+    default:
       break;
   }
   printf("\n");

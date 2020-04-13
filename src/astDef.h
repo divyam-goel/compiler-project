@@ -212,6 +212,7 @@ struct N8Node {
 
 struct ArithmeticExprNode {
   struct Attribute *ptr1; /* Sub Arithmetic Expression */
+  bool is_first;
   enum terminal op;
   struct Attribute *ptr2; /* Term */
   struct Attribute *ptr3;
@@ -220,6 +221,7 @@ struct ArithmeticExprNode {
 
 struct TermNode {
   struct Attribute *ptr1; /* Subterm */
+  bool is_first;
   enum terminal op;
   struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
   struct Attribute *ptr3;

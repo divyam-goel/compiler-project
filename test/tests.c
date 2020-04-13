@@ -5,6 +5,7 @@
 #include "../src/data_structures/stack.h"
 #include "../src/st.h"
 #include "../src/semanticCheck.h"
+#include "../src/intCode.h"
 
 void test_removeComments(){
     /*
@@ -318,7 +319,7 @@ void symbolTableCoreTests() {
 
 void test_createSymbolTables(char *grammar_file, char *source_file) {
     extern bool st_debug_mode;
-    st_debug_mode = true;
+    st_debug_mode = false;
     test_createAST(grammar_file, source_file);
     printf("Generating symbol tables... \n");
     generateSymbolTables();
@@ -333,12 +334,22 @@ void test_semanticCheck(char *grammar_file, char *source_file) {
 }
 
 
+void test_intermediateCodeGeneration(char *grammar_file, char *source_file) {
+  test_createSymbolTables(grammar_file, source_file);
+  extern struct ProgramNode AST;
+  printf("Generating Intermediate Code ...\n\n");
+  generateIntermediateCode(&AST);
+  extern ICInstr *start_global_ic_instr;
+  printICInstructionList(start_global_ic_instr);
+}
+
+
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_5.erplag";
+    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_2.erplag";
     // char source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
@@ -347,9 +358,10 @@ int main() {
     // test_computeFirstAndFollow(grammar_file);
     // test_parseInputSourceCode(grammar_file, adv_source_file);
     // test_createAST(grammar_file, source_file);
-    symbolTableCoreTests();
+    // symbolTableCoreTests();
     // test_createSymbolTables(grammar_file, source_file);
     // test_semanticCheck(grammar_file, source_file);
+    test_intermediateCodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

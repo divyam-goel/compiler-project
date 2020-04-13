@@ -19,4 +19,8 @@ void icStatement(struct Attribute *attribute_node);
 void icStatementList(struct StatementNode *statement_node);
 void generateIntermediateCode(struct ProgramNode *AST);
 
+void printICAddress(ICAddr ic_addr);
+void printICInstruction(ICInstr *ic_instr);
+void printICInstructionList(ICInstr *ic_instr);
+
 #endif
