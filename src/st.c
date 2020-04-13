@@ -773,12 +773,14 @@ stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope
         stWalkThroughExpression(expression->node.n8->ptr2, scope);
         break;
       case ARITHMETIC_EXPR_NODE:
-        stWalkThroughExpression(expression->node.ari_exp->ptr1, scope);
+        if (expression->node.ari_exp->is_first)
+          stWalkThroughExpression(expression->node.ari_exp->ptr1, scope);
         stWalkThroughExpression(expression->node.ari_exp->ptr2, scope);
         stWalkThroughExpression(expression->node.ari_exp->ptr3, scope);
         break;
       case TERM_NODE:
-        stWalkThroughExpression(expression->node.ter->ptr1, scope);
+        if (expression->node.ter->is_first)
+          stWalkThroughExpression(expression->node.ter->ptr1, scope);
         stWalkThroughExpression(expression->node.ter->ptr2, scope);
         stWalkThroughExpression(expression->node.ter->ptr3, scope);
         break;
