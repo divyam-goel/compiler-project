@@ -48,6 +48,8 @@ struct SymbolTable *newSymbolTable(struct SymbolTable *parent,
     st->nodes[i].next = NULL;  /* Formally initialize this pointer. */
   }
 
+  st->is_module_scope = false; /* If needed set this to true afterwards. */
+
   return st;
 }
 

@@ -1,106 +1,296 @@
 #include "codeGen.h"
 
-void cg_ADD_SUB(ICInstr *ic_instr)
-{
-  char instr[100] = ""; //final instruction -temporary max length as 100
+char reg_eax[] = "EAX";
+char reg_ebx[] = "EBX";
+char reg_ecx[] = "ECX";
+char reg_edx[] = "EDX";
 
-  char addr1[30];
-  char store_reg1[50] = "\nMOV\tEAX , ";
-  char addr2[30];
-  char store_reg2[50] = "\nMOV\tEBX , ";
-  // for addr1
-  switch ((ic_instr->addr1).type)
+char reg_ax[] = "AX";
+char reg_bx[] = "BX";
+char reg_cx[] = "CX";
+char reg_dx[] = "DX";
+
+char reg_xmm0[] = "XMM0";
+char reg_xmm1[] = "XMM1";
+
+
+void cgICAddr(char *addr, ICAddr *ic_addr) {
+  switch (ic_addr->type)
   {
   case NUM:
-    sprintf(addr1, "%d", (ic_instr->addr1).value.num);
+    sprintf(addr, "%d", ic_addr->value.num);
     break;
   case RNUM:
-    sprintf(addr1, "%f", (ic_instr->addr1).value.rnum);
+    sprintf(addr, "%f", ic_addr->value.rnum);
     break;
   case BOOLEAN_:
-    if ((ic_instr->addr1).value.boolean == true)
-      sprintf(addr1, "True");
+    if (ic_addr->value.boolean == true)
+      sprintf(addr, "True");
     else
-      sprintf(addr1, "False");
+      sprintf(addr, "False");
     break;
   case IDENTIFIER:
-    sprintf(addr1, "mem(%s)", (char *)(ic_instr->addr1).value.symbol);
+    sprintf(addr, "[%s]", (char *)ic_addr->value.symbol);
     break;
   default:
-    sprintf(addr1, "NULL");
+    sprintf(addr, "NULL");
     break;
   }
-  // for addr2
-  switch ((ic_instr->addr2).type)
-  {
-  case NUM:
-    sprintf(addr2, "%d", (ic_instr->addr2).value.num);
-    break;
-  case RNUM:
-    sprintf(addr2, "%f", (ic_instr->addr2).value.rnum);
-    break;
-  case BOOLEAN_:
-    if ((ic_instr->addr2).value.boolean == true)
-      sprintf(addr2, "True");
-    else
-      sprintf(addr2, "False");
-    break;
-  case IDENTIFIER:
-    sprintf(addr2, "mem(%s)", (char *)(ic_instr->addr2).value.symbol);
-    break;
-  default:
-    sprintf(addr2, "NULL");
-    break;
-  }
-  // store instr
-  strcat(store_reg1, addr1);
-  strcat(store_reg2, addr2);
-  // into code
-  strcat(instr, store_reg1);
-  strcat(instr, store_reg2);
-
-  switch (ic_instr->op)
-  {
-  case icADD:
-    strcat(instr, "\nADD\t");
-    break;
-  case icSUB:
-    strcat(instr, "\nSUB\t");
-    break;
-  default:
-    strcat(instr, "BLAH\t");
-  }
-  // operation
-  strcat(instr, "EAX , EBX");
-  // next is addr3- move the result in EAX to mem
-  strcat(instr, "\nMOV\tEAX, ");
-  strcat(instr, "mem(");
-  strcat(instr, (char *)(ic_instr->addr3).value.symbol);
-  strcat(instr, ")\t");
-
-  // print out result
-  printf("%s", instr);
 }
 
-void cgSTORE(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
+void loadConstReg(char *instr_list, char *reg1, int num){
+  char asm_instr[50];
+  char op[] = "MOV";
+  char num_string[50];
+  itoa(num,num_string, 10);
 
-  char instr[100] = "\nMOV\t"; //final instruction -temporary max length as 100
+  strcat(asm_instr, op);
+  strcat(asm_instr, "\t");
+  
+  strcat(asm_instr, reg1);
+  strcat(asm_instr, " , ");
+  strcat(asm_instr, num_string);
+
+  strcat(instr_list, asm_instr);
+}
+
+void instrOneOperand(char *instr_list, char *op, char *reg1) {
+  char asm_instr[50];
+
+  strcat(asm_instr, op);
+  strcat(asm_instr, "\t");
+  
+  strcat(asm_instr, reg1);
+  strcat(asm_instr, " , ");
+  
+  strcat(instr_list, asm_instr);
+}
+
+
+void instrTwoOperand(char *instr_list, char *op, char *reg1, char *reg2) {
+  char asm_instr[50];
+
+  strcat(asm_instr, op);
+  strcat(asm_instr, "\t");
+  
+  strcat(asm_instr, reg1);
+  strcat(asm_instr, " , ");
+  
+  strcat(asm_instr, reg2);
+  strcat(asm_instr, "\n");
+  
+  strcat(instr_list, asm_instr);
+}
+
+
+void cgLoadINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
+  char asm_instr[50];
+  char addr[30];
+  
+  strcpy(asm_instr, "MOV");
+  cgICAddr(addr, ic_addr);
+  instrTwoOperand(instr_list, asm_instr, reg, addr);
+  strcat(instr_list, asm_instr);
+}
+
+
+void cgLoadReal(char *instr_list, char *reg, ICAddr *ic_addr) { 
+  char asm_instr[50];
+  char addr[30];
+  
+  strcpy(asm_instr, "MOVAPS");
+  cgICAddr(addr, ic_addr);
+  instrTwoOperand(instr_list, asm_instr, reg, addr);
+  strcat(instr_list, asm_instr);
+}
+
+
+void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
+  char asm_instr[50];
+  char addr[30];
+  
+  strcpy(asm_instr, "MOV");
+  cgICAddr(addr, ic_addr);
+  instrTwoOperand(instr_list, asm_instr, addr, reg);
+  strcat(instr_list, asm_instr);
+}
+
+
+void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) { 
+  char asm_instr[50];
+  char addr[30];
+  
+  strcpy(asm_instr, "MOVAPS");
+  cgICAddr(addr, ic_addr);
+  instrTwoOperand(instr_list, asm_instr, addr, reg);
+  strcat(instr_list, asm_instr);
+}
+
+
+void cgADD_SUB_INT(ICInstr *ic_instr) {
+  char instr_list[100] = "";
+  char *asm_instr[50];
+  char *op[10] = "";
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
+  
+  switch (ic_instr->op) {
+  case icADD_INT:
+    strcpy(op, "ADD");
+    instrTwoOperand(instr_list, op, reg_ax, reg_bx);
+    break;
+  case icSUB_INT:
+    strcpy(op, "SUB");
+    instrTwoOperand(instr_list, op, reg_ax, reg_bx);
+    break;
+  default:
+    printf("Error: Invalid Integer Operation\n");
+  }
+
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+
+  printf("DEBUG: %s\n", instr_list);
+}
+
+
+void cgADD_SUB_REAL(ICInstr *ic_instr) {
+  char instr_list[100] = "";
+  char *asm_instr[50];
+  char *op[10] = "";
+
+  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
+  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
+  
+  switch (ic_instr->op) {
+  case icADD_REAL:
+    strcpy(op, "ADDPS");
+    instrTwoOperand(instr_list, op, reg_xmm0, reg_xmm1);
+    break;
+  case icSUB_REAL:
+    strcpy(op, "SUBPS");
+    instrTwoOperand(instr_list, op, reg_xmm0, reg_xmm1);
+    break;
+  default:
+    printf("Error: Invalid Integer Operation\n");
+  }
+
+  cgStoreREAL(instr_list, reg_ax, &(ic_instr->addr3));
+
+  printf("DEBUG: %s\n", instr_list);
+}
+
+
+void cgMUL_INT(ICInstr *ic_instr){ //---> so far only int
+  char instr_list[100] = ""; //final instruction -temporary max length as 100
+
+  char *asm_instr1[50];
+  char *asm_instr2[50];
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
+
+  strcat(instr_list,"IMUL\tAX , CX\n");
+  // The result of this MUL goes into DX:AX- for now we just store EAX
+  cgStoreINT(instr_list, reg_eax, &(ic_instr->addr3));
+
+  // print out result
+  printf("%s", instr_list);
+
+
+}
+
+
+void cgDIV_INT(ICInstr *ic_instr){
+  char instr_list[100] = ""; //final instruction -temporary max length as 100
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
+
+  strcat(instr_list, "IDIV\tCX\n");
+  // The result of this IDIV goes into DX:AX- AX has the quotient
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+
+  // print out result
+  printf("%s", instr_list);
+}
+
+
+void cgMUL_REAL(ICInstr *ic_instr){
+  char instr_list[100] = ""; //final instruction -temporary max length as 100
+
+  cgLoadReal(instr_list, reg_xmm0, &(ic_instr->addr1));
+  cgLoadReal(instr_list, reg_xmm1, &(ic_instr->addr2));
+
+  instrTwoOperand(instr_list, "MULPS", reg_xmm0 , reg_xmm1);
+  // result in reg_xmm0
+  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
+}
+
+
+void cgDIV_REAL(ICInstr *ic_instr){
+  char instr_list[100] = ""; //final instruction -temporary max length as 100
+
+  cgLoadReal(instr_list, reg_xmm0, &(ic_instr->addr1));
+  cgLoadReal(instr_list, reg_xmm1, &(ic_instr->addr2));
+
+  instrTwoOperand(instr_list, "DIVPS", reg_xmm0, reg_xmm1);
+  // result in reg_xmm0
+  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
+}
+
+
+void cgINC(ICInstr *ic_instr) {
+  char instr_list[100];
+  cgLoadReg(instr_list, reg_eax, &(ic_instr->addr1));
+  strcat(instr_list, "INC\tEAX\n");
+  cgStoreMem(instr_list, reg_eax, &(ic_instr->addr1));
+}
+
+
+void cgDEC(ICInstr *ic_instr) {
+  char instr_list[100];
+  cgLoadReg(instr_list, reg_eax, &(ic_instr->addr1));
+  strcat(instr_list, "DEC\tEAX\n");
+  cgStoreMem(instr_list, reg_eax, &(ic_instr->addr1));
+}
+
+
+void cgSTORE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
+  char instr_list[100] = "";
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
 
   char addr3[30];
-  fflush(stdout);
   sprintf(addr3, "mem(%s)", (char *)(ic_instr->addr3).value.symbol);
   char addr1[30];
   sprintf(addr1, "mem(%s)", (char *)(ic_instr->addr1).value.symbol);
-  strcat(instr, addr3);
-  strcat(instr, " , ");
-  strcat(instr, addr1);
+  strcat(instr_list, addr3);
+  strcat(instr_list, " , ");
+  strcat(instr_list, addr1);
 
   // print out result
-  printf("%s", instr);
+  printf("%s", instr_list);
 }
 
-// void cgINC(ICInstr *ic_instr) {}
-// void cgDEC(ICInstr *ic_instr) {}
+
+void cgLT(ICInstr *ic_instr) {
+  char instr_list[100] = ""; //final instruction -temporary max length as 100
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
+
+  instrTwoOperand(instr_list,"CMP",reg_ax,reg_bx);
+  // for now, using 1 as truth value, 0 as false value:
+  // also, need to implement label  properly
+  strcat(instr_list,"L1: ");
+  instrTwoOperand(instr_list,)
+
+}
+
+// -void cgINC(ICInstr *ic_instr) {}
+// -void cgDEC(ICInstr *ic_instr) {}
 // void cgAND(ICInstr *ic_instr) {}
 // void cgOR(ICInstr *ic_instr) {}
 // void cgEQ(ICInstr *ic_instr) {}
@@ -115,3 +305,70 @@ void cgSTORE(ICInstr *ic_instr){ //---> not fully working- indexed elements of a
 // void cgJUMP(ICInstr *ic_instr) {}
 // void cgTJUMP(ICInstr *ic_instr) {}
 // void cgFJUMP(ICInstr *ic_instr) {}
+
+
+void generateASMCode(ICInstr *ic_instr) {
+  while (ic_instr != NULL) {
+    switch (ic_instr->op) {
+      case icADD_INT:
+      case icSUB_INT:
+        cgADD_SUB_INT(ic_instr);
+        break;
+      case icMUL_INT:
+        cgMUL_INT(ic_instr);
+        break;
+      case icDIV_INT:
+        cgDIV_INT(ic_instr);
+        break;
+      case icADD_REAL:
+      case icSUB_REAL:
+        cgADD_SUB_REAL(ic_instr);
+        break;
+      case icMUL_REAL:
+        cgMUL_REAL(ic_instr);
+        break;
+      case icDIV_REAL:
+        cgDIV_REAL(ic_instr);
+        break;
+      case icINC:
+        break;
+      case icDEC:
+        break;
+      case icAND:
+        break;
+      case icOR:
+        break;
+      case icEQ:
+        break;
+      case icNE:
+        break;
+      case icLT:
+        break;
+      case icGT:
+        break;
+      case icLE:
+        break;
+      case icGE:
+        break;
+      case icPLUS:
+        break;
+      case icMINUS:
+        break;
+      case icCOPY:
+        break;
+      case icSTORE:
+        break;
+      case icJUMP:
+        break;
+      case icJUMPNZ:
+        break;
+      case icJUMPZ:
+        break;
+      case icLABEL:
+        break;
+      default:
+        break;
+    }
+
+  }
+} //question: whats the result of a less than operation? just windering what to put okayokan the addrr3

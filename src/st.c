@@ -22,6 +22,7 @@ char *module_undeclared_error_message = "Semantic Error: Module \"%s\" used on l
 declared.\n";
 char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
 may be detected after resolving the above).\n";
+char *invalid_datatype_error_message = "%d is not a valid datatype to create a temporary variable.\n";
 
 
 /**
@@ -149,6 +150,7 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
         }
       /* Even if there's a semantic error, parse it. No harm. */
       module_scope = newSymbolTable(global_symbol_table, module_name, NULL);
+      module_scope->is_module_scope = true;
       stAddInputPlistToScope(module->ptr2, module_scope);
       stAddOutputPlistToScope(module->ptr3, module_scope);
       stWalkThroughStatements(module->ptr4, module_scope);
@@ -345,7 +347,15 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
 void
 stAddDriverModuleDefinition (struct StatementNode *statements_ll)
 {
-  struct SymbolTable *driver_scope = newSymbolTable(global_symbol_table, "Driver", NULL);
+  char *module_name = "driver";
+  union SymbolTableValue new_value;
+  struct SymbolTable *driver_scope = newSymbolTable(global_symbol_table, module_name, NULL);
+
+  driver_scope->is_module_scope = true;
+  new_value = stCreateSymbolTableValueForModule("driver", -1, -1, NULL, NULL);
+  /* We actually don't have the line number information for the driver module. */
+  symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, false);
+  
   stWalkThroughStatements(statements_ll, driver_scope);
   if (st_debug_mode)
     {
@@ -630,6 +640,7 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
           assert(dtnode != NULL);
           new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
+          stUpdateMemoryUsage(scope, variable_name, datatype);
         }
         variable_ll = variable_ll->ptr2;
     }
@@ -818,4 +829,80 @@ stUpdateLeafNode (struct LeafNode *lea, struct SymbolTable *scope)
         }
     }
   lea->scope = scope;
+}
+
+
+/**
+ * Given a scope and a datatype, create a new temporary variable and add it to the closest
+ * module level symbol table. This function also handles updating the module's entry in the
+ * symbol table and other related tasks.
+ * @param     scope     The scope of an leaf node - we will find the module that this scope
+ *                      belongs to and then use that for creating a new temporary variable.
+ * @param     datatype  The datatype to allocate a new temporary variable for.
+ * @returns             A pointer to the variable entry that actually lies in the symbol table.
+ */
+struct VariableEntry *
+stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
+{
+  int datasize;
+  char *module_name;
+  char temp_var_name[7];
+  union SymbolTableValue new_variable;
+  struct SymbolTableNode *module_node, *new_variable_node;
+  struct ModuleEntry module;
+  
+  while (scope != NULL && scope->is_module_scope == false)
+    scope = scope->parent;
+  assert(scope != NULL);
+  module_name = scope->scope_tag;
+  module_node = symbolTableGet(global_symbol_table, module_name);
+  assert(module_node->value_type == ST_MODULE);
+
+  switch (datatype)
+    {
+      case (INTEGER):
+        datasize = DT_INTEGER_SIZE;
+        break;
+      case (REAL):
+        datasize = DT_REAL_SIZE;
+        break;
+      case (BOOLEAN_):
+        datasize = DT_BOOL_SIZE;
+        break;
+      default:
+        fprintf(stderr, invalid_datatype_error_message, datatype);
+        exit(EXIT_FAILURE);
+    }
+
+  sprintf(temp_var_name, "%t.5d", module.num_temp_var);
+  module = module_node->value.module;
+  module.num_temp_var += 1;
+  module.activation_record_size += datasize;
+
+  strcpy(new_variable.variable.name, temp_var_name);
+  new_variable.variable.line_number = -1;
+  /* Don't set value here - let the caller do that. */
+  new_variable.variable.datatype = datatype;
+  new_variable.variable.isArray = false;
+  new_variable.variable.isStatic = false;
+  new_variable.variable.isTemporary = true;
+  new_variable.variable.lower_bound = -1;
+  new_variable.variable.upper_bound = -1;
+  /* new_variable.mem_offset - yet to be decided */
+
+  symbolTableSet(scope, temp_var_name, new_variable, ST_VARIABLE, false);
+
+  new_variable_node = symbolTableGet(scope, temp_var_name);
+  return &(new_variable_node->value.variable);
+}
+
+
+/**
+ * Given the symbol table a variable belongs to the name of the variable and the some information
+ * about the type of data stored in it, update the stack frame requir
+ */
+void
+stUpdateMemoryUsage (struct SymbolTable *scope, char *variable_name, enum terminal datatype, bool is_array)
+{
+
 }

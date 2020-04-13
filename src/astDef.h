@@ -216,6 +216,7 @@ struct ArithmeticExprNode {
   enum terminal op;
   struct Attribute *ptr2; /* Term */
   struct Attribute *ptr3;
+  enum terminal data_type;
   ICAddr addr;
 };
 
@@ -225,6 +226,7 @@ struct TermNode {
   enum terminal op;
   struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
   struct Attribute *ptr3;
+  enum terminal data_type;
   ICAddr addr;
 };
 

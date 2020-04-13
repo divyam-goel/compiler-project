@@ -13,6 +13,9 @@
 
 #define POLYNOMIAL_ROLLING_HASH_FACTOR 17
 #define ST_DEFAULT_HASH_FUNCTION polynomialRollingHashFunction;
+#define DT_BOOL_SIZE 1
+#define DT_INTEGER_SIZE 2
+#define DT_REAL_SIZE 4
 
 /* Functions from stCore.c */
 int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
@@ -55,5 +58,7 @@ void stHandleForLoop(struct ForIterativeStmtNode *for_loop, struct SymbolTable *
 void stHandleWhileLoop(struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope);
 void stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope);
 void stUpdateLeafNode(struct LeafNode *lea, struct SymbolTable *scope);
+struct VariableEntry *stNewTemporaryVariable(struct SymbolTable *scope, enum terminal datatype);
+void stUpdateMemoryUsage(struct SymbolTable *scope, char *variable_name, enum terminal datatype, bool is_array);
 
 #endif

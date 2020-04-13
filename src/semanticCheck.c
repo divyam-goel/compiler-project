@@ -10,13 +10,6 @@ void moduleDefinitionSemanticChecker(struct StatementNode *statement_node);
 void modulesSemanticChecker(struct OtherModuleNode *other_module_node);
 
 
-void semanticChecker(struct ProgramNode *AST) {
-  modulesSemanticChecker(AST->ptr2);
-  moduleDefinitionSemanticChecker(AST->ptr3);
-  modulesSemanticChecker(AST->ptr4);
-}
-
-
 enum terminal leafType(struct LeafNode *leaf) {
   enum terminal data_type;
   struct SymbolTableNode *symbol_table_entry = NULL;
@@ -35,6 +28,9 @@ enum terminal leafType(struct LeafNode *leaf) {
       if (symbol_table_entry == NULL) {
         printf("Type Error: Undeclared variable %s\n", (char *)leaf->value.entry);
         data_type = EPSILON;
+      }
+      else if (symbol_table_entry->value.variable.isArray) {
+        data_type = ARRAY;
       }
       else {
         data_type = symbol_table_entry->value.variable.datatype;
@@ -55,36 +51,36 @@ enum terminal leafType(struct LeafNode *leaf) {
 }
 
 
-// enum terminal arrayType(struct ArrayNode *array) {
-//   enum terminal data_type_var, data_type_idx;
-//   struct SymbolTableNode *symbol_table_entry = NULL;
+enum terminal arrayType(struct ArrayNode *array) {
+  enum terminal data_type_var, data_type_idx;
+  struct SymbolTableNode *symbol_table_entry = NULL;
 
-//   symbol_table_entry = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
-//   if (symbol_table_entry == NULL) {
-//     printf("Type Error: Undeclared variable %s\n", (char *)array->ptr1->value.entry);
-//     return EPSILON;
-//   }
+  symbol_table_entry = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
+  if (symbol_table_entry == NULL) {
+    printf("Type Error: Undeclared variable %s\n", (char *)array->ptr1->value.entry);
+    return EPSILON;
+  }
 
-//   data_type_var = symbol_table_entry->value.variable.datatype;
-//   data_type_idx = leafType(array->ptr2);
+  data_type_var = symbol_table_entry->value.variable.datatype;
+  data_type_idx = leafType(array->ptr2);
 
-//   if (data_type_idx != INTEGER) {
-//     printf("Type Error: Array index should be of type INTEGER, found %s\n",
-//     terminalStringRepresentations[data_type_idx]);
-//   }
+  if (data_type_idx != INTEGER) {
+    printf("Type Error: Array index should be of type INTEGER, found %s\n",
+    terminalStringRepresentations[data_type_idx]);
+  }
 
-//   if (symbol_table_entry->value.variable.isStatic && array->ptr2->type == NUM) {
-//     int lower_bound, upper_bound, index;
-//     lower_bound = symbol_table_entry->value.variable.lower_bound;
-//     upper_bound = symbol_table_entry->value.variable.upper_bound;
-//     index = array->ptr2->value.num;
-//     if (index < lower_bound || index > upper_bound) {
-//       printf("Semantic Error: Array out of bounds\n");
-//     }
-//   }
+  if (symbol_table_entry->value.variable.isStatic && array->ptr2->type == NUM) {
+    int lower_bound, upper_bound, index;
+    lower_bound = symbol_table_entry->value.variable.lower_bound->value.num;
+    upper_bound = symbol_table_entry->value.variable.upper_bound->value.num;
+    index = array->ptr2->value.num;
+    if (index < lower_bound || index > upper_bound) {
+      printf("Semantic Error: Array out of bounds\n");
+    }
+  }
 
-//   return data_type_var;
-// }
+  return data_type_var;
+}
 
 
 enum terminal attributeType(struct Attribute *attribute) {
@@ -101,89 +97,201 @@ enum terminal attributeType(struct Attribute *attribute) {
 }
 
 
-enum terminal expressionType(struct Attribute *expression) {
+enum terminal logicalExpressionType(struct N7Node *logical_expression) {
+  enum terminal left_operand_type, right_operand_type;
+  left_operand_type = expressionType(logical_expression->ptr1);
+  right_operand_type = expressionType(logical_expression->ptr2);
+  
+  if (left_operand_type != BOOLEAN_) {
+    printf("Type Error: Operator %s expects type BOOLEAN, found %s\n",
+      terminalStringRepresentations[logical_expression->logicalOp], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+  if (right_operand_type != BOOLEAN_) {
+    printf("Type Error: Operator %s expects type BOOLEAN, found %s\n",
+      terminalStringRepresentations[logical_expression->logicalOp], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+  
+  return BOOLEAN_;
+}
+
+
+enum terminal relationalExpressionType(struct N8Node *relational_expression) {
+  enum terminal left_operand_type, right_operand_type;
+  left_operand_type = expressionType(relational_expression->ptr1);
+  right_operand_type = expressionType(relational_expression->ptr2);
+  
+  if (left_operand_type != INTEGER && left_operand_type != REAL) {
+    printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+      terminalStringRepresentations[relational_expression->relationalOp], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+  if (right_operand_type != INTEGER && right_operand_type != REAL) {
+    printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+      terminalStringRepresentations[relational_expression->relationalOp], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+  
+  return BOOLEAN_;
+}
+
+
+enum terminal ArithmeticExpressionType(struct ArithmeticExprNode *arithmetic_expression) {
   enum terminal left_operand_type, right_operand_type;
   
+  right_operand_type = expressionType(arithmetic_expression->ptr2);
+  if (right_operand_type != INTEGER && right_operand_type != REAL) {
+    printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+      terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+  
+  if (arithmetic_expression->is_first) {
+    left_operand_type = expressionType(arithmetic_expression->ptr1);
+    if (left_operand_type != INTEGER && left_operand_type != REAL) {
+      printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+        terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+        return EPSILON;
+    }
+    if (left_operand_type != right_operand_type) {
+      printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
+        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+    }
+  }
+  
+  if (arithmetic_expression->ptr3->type != NULL_NODE) {
+    left_operand_type = expressionType(arithmetic_expression->ptr3);
+    if (left_operand_type != INTEGER && left_operand_type != REAL) {
+      printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+        terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+        return EPSILON;
+    }
+    if (left_operand_type != right_operand_type) {
+      printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
+        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+    }
+  }
+
+  arithmetic_expression->data_type = right_operand_type;
+  return right_operand_type;
+}
+
+
+enum terminal TermExpressionType(struct TermNode *term_expression) {
+  enum terminal left_operand_type, right_operand_type;
+
+  right_operand_type = expressionType(term_expression->ptr2);
+  if (right_operand_type != INTEGER && right_operand_type != REAL) {
+    printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+      terminalStringRepresentations[term_expression->op], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+  }
+
+  if (term_expression->is_first) {
+    left_operand_type = expressionType(term_expression->ptr1);
+    if (left_operand_type != INTEGER && left_operand_type != REAL) {
+      printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+        terminalStringRepresentations[term_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+        return EPSILON;
+    }
+    if (left_operand_type != right_operand_type) {
+      printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
+        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+    }
+  }
+  
+  if (term_expression->ptr3->type != NULL_NODE) {
+    left_operand_type = expressionType(term_expression->ptr3);
+    if (left_operand_type != INTEGER && left_operand_type != REAL) {
+      printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
+        terminalStringRepresentations[term_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+        return EPSILON;
+    }
+    if (left_operand_type != right_operand_type) {
+      printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
+        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      return EPSILON;
+    }
+  }
+
+  term_expression->data_type = right_operand_type;
+  return right_operand_type;
+}
+
+
+enum terminal expressionType(struct Attribute *expression) {
   switch (expression->type) {
     case U_NODE:
       return expressionType(expression->node.u->ptr1);
       break;
     case N7_NODE:
-      left_operand_type = expressionType(expression->node.n7->ptr1);
-      right_operand_type = expressionType(expression->node.n7->ptr2);
+      return logicalExpressionType(expression->node.n7);
       break;
     case N8_NODE:
-      left_operand_type = expressionType(expression->node.n8->ptr1);
-      right_operand_type = expressionType(expression->node.n8->ptr2);
-      return BOOLEAN_;
+      return relationalExpressionType(expression->node.n8);
       break;
     case ARITHMETIC_EXPR_NODE:
-      right_operand_type = expressionType(expression->node.ari_exp->ptr2);
-      if (expression->node.ari_exp->is_first) {
-        left_operand_type = expressionType(expression->node.ari_exp->ptr1);
-        if (left_operand_type != right_operand_type) {
-          printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-            terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-          return EPSILON;
-        }
-      }
-      if (expression->node.ari_exp->ptr3->type != NULL_NODE) {
-        left_operand_type = expressionType(expression->node.ari_exp->ptr3);
-      }
+      return ArithmeticExpressionType(expression->node.ari_exp);
       break;
     case TERM_NODE:
-      right_operand_type = expressionType(expression->node.ter->ptr2);
-      if (expression->node.ter->is_first) {
-        left_operand_type = expressionType(expression->node.ter->ptr1);
-        if (left_operand_type != right_operand_type) {
-          printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-            terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-          return EPSILON;
-        }
-      }
-      if (expression->node.ter->ptr3->type != NULL_NODE) {
-        left_operand_type = expressionType(expression->node.ter->ptr3);
-      }
+      return TermExpressionType(expression->node.ter);
       break;
     case ARRAY_NODE:
-      return leafType(expression->node.arr->ptr1);
+      return arrayType(expression->node.arr);
       break;
     case LEAF_NODE:
       return leafType(expression->node.lea);
       break;
     default:
       printf("Invalid Expression Type %d!\n", expression->type);
+      return EPSILON;
       break;
   }
-
-  if (left_operand_type == EPSILON || right_operand_type == EPSILON)
-    return EPSILON;
-
-  if (left_operand_type != right_operand_type) {
-    printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-      terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-    return EPSILON;
-  }
-
-  return left_operand_type;
 }
 
 
-void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
-  if (assignment_node == NULL) {
-    return;
-  }
-  
+void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {  
   enum terminal lhs_type, rhs_type;
+
+  struct SymbolTableNode *symbol_table_node;
+  struct VariableEntry *lhs_symbol_table_entry, *rhs_symbol_table_entry;
 
   lhs_type = leafType(assignment_node->ptr1);
     
   struct Attribute *rhs_expression = NULL;
-  if (assignment_node->ptr2->type == LVALUE_ID_NODE)
-    rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;
-  else
-    rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;
+  if (assignment_node->ptr2->type == LVALUE_ID_NODE) {
+    rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;}
+  else {
+    if (lhs_type != EPSILON) {
+      symbol_table_node = symbolTableGet(assignment_node->ptr1->scope, assignment_node->ptr1->value.entry);
+      lhs_symbol_table_entry = &symbol_table_node->value.variable;
+      lhs_type = lhs_symbol_table_entry->datatype;
+    }
+    rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;}
   rhs_type = expressionType(rhs_expression);
+
+  if (lhs_type == rhs_type == ARRAY) {
+    symbol_table_node = symbolTableGet(assignment_node->ptr1->scope, assignment_node->ptr1->value.entry);
+    lhs_symbol_table_entry = &symbol_table_node->value.variable;
+
+    symbol_table_node = symbolTableGet(assignment_node->ptr2->node.lea->scope,
+                                      assignment_node->ptr2->node.lva_id->ptr1->node.lea->value.entry);
+    rhs_symbol_table_entry = &symbol_table_node->value.variable;
+
+    if (lhs_symbol_table_entry->lower_bound == rhs_symbol_table_entry->lower_bound &&
+        lhs_symbol_table_entry->upper_bound == rhs_symbol_table_entry->upper_bound &&
+        lhs_symbol_table_entry->datatype == rhs_symbol_table_entry->datatype) {
+          return;
+    }
+
+    printf("Type Error: Mismatching types for array assignment, found %s and %s\n",
+      terminalStringRepresentations[lhs_symbol_table_entry->datatype],
+      terminalStringRepresentations[rhs_symbol_table_entry->datatype]);
+  }
 
   if (lhs_type != EPSILON && rhs_type != EPSILON && lhs_type != rhs_type)
     printf("Type Error: expression evaluates to type %s, expected %s\n",
@@ -365,6 +473,7 @@ void statementSemanticChecker(struct StatementNode *statement_node) {
   if (statement_node == NULL)
     return;
   
+  // printStatement(statement_node);
   switch (statement_node->ptr1->type) {
     case ASSIGN_STMT_NODE:
       assignmentTypeChecker(statement_node->ptr1->node.agn_stm);
@@ -412,4 +521,11 @@ void modulesSemanticChecker(struct OtherModuleNode *other_module_node) {
     moduleDefinitionSemanticChecker(other_module_node->ptr1->ptr4);
     other_module_node = other_module_node->ptr2;
   }
+}
+
+
+void semanticChecker(struct ProgramNode *AST) {
+  modulesSemanticChecker(AST->ptr2);
+  moduleDefinitionSemanticChecker(AST->ptr3);
+  modulesSemanticChecker(AST->ptr4);
 }

@@ -1393,6 +1393,7 @@ void case_72(struct treeNode *curr_node){
   }
 }
 
+
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;

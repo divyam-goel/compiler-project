@@ -17,6 +17,8 @@ struct ModuleEntry {
   char name[IDENTIFIER_NAME_MAX_LEN + 1];
   int dec_line_number;
   int def_line_number;
+  int num_temp_var;
+  int activation_record_size;
   struct InputPlistNode *inputplist;
   struct OutputPlistNode *outputplist;
 };
@@ -29,6 +31,7 @@ struct VariableEntry {
   enum terminal datatype;
   bool isArray;
   bool isStatic;
+  bool isTemporary;
   struct LeafNode *lower_bound;  /* Only valid when isArray == true */
   struct LeafNode *upper_bound;  /* Only valid when isArray == true */
   void *mem_offset;
@@ -61,6 +64,7 @@ struct SymbolTable {
   struct SymbolTableNode nodes[ST_NUMBER_OF_BUCKETS];
   SymbolTableHashFunction hash;
   char scope_tag[ST_SCOPE_TAG_MAX_LEN + 1];
+  bool is_module_scope;
   /* The scope tag is just for better visibility of what's going
    * on to make debugging easier. E.g. for functions, it's just
    * the function name.*/

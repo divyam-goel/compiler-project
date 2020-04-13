@@ -6,7 +6,8 @@
 
 typedef enum IntermediateCodeOperation {
   /* arithmetic */
-  icADD, icSUB, icMUL, icDIV,
+  icADD_INT, icSUB_INT, icMUL_INT, icDIV_INT,
+  icADD_REAL, icSUB_REAL, icMUL_REAL, icDIV_REAL,
 
   /* utility arithmetic */
   icINC, icDEC,

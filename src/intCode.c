@@ -1,90 +1,5 @@
 #include "intCode.h"
 
-// to be removed- just added here for testing code
-// actual code is in codeGen.c
-void cg_ADD_SUB(ICInstr *ic_instr)
-{
-  char instr[100] = ""; //final instruction -temporary max length as 100
-
-  char addr1[30];
-  char store_reg1[50] = "\nMOV\tEAX , ";
-  char addr2[30];
-  char store_reg2[50] = "\nMOV\tEBX , ";
-  // for addr1
-  switch ((ic_instr->addr1).type)
-  {
-  case NUM:
-    sprintf(addr1, "%d", (ic_instr->addr1).value.num);
-    break;
-  case RNUM:
-    sprintf(addr1, "%f", (ic_instr->addr1).value.rnum);
-    break;
-  case BOOLEAN_:
-    if ((ic_instr->addr1).value.boolean == true)
-      sprintf(addr1, "True");
-    else
-      sprintf(addr1, "False");
-    break;
-  case IDENTIFIER:
-    sprintf(addr1, "mem(%s)", (char *)(ic_instr->addr1).value.symbol);
-    break;
-  default:
-    sprintf(addr1, "NULL");
-    break;
-  }
-  // for addr2
-  switch ((ic_instr->addr2).type)
-  {
-  case NUM:
-    sprintf(addr2, "%d", (ic_instr->addr2).value.num);
-    break;
-  case RNUM:
-    sprintf(addr2, "%f", (ic_instr->addr2).value.rnum);
-    break;
-  case BOOLEAN_:
-    if ((ic_instr->addr2).value.boolean == true)
-      sprintf(addr2, "True");
-    else
-      sprintf(addr2, "False");
-    break;
-  case IDENTIFIER:
-    sprintf(addr2, "mem(%s)", (char *)(ic_instr->addr2).value.symbol);
-    break;
-  default:
-    sprintf(addr2, "NULL");
-    break;
-  }
-  // store instr
-  strcat(store_reg1,addr1);
-  strcat(store_reg2,addr2);
-  // into code
-  strcat(instr, store_reg1);
-  strcat(instr, store_reg2);
-
-  switch (ic_instr->op){
-  case icADD:
-    strcat(instr, "\nADD\t");
-    break;
-  case icSUB:
-    strcat(instr, "\nSUB\t");
-    break;
-  default:
-    strcat(instr, "BLAH\t");
-  }
-  // operation
-  strcat(instr,"EAX , EBX");
-  // next is addr3- move the result in EAX to mem
-  strcat(instr,"\nMOV\tEAX, ");
-  strcat(instr, "mem(");
-  strcat(instr, (char *)(ic_instr->addr3).value.symbol);
-  strcat(instr, ")\t");
-
-  // print out result
-  printf("%s", instr);
-}
-
-
-
 ICInstr *start_global_ic_instr = NULL;
 ICInstr *global_ic_instr = NULL;
 int temporary_count = 0;
@@ -270,11 +185,25 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
   ic_instr->addr3 = newTemporary();
   switch (arithmetic_expression->op) {
     case PLUS:
-      ic_instr->op = icADD;
+      switch (arithmetic_expression->data_type) {
+        case INTEGER:
+          ic_instr->op = icADD_INT;
+          break;
+        case REAL:
+          ic_instr->op = icADD_REAL;
+          break;
+      }
       break;
     case MINUS:
-      ic_instr->op = icSUB;
-      break;
+      switch (arithmetic_expression->data_type) {
+        case INTEGER:
+          ic_instr->op = icSUB_INT;
+          break;
+        case REAL:
+          ic_instr->op = icSUB_REAL;
+          break;
+      }
+`      break;
     default:
       break;
   }
@@ -301,10 +230,24 @@ void icTermExpression(struct TermNode *term_expression) {
   ic_instr->addr3 = newTemporary();
   switch (term_expression->op) {
     case MUL:
-      ic_instr->op = icMUL;
+      switch (term_expression->data_type) {
+        case INTEGER:
+          ic_instr->op = icMUL_INT;
+          break;
+        case REAL:
+          ic_instr->op = icMUL_REAL;
+          break;
+      }
       break;
     case DIV:
-      ic_instr->op = icDIV;
+      switch (term_expression->data_type) {
+        case INTEGER:
+          ic_instr->op = icDIV_INT;
+          break;
+        case REAL:
+          ic_instr->op = icDIV_REAL;
+          break;
+      }
       break;
     default:
       printf("Default term\n");
@@ -357,8 +300,18 @@ void icExpression(struct Attribute *expression) {
 
 
 void icAssignmentStatement(struct AssignStmtNode *assignment) {
+  enum terminal lhs_type, rhs_type;
+  
   switch (assignment->ptr2->type) {
     case LVALUE_ID_NODE:
+      if (assignment->ptr2->node.lva_id->ptr1->type == LEAF_NODE) {
+        lhs_type = leafType(assignment->ptr1);
+        rhs_type = leafType(assignment->ptr2->node.lva_id->ptr1->node.lea);
+        if (lhs_type == rhs_type == ARRAY) {
+          icArrayAssignment(assignment->ptr1, assignment->ptr2->node.lva_id->ptr1->node.lea);
+          return;
+        }
+      }
       icLeaf(assignment->ptr1);
       icExpression(assignment->ptr2->node.lva_id->ptr1);
       assignment->ptr2->addr = assignment->ptr2->node.lva_id->ptr1->addr;
@@ -619,28 +572,30 @@ void printICAddress(ICAddr ic_addr) {
 
 void printICInstruction(ICInstr *ic_instr) {
   switch (ic_instr->op) {
-    case icADD:
-      // printf("ADD\t");
-      // printICAddress(ic_instr->addr3);
-      // printICAddress(ic_instr->addr1);
-      // printICAddress(ic_instr->addr2);
-      cg_ADD_SUB(ic_instr);
+    case icADD_INT:
+    case icADD_REAL:
+      printf("ADD\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
       break;
-    case icSUB:
-      // printf("SUB\t");
-      // printICAddress(ic_instr->addr3);
-      // printICAddress(ic_instr->addr1);
-      // printICAddress(ic_instr->addr2);
-      cg_ADD_SUB(ic_instr);
+    case icSUB_INT:
+    case icSUB_REAL:
+      printf("SUB\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
       break;
-    case icMUL:
+    case icMUL_INT:
+    case icMUL_REAL:
       printf("MUL\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
 
       break;
-    case icDIV:
+    case icDIV_INT:
+    case icDIV_REAL:
       printf("DIV\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
