@@ -14,9 +14,9 @@ OBJ_CFLAGS = $(CFLAGS) -c
 # 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
 
 build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
-	semanticCheck.o intCode.o
+	semanticCheck.o intCode.o codeGen.o
 	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
-	lib/stCore.o lib/st.o lib/semanticCheck.o lib/intCode.o -o build/tests $(CFLAGS)
+	lib/stCore.o lib/st.o lib/semanticCheck.o lib/intCode.o src/codeGen.o -o build/tests $(CFLAGS)
 
 test.o: test/tests.c \
 		src/utils.h \
@@ -76,6 +76,9 @@ semanticCheck.o: src/semanticCheck.c src/semanticCheck.h src/st.h src/stDef.h sr
 # This actually depends on more header files:
 intCode.o: src/intCode.c src/intCode.h src/intCodeDef.h src/st.h src/stDef.h src/ast.h src/astDef.h
 	$(CC) src/intCode.c -o lib/intCode.o $(OBJ_CFLAGS)
+
+codeGen.o: intCode.o
+	$(CC) src/codeGen.c -o lib/codeGen.o $(OBJ_FLAGS)
 
 clean:
 	find . -type f -name '*.o' -delete
