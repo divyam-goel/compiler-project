@@ -34,7 +34,7 @@ struct VariableEntry {
   bool isTemporary;
   struct LeafNode *lower_bound;  /* Only valid when isArray == true */
   struct LeafNode *upper_bound;  /* Only valid when isArray == true */
-  void *mem_offset;
+  int mem_offset;
 };
 
 

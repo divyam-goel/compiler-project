@@ -853,7 +853,6 @@ struct VariableEntry *
 stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
 {
   int datasize;
-  char *module_name;
   struct ModuleEntry *module;
   char temp_var_name[7];
   union SymbolTableValue new_variable;
@@ -861,7 +860,7 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   
   scope = getModuleLevelScope(scope);
   module = getModuleEntry(scope->scope_tag);
-  sprintf(temp_var_name, "%t.5d", module->num_temp_var);
+  sprintf(temp_var_name, "t%.5d", module->num_temp_var);
 
   datasize = getMemorySizeofDatatype(datatype, false);
 
@@ -871,8 +870,8 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   new_variable.variable.isArray = false;
   new_variable.variable.isStatic = false;
   new_variable.variable.isTemporary = true;
-  new_variable.variable.lower_bound = -1;
-  new_variable.variable.upper_bound = -1;
+  new_variable.variable.lower_bound = NULL;
+  new_variable.variable.upper_bound = NULL;
   new_variable.variable.mem_offset = module->activation_record_size;
 
   symbolTableSet(scope, temp_var_name, new_variable, ST_VARIABLE, false);
@@ -902,6 +901,7 @@ getModuleLevelScope (struct SymbolTable *scope)
   while (scope != NULL && scope->is_module_scope == false)
     scope = scope->parent;
   assert(scope != NULL);
+  return scope;
 }
 
 

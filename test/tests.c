@@ -278,7 +278,7 @@ void symbolTableCoreTests() {
     xval.variable.isArray = true;
     xval.variable.lower_bound = &lower_bound;
     xval.variable.upper_bound = &upper_bound;
-    xval.variable.mem_offset = NULL;
+    xval.variable.mem_offset = -1;
     
     assert(symbolTableSet(st, xkey, xval, xtype, true) == true);
     node = symbolTableGet(st, xkey);
