@@ -41,13 +41,14 @@ void cgICAddr(char *addr, ICAddr *ic_addr) {
   }
 }
 
+
 void addLabel(char *instr_list, char *label){
   strcat(instr_list,label);
   strcat(instr_list, ":\n");
 }
 
-void loadConstReg(char *instr_list, char *reg1, int num)
-{
+
+void loadConstReg(char *instr_list, char *reg1, int num) {
   char asm_instr[50] = "";
   char num_string[50];
   itoa(num,num_string, 10);
@@ -62,6 +63,7 @@ void loadConstReg(char *instr_list, char *reg1, int num)
 
   strcat(instr_list, asm_instr);
 }
+
 
 void instrOneOperand(char *instr_list, char *op, char *reg1) {
   char asm_instr[50] = "";

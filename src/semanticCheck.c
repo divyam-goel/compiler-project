@@ -274,7 +274,7 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
     rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;}
   rhs_type = expressionType(rhs_expression);
 
-  if (lhs_type == rhs_type == ARRAY) {
+  if (lhs_type == rhs_type && rhs_type == ARRAY) {
     symbol_table_node = symbolTableGet(assignment_node->ptr1->scope, assignment_node->ptr1->value.entry);
     lhs_symbol_table_entry = &symbol_table_node->value.variable;
 

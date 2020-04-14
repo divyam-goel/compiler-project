@@ -192,6 +192,8 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
         case REAL:
           ic_instr->op = icADD_REAL;
           break;
+        default:
+          break;
       }
       break;
     case MINUS:
@@ -201,6 +203,8 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
           break;
         case REAL:
           ic_instr->op = icSUB_REAL;
+          break;
+        default:
           break;
       }
       break;
@@ -237,6 +241,8 @@ void icTermExpression(struct TermNode *term_expression) {
         case REAL:
           ic_instr->op = icMUL_REAL;
           break;
+        default:
+          break;
       }
       break;
     case DIV:
@@ -246,6 +252,8 @@ void icTermExpression(struct TermNode *term_expression) {
           break;
         case REAL:
           ic_instr->op = icDIV_REAL;
+          break;
+        default:
           break;
       }
       break;
@@ -287,6 +295,8 @@ void icExpression(struct Attribute *expression) {
       expression->addr = expression->node.ter->addr;
       break;
     case ARRAY_NODE:
+      icLeaf(expression->node.arr->ptr1);
+      expression->addr = expression->node.arr->ptr1->addr;
       break;
     case LEAF_NODE:
       icLeaf(expression->node.lea);
@@ -299,6 +309,11 @@ void icExpression(struct Attribute *expression) {
 }
 
 
+void icArrayAssignment(struct LeafNode *lhs, struct LeafNode *rhs) {
+  printf("TO BE IMPLEMENTED\n");
+}
+
+
 void icAssignmentStatement(struct AssignStmtNode *assignment) {
   enum terminal lhs_type, rhs_type;
   
@@ -307,7 +322,7 @@ void icAssignmentStatement(struct AssignStmtNode *assignment) {
       if (assignment->ptr2->node.lva_id->ptr1->type == LEAF_NODE) {
         lhs_type = leafType(assignment->ptr1);
         rhs_type = leafType(assignment->ptr2->node.lva_id->ptr1->node.lea);
-        if (lhs_type == rhs_type == ARRAY) {
+        if (lhs_type == rhs_type && rhs_type == ARRAY) {
           icArrayAssignment(assignment->ptr1, assignment->ptr2->node.lva_id->ptr1->node.lea);
           return;
         }
@@ -355,7 +370,7 @@ void icConditionalStatement(struct ConditionalStmtNode *conditional) {
     ic_instr->addr1 = conditional->ptr1->addr;
     ic_instr->addr2 = case_statement->ptr1->addr;
     ic_instr->addr3 = temporary;
-    ic_instr->op = icSUB;
+    ic_instr->op = icSUB_INT;
     global_ic_instr->next = ic_instr;
     global_ic_instr = ic_instr;
 
@@ -441,7 +456,7 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration) {
   ic_instr->addr1 = for_iteration->ptr1->addr;
   ic_instr->addr2 = for_iteration->ptr2->ptr2->addr;
   ic_instr->addr3 = temporary;
-  ic_instr->op = icSUB;
+  ic_instr->op = icSUB_INT;
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
 

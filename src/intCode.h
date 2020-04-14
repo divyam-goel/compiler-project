@@ -3,6 +3,7 @@
 #define INTCODE_H
 
 #include "st.h"
+#include "semanticCheck.h"
 
 void icLeafNode(struct LeafNode *leaf);
 void icUnaryExpr(struct UNode *unary_expression);
