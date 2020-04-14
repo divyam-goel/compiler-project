@@ -62,21 +62,21 @@ void addLabel(char *instr_list, char *label){
 }
 
 
-void loadConstReg(char *instr_list, char *reg1, int num) {
-  char asm_instr[50] = "";
-  char num_string[50];
-  itoa(num,num_string, 10);
+// void loadConstReg(char *instr_list, char *reg1, int num) {
+//   char asm_instr[50] = "";
+//   char num_string[50];
+//   itoa(num,num_string, 10);
 
-  strcat(asm_instr, "MOV");
-  strcat(asm_instr, "\t");
+//   strcat(asm_instr, "MOV");
+//   strcat(asm_instr, "\t");
   
-  strcat(asm_instr, reg1);
-  strcat(asm_instr, " , ");
-  strcat(asm_instr, num_string);
-  strcat(asm_instr,"\n");
+//   strcat(asm_instr, reg1);
+//   strcat(asm_instr, " , ");
+//   strcat(asm_instr, num_string);
+//   strcat(asm_instr,"\n");
 
-  strcat(instr_list, asm_instr);
-}
+//   strcat(instr_list, asm_instr);
+// }
 
 
 void instrOneOperand(char *instr_list, char *op, char *reg1) {
@@ -118,7 +118,7 @@ void cgLoadINT(char *instr_list, char *reg, ICAddr *ic_addr) {
 }
 
 
-void cgLoadReal(char *instr_list, char *reg, ICAddr *ic_addr) { 
+void cgLoadREAL(char *instr_list, char *reg, ICAddr *ic_addr) { 
   char op[50];
   char addr[30];
 
@@ -152,7 +152,7 @@ void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) {
 
 void cgADD_SUB_INT(ICInstr *ic_instr) {
   char instr_list[100] = "";
-  char *op[10] = "";
+  char op[10] = "";
 
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
@@ -178,7 +178,7 @@ void cgADD_SUB_INT(ICInstr *ic_instr) {
 
 void cgADD_SUB_REAL(ICInstr *ic_instr) {
   char instr_list[100] = "";
-  char *op[10] = "";
+  char op[10] = "";
 
   cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
   cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
@@ -237,8 +237,8 @@ void cgDIV_INT(ICInstr *ic_instr){
 void cgMUL_REAL(ICInstr *ic_instr){
   char instr_list[100] = ""; //final instruction -temporary max length as 100
 
-  cgLoadReal(instr_list, reg_xmm0, &(ic_instr->addr1));
-  cgLoadReal(instr_list, reg_xmm1, &(ic_instr->addr2));
+  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
+  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
 
   instrTwoOperand(instr_list, "MULPS", reg_xmm0 , reg_xmm1);
   // result in reg_xmm0
@@ -249,8 +249,8 @@ void cgMUL_REAL(ICInstr *ic_instr){
 void cgDIV_REAL(ICInstr *ic_instr){
   char instr_list[100] = ""; //final instruction -temporary max length as 100
 
-  cgLoadReal(instr_list, reg_xmm0, &(ic_instr->addr1));
-  cgLoadReal(instr_list, reg_xmm1, &(ic_instr->addr2));
+  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
+  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
 
   instrTwoOperand(instr_list, "DIVPS", reg_xmm0, reg_xmm1);
   // result in reg_xmm0
@@ -260,21 +260,21 @@ void cgDIV_REAL(ICInstr *ic_instr){
 
 void cgINC(ICInstr *ic_instr) {
   char instr_list[100];
-  cgLoadReg(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   strcat(instr_list, "INC\tAX\n");
-  cgStoreMem(instr_list, reg_ax, &(ic_instr->addr1));
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr1));
 }
 
 
 void cgDEC(ICInstr *ic_instr) {
   char instr_list[100];
-  cgLoadReg(instr_list, reg_ax, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   strcat(instr_list, "DEC\tAX\n");
-  cgStoreMem(instr_list, reg_ax, &(ic_instr->addr1));
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr1));
 }
 
 
-void cgSTORE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
+void cgSTOREVALUE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
   char instr_list[100] = "";
 
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
@@ -343,7 +343,7 @@ void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
 
 void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
   char instr_list[100] = "";
-  char *op[10] = "";
+  char op[10] = "";
 
   //assuming that booleans are a byte long
   cgLoadINT(instr_list, reg_al, &(ic_instr->addr1));
@@ -367,7 +367,7 @@ void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
 
 void cgPLUS_MINUS(ICInstr *ic_instr) {
   char instr_list[100] = "";
-  char *op[10] = "";
+  char op[10] = "";
 
   // we take the positive or negative of addr1 and pass it to addr3
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
@@ -470,3 +470,155 @@ void generateASMCode(ICInstr *ic_instr) {
 
   }
 } 
+
+
+//testing
+void printInstrCG(ICInstr *ic_instr){
+  switch (ic_instr->op){
+    case icADD_INT:
+    case icADD_REAL:
+      printf("ADD\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icSUB_INT:
+    case icSUB_REAL:
+      printf("SUB\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icMUL_INT:
+    case icMUL_REAL:
+      printf("MUL\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+
+      break;
+    case icDIV_INT:
+    case icDIV_REAL:
+      printf("DIV\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      // cg_ADD_SUB_DIV_MUL(ic_instr);
+      break;
+    case icINC:
+      printf("INC\t");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icDEC:
+      printf("DEC\t");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icAND:
+      printf("AND\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icOR:
+      printf("OR\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icEQ:
+      printf("EQ\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icNE:
+      printf("NE\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icLT:
+      printf("LT\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icGT:
+      printf("GT\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icLE:
+      printf("LE\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icGE:
+      printf("GE\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icPLUS:
+      printf("PLUS\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      break;
+    case icMINUS:
+      printf("MINUS\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      break;
+    // case icCOPY:
+    //   printf("COPY\t");
+    //   break;
+    // case icLOAD:
+    //   printf("LOAD\t");
+    //   break;
+    case icSTORE:
+      printf("STORE\t");
+      printICAddress(ic_instr->addr3);
+      printICAddress(ic_instr->addr1);
+      // cgSTORE(ic_instr);
+      break;
+    case icJUMP:
+      printf("JUMP\t");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icJUMPNZ:
+      printf("JUMPNZ\t");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    case icJUMPZ:
+      printf("JUMPZ\t");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      printICAddress(ic_instr->addr2);
+      break;
+    // case icCALL:
+    //   printf("CALL\t\t\t");
+    //   break;
+    case icLABEL:
+      printf("LABEL\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    default:
+      break;
+  }
+  printf("\n");
+}
+
+void printCodeGen(ICInstr *ic_instr){
+  while (ic_instr != NULL)
+  {
+    printInstrCG(ic_instr);
+    ic_instr = ic_instr->next;
+  }
+}

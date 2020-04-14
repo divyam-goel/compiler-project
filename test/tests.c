@@ -6,6 +6,7 @@
 #include "../src/st.h"
 #include "../src/semanticCheck.h"
 #include "../src/intCode.h"
+#include "../src/codeGen.h"
 
 void test_removeComments(){
     /*
@@ -343,6 +344,15 @@ void test_intermediateCodeGeneration(char *grammar_file, char *source_file) {
   printICInstructionList(start_global_ic_instr);
 }
 
+void test_CodeGeneration(char *grammar_file, char *source_file)
+{
+    test_createSymbolTables(grammar_file, source_file);
+    extern struct ProgramNode AST;
+    printf("Generating Intermediate Code ...\n\n");
+    generateIntermediateCode(&AST);
+    extern ICInstr *start_global_ic_instr;
+    printCodeGen(start_global_ic_instr);
+}
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -361,7 +371,8 @@ int main() {
     // symbolTableCoreTests();
     // test_createSymbolTables(grammar_file, source_file);
     // test_semanticCheck(grammar_file, source_file);
-    test_intermediateCodeGeneration(grammar_file, source_file);
+    // test_intermediateCodeGeneration(grammar_file, source_file);
+    test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }
