@@ -227,8 +227,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   if (dtnode->type == ARRAY_TYPE_NODE)
     {
       assert(dtnode->node.arr_typ->ptr1->nullData == true);
-      assert(dtnode->node.arr_typ->ptr2->ptr1->type == NUM);
-      assert(dtnode->node.arr_typ->ptr2->ptr2->type == NUM);
+      assert(dtnode->node.arr_typ->ptr2->ptr1->type == NUM ||
+             dtnode->node.arr_typ->ptr2->ptr1->type == IDENTIFIER);
+      assert(dtnode->node.arr_typ->ptr2->ptr2->type == NUM ||
+             dtnode->node.arr_typ->ptr2->ptr2->type == IDENTIFIER);
       is_array = true;
       basetype = dtnode->node.arr_typ->ptr1->type;
       lower_bound = dtnode->node.arr_typ->ptr2->ptr1;

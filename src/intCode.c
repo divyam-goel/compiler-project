@@ -67,24 +67,87 @@ void icLeaf(struct LeafNode *leaf) {
 }
 
 
-// void icArray(struct ArrayNode *array) {
-//   ICInstr *ic_instr = NULL;
+void icArray(struct ArrayNode *array) {
+  ICInstr *ic_instr = NULL;
+  ICAddr ic_addr, label_error, label_success;
   
-//   icLeaf(array->ptr1);
-//   icLeaf(array->ptr2);
+  icLeaf(array->ptr1);
+  icLeaf(array->ptr2);
 
-//   struct VariableEntry *array_symbol;
-//   array_symbol = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
-//   if (!array_symbol->isStatic) {
-//     // dynamically check array bounds
-//   }
+  /* check array bounds for dynamic arrays OR variable index */
+  struct SymbolTableNode *array_symbol_node;
+  struct VariableEntry *array_symbol_entry;
+  array_symbol_node = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
+  array_symbol_entry = &array_symbol_node->value.variable;
+  if (!array_symbol_entry->isStatic || array->ptr2->type == IDENTIFIER) {
+    icLeaf(array_symbol_entry->lower_bound);
+    icLeaf(array_symbol_entry->upper_bound);
 
-//   ic_instr = newICInstruction();
-//   ic_instr->addr1 = ic_addr;
-//   ic_instr->addr2 = ic_addr;
-//   ic_instr->addr3 = newTemporary();
-//   ic_instr->op = icLOAD;
-// }
+    label_error = newLabel();
+    label_success = newLabel();
+    
+    /* Greater than / equal to lower bound */
+    ic_instr = newICInstruction();
+    ic_addr = newTemporary();
+    ic_instr->addr1 = array->ptr2->addr;
+    ic_instr->addr2 = array_symbol_entry->lower_bound->addr;
+    ic_instr->addr3 = ic_addr;
+    ic_instr->op = icGE;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+    
+    /* Jump if false */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = ic_addr;
+    ic_instr->addr2 = label_error;
+    ic_instr->op = icJUMPZ;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /* Less than / equal to upper bound */
+    ic_instr = newICInstruction();
+    ic_addr = newTemporary();
+    ic_instr->addr1 = array->ptr2->addr;
+    ic_instr->addr2 = array_symbol_entry->upper_bound->addr;
+    ic_instr->addr3 = ic_addr;
+    ic_instr->op = icLE;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /* Jump if true */  
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = ic_addr;
+    ic_instr->addr2 = label_success;
+    ic_instr->op = icJUMPNZ;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /* Label for error message */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = label_error;
+    ic_instr->op = icLABEL;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /* Error interrupt */
+    ic_instr = newICInstruction();
+    ic_instr->op = icERR;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /* Label for successful dynamic check */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = label_success;
+    ic_instr->op = icLABEL;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+  }
+
+  ic_addr.type = ARRAY;
+  ic_addr.value.array.var = array->ptr1->addr.value.symbol;
+  ic_addr.value.array.idx = &(array->ptr2->addr);
+  array->addr = ic_addr;
+}
 
 
 void icUnaryExpression(struct UNode *unary_expression) {
@@ -174,9 +237,11 @@ void icRelationalExpression(struct N8Node *relational_expression) {
 
 
 void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
-  if (arithmetic_expression->is_first) {
+  if (arithmetic_expression->is_first)
     icExpression(arithmetic_expression->ptr1);
-  }
+  else
+    arithmetic_expression->ptr1->addr = arithmetic_expression->ptr1->node.ari_exp->addr;
+  
   icExpression(arithmetic_expression->ptr2);
 
   ICInstr *ic_instr = newICInstruction();
@@ -193,6 +258,7 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
           ic_instr->op = icADD_REAL;
           break;
         default:
+          printf("Invalid data type for arithmetic expression\n");
           break;
       }
       break;
@@ -205,27 +271,32 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
           ic_instr->op = icSUB_REAL;
           break;
         default:
+          printf("Invalid data type for arithmetic expression\n");
           break;
       }
       break;
     default:
+      printf("Invalid op for arithmetic expression\n");
       break;
   }
+  arithmetic_expression->addr = ic_instr->addr3;
 
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
 
   if (arithmetic_expression->ptr3->type != NULL_NODE) {
     icExpression(arithmetic_expression->ptr3);
+    arithmetic_expression->addr = global_ic_instr->addr3;
   }
-  arithmetic_expression->addr = global_ic_instr->addr3;
 }
 
 
 void icTermExpression(struct TermNode *term_expression) {
-  if (term_expression->is_first) {
+  if (term_expression->is_first)
     icExpression(term_expression->ptr1);
-  }
+  else
+    term_expression->ptr1->addr = term_expression->ptr1->node.ter->addr;
+
   icExpression(term_expression->ptr2);
 
   ICInstr *ic_instr = newICInstruction();
@@ -242,6 +313,7 @@ void icTermExpression(struct TermNode *term_expression) {
           ic_instr->op = icMUL_REAL;
           break;
         default:
+          printf("Invalid data type for term expression\n");
           break;
       }
       break;
@@ -254,21 +326,23 @@ void icTermExpression(struct TermNode *term_expression) {
           ic_instr->op = icDIV_REAL;
           break;
         default:
+          printf("Invalid data type for term expression\n");
           break;
       }
       break;
     default:
-      printf("Default term\n");
+      printf("Invalid op for term expression\n");
       break;
   }
+  term_expression->addr = ic_instr->addr3;
 
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
 
   if (term_expression->ptr3->type != NULL_NODE) {
     icExpression(term_expression->ptr3);
+    term_expression->addr = global_ic_instr->addr3;
   }
-  term_expression->addr = global_ic_instr->addr3;
 }
 
 
@@ -295,8 +369,8 @@ void icExpression(struct Attribute *expression) {
       expression->addr = expression->node.ter->addr;
       break;
     case ARRAY_NODE:
-      icLeaf(expression->node.arr->ptr1);
-      expression->addr = expression->node.arr->ptr1->addr;
+      icArray(expression->node.arr);
+      expression->addr = expression->node.arr->addr;
       break;
     case LEAF_NODE:
       icLeaf(expression->node.lea);

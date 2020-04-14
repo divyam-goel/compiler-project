@@ -9,6 +9,8 @@ char reg_ax[] = "AX";
 char reg_bx[] = "BX";
 char reg_cx[] = "CX";
 char reg_dx[] = "DX";
+char reg_r8w[] = "R8W";
+char reg_r9w[] = "R9W";
 
 char reg_xmm0[] = "XMM0";
 char reg_xmm1[] = "XMM1";
@@ -17,9 +19,10 @@ char reg_al[] = "AL";
 char reg_bl[] = "BL";
 char reg_cl[] = "CL";
 
-void cgICAddr(char *addr, ICAddr *ic_addr) {
-  switch (ic_addr->type)
-  {
+void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
+  char op[10];
+  
+  switch (ic_addr->type) {
   case NUM:
     sprintf(addr, "%d", ic_addr->value.num);
     break;
@@ -34,6 +37,17 @@ void cgICAddr(char *addr, ICAddr *ic_addr) {
     break;
   case IDENTIFIER:
     sprintf(addr, "[%s]", (char *)ic_addr->value.symbol);
+    break;
+  case ARRAY:
+    strcpy(op, "MOV");
+    cgICAddr(instr_list, addr, ic_addr->value.array.idx);
+    instrTwoOperand(instr_list, op, reg_r8w, addr);
+    
+    strcpy(op, "MOV");
+    strcpy(addr, ic_addr->value.array.var);
+    instrTwoOperand(instr_list, op, reg_r9w, addr);
+    
+    sprintf(addr, "[%s + %s * 2]", reg_r9w, reg_r8w);
     break;
   default:
     sprintf(addr, "NULL");
@@ -95,24 +109,22 @@ void instrTwoOperand(char *instr_list, char *op, char *reg1, char *reg2) {
 
 
 void cgLoadINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char asm_instr[50];
+  char op[50];
   char addr[30];
   
-  strcpy(asm_instr, "MOV");
-  cgICAddr(addr, ic_addr);
-  instrTwoOperand(instr_list, asm_instr, reg, addr);
-  // strcat(instr_list, asm_instr);
+  strcpy(op, "MOV");
+  cgICAddr(instr_list, addr, ic_addr);  
+  instrTwoOperand(instr_list, op, reg, addr);
 }
 
 
 void cgLoadReal(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char asm_instr[50];
+  char op[50];
   char addr[30];
-  
-  strcpy(asm_instr, "MOVAPS");
-  cgICAddr(addr, ic_addr);
-  instrTwoOperand(instr_list, asm_instr, reg, addr);
-  // strcat(instr_list, asm_instr);
+
+  strcpy(op, "MOVAPS");
+  cgICAddr(instr_list, addr, ic_addr);  
+  instrTwoOperand(instr_list, op, reg, addr);
 }
 
 
@@ -121,7 +133,7 @@ void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) {
   char addr[30];
   
   strcpy(asm_instr, "MOV");
-  cgICAddr(addr, ic_addr);
+  cgICAddr(instr_list, addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, addr, reg);
   // strcat(instr_list, asm_instr);
 }
@@ -132,7 +144,7 @@ void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) {
   char addr[30];
   
   strcpy(asm_instr, "MOVAPS");
-  cgICAddr(addr, ic_addr);
+  cgICAddr(instr_list, addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, addr, reg);
   // strcat(instr_list, asm_instr);
 }

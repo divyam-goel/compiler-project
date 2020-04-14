@@ -28,8 +28,14 @@ typedef enum IntermediateCodeOperation {
   icJUMP, icJUMPZ, icJUMPNZ, icCALL,
 
   /* others */
-  icLABEL
+  icLABEL, icERR
 } ICOp;
+
+
+typedef struct IntermediateCodeArrayAddress {
+  void *var;
+  struct IntermediateCodeAddress *idx;
+}ICArrayAddr;
 
 
 typedef union IntermediateCodeAddressUnion {
@@ -37,6 +43,7 @@ typedef union IntermediateCodeAddressUnion {
   float rnum;
   bool boolean;
   void *symbol;
+  ICArrayAddr array;
 } ICAddrUnion;
 
 
