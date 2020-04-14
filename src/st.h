@@ -16,6 +16,7 @@
 #define DT_BOOL_SIZE 1
 #define DT_INTEGER_SIZE 2
 #define DT_REAL_SIZE 4
+#define DT_ARRAY_POINTER_SIZE 4
 
 /* Functions from stCore.c */
 int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
@@ -59,6 +60,8 @@ void stHandleWhileLoop(struct WhileIterativeStmtNode *while_loop, struct SymbolT
 void stWalkThroughExpression (struct Attribute *expression, struct SymbolTable *scope);
 void stUpdateLeafNode(struct LeafNode *lea, struct SymbolTable *scope);
 struct VariableEntry *stNewTemporaryVariable(struct SymbolTable *scope, enum terminal datatype);
-void stUpdateMemoryUsage(struct SymbolTable *scope, char *variable_name, enum terminal datatype, bool is_array);
+struct SymbolTable *getModuleLevelScope(struct SymbolTable *scope);
+struct ModuleEntry *getModuleEntry(char *module_name);
+int getMemorySizeofDatatype(enum terminal datatype, bool is_array);
 
 #endif

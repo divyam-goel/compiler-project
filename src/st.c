@@ -22,7 +22,7 @@ char *module_undeclared_error_message = "Semantic Error: Module \"%s\" used on l
 declared.\n";
 char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
 may be detected after resolving the above).\n";
-char *invalid_datatype_error_message = "%d is not a valid datatype to create a temporary variable.\n";
+char *invalid_datatype_error_message = "%d is not a valid datatype and does not have a memory requirement value.\n";
 
 
 /**
@@ -198,6 +198,8 @@ stCreateSymbolTableValueForModule (char *name, int dec_line_no, int def_line_no,
  * the variable and the attribute (node) for the datatype and then extracts the
  * necessary information out of them - so code for stuff like checking if this
  * variable is an array only have to be written once.
+ * We also handle updating the memory requirement of the encapsulating module's
+ * activation record.
  * @param   varnode       The leafnode containing the variable name.
  * @param   dtnode        The attribute containing the variable datatype.
  * @param   scope         If this is not NULL, then this will be assigned to the
@@ -211,8 +213,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   char *name;
   bool is_array, is_static;
   enum terminal basetype;
-  int line_number;
+  int line_number, datasize;
   struct LeafNode *lower_bound, *upper_bound;
+  struct ModuleEntry *module;
+  struct SymbolTable *module_scope;
   
   assert(varnode != NULL);
   assert(varnode->type == IDENTIFIER);
@@ -250,6 +254,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       upper_bound = NULL;
     }
 
+  module_scope = getModuleLevelScope(scope);
+  module = getModuleEntry(module_scope->scope_tag);
+  datasize = getMemorySizeofDatatype(basetype, is_array);
+
   union SymbolTableValue new_value;
   memset(&new_value, 0, sizeof(union SymbolTableValue));
   assert(strlen(name) <= IDENTIFIER_NAME_MAX_LEN);
@@ -260,8 +268,9 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   new_value.variable.line_number = line_number;
   new_value.variable.lower_bound = lower_bound;
   new_value.variable.upper_bound = upper_bound;
-  /* We don't set new_value.variable.value here since that would be done later. */
-  new_value.variable.mem_offset = NULL;  /* Not sure of what to do with this yet. */
+  new_value.variable.mem_offset = module->activation_record_size;
+
+  module->activation_record_size += datasize;
   return new_value;
 }
 
@@ -640,7 +649,6 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
           assert(dtnode != NULL);
           new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
-          stUpdateMemoryUsage(scope, variable_name, datatype);
         }
         variable_ll = variable_ll->ptr2;
     }
@@ -846,63 +854,98 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
 {
   int datasize;
   char *module_name;
+  struct ModuleEntry *module;
   char temp_var_name[7];
   union SymbolTableValue new_variable;
-  struct SymbolTableNode *module_node, *new_variable_node;
-  struct ModuleEntry module;
+  struct SymbolTableNode *new_variable_node;
   
-  while (scope != NULL && scope->is_module_scope == false)
-    scope = scope->parent;
-  assert(scope != NULL);
-  module_name = scope->scope_tag;
-  module_node = symbolTableGet(global_symbol_table, module_name);
-  assert(module_node->value_type == ST_MODULE);
+  scope = getModuleLevelScope(scope);
+  module = getModuleEntry(scope->scope_tag);
+  sprintf(temp_var_name, "%t.5d", module->num_temp_var);
 
-  switch (datatype)
-    {
-      case (INTEGER):
-        datasize = DT_INTEGER_SIZE;
-        break;
-      case (REAL):
-        datasize = DT_REAL_SIZE;
-        break;
-      case (BOOLEAN_):
-        datasize = DT_BOOL_SIZE;
-        break;
-      default:
-        fprintf(stderr, invalid_datatype_error_message, datatype);
-        exit(EXIT_FAILURE);
-    }
-
-  sprintf(temp_var_name, "%t.5d", module.num_temp_var);
-  module = module_node->value.module;
-  module.num_temp_var += 1;
-  module.activation_record_size += datasize;
+  datasize = getMemorySizeofDatatype(datatype, false);
 
   strcpy(new_variable.variable.name, temp_var_name);
   new_variable.variable.line_number = -1;
-  /* Don't set value here - let the caller do that. */
   new_variable.variable.datatype = datatype;
   new_variable.variable.isArray = false;
   new_variable.variable.isStatic = false;
   new_variable.variable.isTemporary = true;
   new_variable.variable.lower_bound = -1;
   new_variable.variable.upper_bound = -1;
-  /* new_variable.mem_offset - yet to be decided */
+  new_variable.variable.mem_offset = module->activation_record_size;
 
   symbolTableSet(scope, temp_var_name, new_variable, ST_VARIABLE, false);
+  
+  module->num_temp_var += 1;
+  module->activation_record_size += datasize;
 
+  /* For convenience, instead of returning the module's name return the 
+   * VariableEntry that exists in the symbol table. */
   new_variable_node = symbolTableGet(scope, temp_var_name);
   return &(new_variable_node->value.variable);
 }
 
 
 /**
- * Given the symbol table a variable belongs to the name of the variable and the some information
- * about the type of data stored in it, update the stack frame requir
+ * Traverse through parent scopes to find the encapsulating module level
+ * scope. This scope is then usually used for updating activation record
+ * sizes, for memory offset calculation, and for adding new temporary
+ * variables.
+ * @param     scope     The scope of the leaf node for which we want to find
+ *                      the encapsulating module scope.
+ * @returns             The encapsulating module scope itself.
  */
-void
-stUpdateMemoryUsage (struct SymbolTable *scope, char *variable_name, enum terminal datatype, bool is_array)
+struct SymbolTable *
+getModuleLevelScope (struct SymbolTable *scope)
 {
+  while (scope != NULL && scope->is_module_scope == false)
+    scope = scope->parent;
+  assert(scope != NULL);
+}
 
+
+/**
+ * Given the name of a module, retrieve it's ModuleEntry from the symbol table.
+ * @param     module_name     Name of the module
+ * @returns                   The corresponding ModuleEntry from the global
+ *                            symbol table.
+ */
+struct ModuleEntry *
+getModuleEntry (char *module_name)
+{
+  struct SymbolTableNode *module_node;
+  module_node = symbolTableGet(global_symbol_table, module_name);
+  assert(module_node->value_type == ST_MODULE);
+  return &(module_node->value.module);
+}
+
+
+/**
+ * Basically a static map in the form of a callable function. Maps datatypes
+ * to how much memory they require (in bytes).
+ * @param     datatype      The datatype itself.
+ * @param     is_array      Set to true it's an array, then datatype will be ignored.
+ * @returns                 The number of bytes required to store that datatype.
+ */
+int
+getMemorySizeofDatatype (enum terminal datatype, bool is_array)
+{
+  if (is_array)
+    return DT_ARRAY_POINTER_SIZE;
+
+  switch (datatype)
+    {
+      case (INTEGER):
+        return DT_INTEGER_SIZE;
+      case (REAL):
+        return DT_REAL_SIZE;
+      case (TRUE_):
+      case (FALSE_):
+      case (BOOLEAN_):
+        return DT_BOOL_SIZE;
+      default:
+        fprintf(stderr, invalid_datatype_error_message, datatype);
+        exit(EXIT_FAILURE);
+    }
 }
