@@ -182,7 +182,7 @@ void cgADD_SUB_REAL(ICInstr *ic_instr) {
     printf("Error: Invalid Integer Operation\n");
   }
 
-  cgStoreREAL(instr_list, reg_ax, &(ic_instr->addr3));
+  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
 
   printf("DEBUG: %s\n", instr_list);
 }
@@ -279,7 +279,7 @@ void cgSTORE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements 
 }
 
 
-void cgRelationalOp(ICInstr *ic_instr) {
+void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
   // for now, using 1 as truth value, 0 as false value:
   char instr_list[100] = ""; //final instruction -temporary max length as 100
   char label1[] = "L1";
@@ -308,8 +308,7 @@ void cgRelationalOp(ICInstr *ic_instr) {
   default:
     strcat(operator, "BLAH1");
     break;
-  }
-  
+  } 
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
   cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
 
@@ -328,12 +327,35 @@ void cgRelationalOp(ICInstr *ic_instr) {
   cgStoreINT(instr_list, reg_cl, &(ic_instr->addr3));
 }
 
+void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
+  char instr_list[100] = "";
+  char *op[10] = "";
+
+  //assuming that booleans are a byte long
+  cgLoadINT(instr_list, reg_al, &(ic_instr->addr1));
+  cgLoadINT(instr_list, reg_bl, &(ic_instr->addr2));
+
+  switch (ic_instr->op){
+  case icAND:
+    strcpy(op, "AND");
+    instrTwoOperand(instr_list, op, reg_al, reg_bl);
+    break;
+  case icOR:
+    strcpy(op, "OR");
+    instrTwoOperand(instr_list, op, reg_al, reg_bl);
+    break;
+  default:
+    printf("Error: Invalid Integer Operation\n");
+  }
+  //store result in reg_al to memory
+  cgStoreINT(instr_list, reg_al, &(ic_instr->addr3));
+}
 
 /* Those with '-' next to them have been implemented*/
 // -void cgINC(ICInstr *ic_instr) {}
 // -void cgDEC(ICInstr *ic_instr) {}
-// void cgAND(ICInstr *ic_instr) {}
-// void cgOR(ICInstr *ic_instr) {}
+// -void cgAND(ICInstr *ic_instr) {}
+// -void cgOR(ICInstr *ic_instr) {}
 // -void cgEQ(ICInstr *ic_instr) {}
 // -void cgNE(ICInstr *ic_instr) {}
 // -void cgLT(ICInstr *ic_instr) {}
