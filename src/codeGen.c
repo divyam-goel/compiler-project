@@ -13,6 +13,9 @@ char reg_dx[] = "DX";
 char reg_xmm0[] = "XMM0";
 char reg_xmm1[] = "XMM1";
 
+char reg_al[] = "AL";
+char reg_bl[] = "BL";
+char reg_cl[] = "CL";
 
 void cgICAddr(char *addr, ICAddr *ic_addr) {
   switch (ic_addr->type)
@@ -96,7 +99,7 @@ void cgLoadINT(char *instr_list, char *reg, ICAddr *ic_addr) {
   strcpy(asm_instr, "MOV");
   cgICAddr(addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, reg, addr);
-  strcat(instr_list, asm_instr);
+  // strcat(instr_list, asm_instr);
 }
 
 
@@ -107,7 +110,7 @@ void cgLoadReal(char *instr_list, char *reg, ICAddr *ic_addr) {
   strcpy(asm_instr, "MOVAPS");
   cgICAddr(addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, reg, addr);
-  strcat(instr_list, asm_instr);
+  // strcat(instr_list, asm_instr);
 }
 
 
@@ -118,7 +121,7 @@ void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) {
   strcpy(asm_instr, "MOV");
   cgICAddr(addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, addr, reg);
-  strcat(instr_list, asm_instr);
+  // strcat(instr_list, asm_instr);
 }
 
 
@@ -129,7 +132,7 @@ void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) {
   strcpy(asm_instr, "MOVAPS");
   cgICAddr(addr, ic_addr);
   instrTwoOperand(instr_list, asm_instr, addr, reg);
-  strcat(instr_list, asm_instr);
+  // strcat(instr_list, asm_instr);
 }
 
 
@@ -314,15 +317,15 @@ void cgRelationalOp(ICInstr *ic_instr) {
   //instr eg -> "JLE L1"
   instrOneOperand(instr_list,operator,label1); 
   //this runs if above condition isnt true
-  loadConstReg(instr_list, reg_cx, 0); //false
+  instrTwoOperand(instr_list, "MOV", reg_cl, "0x00"); //false
   instrOneOperand(instr_list, "JMP", label2); //jump to label2
 
   addLabel(instr_list,label1); //true => it comes here
-  loadConstReg(instr_list, reg_cx, 1); //true
+  instrTwoOperand(instr_list, "MOV", reg_cl, "0x11"); //true
 
   addLabel(instr_list,label2); // if false, the other condition jumps here
   // store value in addr3
-  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+  cgStoreINT(instr_list, reg_cl, &(ic_instr->addr3));
 }
 
 
@@ -409,4 +412,4 @@ void generateASMCode(ICInstr *ic_instr) {
     }
 
   }
-} //question: whats the result of a less than operation? just windering what to put okayokan the addrr3
+} 
