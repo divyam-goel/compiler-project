@@ -203,7 +203,7 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
           ic_instr->op = icSUB_REAL;
           break;
       }
-`      break;
+      break;
     default:
       break;
   }

@@ -351,6 +351,27 @@ void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
   cgStoreINT(instr_list, reg_al, &(ic_instr->addr3));
 }
 
+void cgPLUS_MINUS(ICInstr *ic_instr) {
+  char instr_list[100] = "";
+  char *op[10] = "";
+
+  // we take the positive or negative of addr1 and pass it to addr3
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+
+  switch (ic_instr->op){
+  case icPLUS:
+    break;
+  case icMINUS:
+    strcpy(op, "NEG");
+    instrOneOperand(instr_list, op, reg_ax);
+    break;
+  default:
+    printf("Error: Invalid Unary Op\n");
+  }
+  //store result in reg_al to memory
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+}
+
 /* Those with '-' next to them have been implemented*/
 // -void cgINC(ICInstr *ic_instr) {}
 // -void cgDEC(ICInstr *ic_instr) {}
