@@ -17,6 +17,7 @@
 #define DT_INTEGER_SIZE 2
 #define DT_REAL_SIZE 4
 #define DT_ARRAY_POINTER_SIZE 4
+#define ST_TEMP_VAR_FORMAT "@%.5d"
 
 /* Functions from stCore.c */
 int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],

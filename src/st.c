@@ -858,7 +858,7 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   
   scope = getModuleLevelScope(scope);
   module = getModuleEntry(scope->scope_tag);
-  sprintf(temp_var_name, "t%.5d", module->num_temp_var);
+  sprintf(temp_var_name, ST_TEMP_VAR_FORMAT, module->num_temp_var);
 
   datasize = getMemorySizeofDatatype(datatype, false);
 
