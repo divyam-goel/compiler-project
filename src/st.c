@@ -677,29 +677,20 @@ stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct Symbo
   struct LeafNode *conditional_variable = con_stmt->ptr1;
   struct CaseStmtNode *cases_ll = con_stmt->ptr2;
   struct StatementNode *default_case_statements = con_stmt->ptr3;
-  struct SymbolTable *case_scope;
 
   assert(conditional_variable->type == IDENTIFIER);
   stUpdateLeafNode(conditional_variable, scope);
   while (cases_ll != NULL)
     {
       stUpdateLeafNode(cases_ll->ptr1, scope);
-      case_scope = newSymbolTable(scope, "case", NULL);
-      stWalkThroughStatements(cases_ll->ptr2, case_scope);
+      stWalkThroughStatements(cases_ll->ptr2, scope);
       cases_ll = cases_ll->ptr3;  
-      if (st_debug_mode)
-        {
-          fprintf(stdout, "Case symbol table:\n");
-          printSymbolTable(case_scope);
-          printf("\n");
-        }
     }
-  case_scope = newSymbolTable(scope, "default case", NULL);
-  stWalkThroughStatements(default_case_statements, case_scope);
+  stWalkThroughStatements(default_case_statements, scope);
   if (st_debug_mode)
     {
-      fprintf(stdout, "Defualt case symbol table:\n");
-      printSymbolTable(case_scope);
+      fprintf(stdout, "Case statement symbol table:\n");
+      printSymbolTable(scope);
       printf("\n");
     }
 }
