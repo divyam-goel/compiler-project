@@ -13,7 +13,7 @@
 
 #define POLYNOMIAL_ROLLING_HASH_FACTOR 17
 #define ST_DEFAULT_HASH_FUNCTION polynomialRollingHashFunction;
-#define DT_BOOL_SIZE 1
+#define DT_BOOL_SIZE 2
 #define DT_INTEGER_SIZE 2
 #define DT_REAL_SIZE 4
 #define DT_ARRAY_POINTER_SIZE 4
