@@ -388,24 +388,6 @@ void cgPLUS_MINUS(ICInstr *ic_instr) {
   printf("%s", instr_list);
 }
 
-/* Those with '-' next to them have been implemented*/
-// -void cgINC(ICInstr *ic_instr) {}
-// -void cgDEC(ICInstr *ic_instr) {}
-// -void cgAND(ICInstr *ic_instr) {}
-// -void cgOR(ICInstr *ic_instr) {}
-// -void cgEQ(ICInstr *ic_instr) {}
-// -void cgNE(ICInstr *ic_instr) {}
-// -void cgLT(ICInstr *ic_instr) {}
-// -void cgGT(ICInstr *ic_instr) {}
-// -void cgLE(ICInstr *ic_instr) {}
-// -void cgGE(ICInstr *ic_instr) {}
-// void cgPLUS(ICInstr *ic_instr) {}
-// void cgMINUS(ICInstr *ic_instr) {}
-
-// void cgJUMP(ICInstr *ic_instr) {}
-// void cgTJUMP(ICInstr *ic_instr) {}
-// void cgFJUMP(ICInstr *ic_instr) {}
-
 
 void generateASMCode(ICInstr *ic_instr) {
   while (ic_instr != NULL) {
@@ -577,3 +559,10 @@ void printCodeGen(ICInstr *ic_instr){
     ic_instr = ic_instr->next;
   }
 }
+
+/* Those with '-' next to them have been implemented*/
+// void cgPLUS(ICInstr *ic_instr) {}
+// void cgMINUS(ICInstr *ic_instr) {}
+// void cgJUMP(ICInstr *ic_instr) {}
+// void cgTJUMP(ICInstr *ic_instr) {}
+// void cgFJUMP(ICInstr *ic_instr) {}

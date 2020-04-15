@@ -193,6 +193,7 @@ struct IdListNode {
 struct UNode {
   enum terminal op;
   struct Attribute *ptr1;
+  enum terminal data_type;
   ICAddr addr;
 };
 

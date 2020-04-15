@@ -2,6 +2,7 @@
 #include "st.h"
 #include "semanticCheck.h"
 
+bool is_input_code_error_free = true;
 
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
 extern struct SymbolTable *global_symbol_table;
@@ -28,6 +29,7 @@ enum terminal leafType(struct LeafNode *leaf) {
       if (symbol_table_entry == NULL) {
         printf("Type Error: Undeclared variable %s\n", (char *)leaf->value.entry);
         data_type = EPSILON;
+        is_input_code_error_free = false;
       }
       else if (symbol_table_entry->value.variable.isArray) {
         data_type = ARRAY;
@@ -58,6 +60,7 @@ enum terminal arrayType(struct ArrayNode *array) {
   symbol_table_entry = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
   if (symbol_table_entry == NULL) {
     printf("Type Error: Undeclared variable %s\n", (char *)array->ptr1->value.entry);
+    is_input_code_error_free = false;
     return EPSILON;
   }
 
@@ -67,6 +70,7 @@ enum terminal arrayType(struct ArrayNode *array) {
   if (data_type_idx != INTEGER) {
     printf("Type Error: Array index should be of type INTEGER, found %s\n",
     terminalStringRepresentations[data_type_idx]);
+    is_input_code_error_free = false;
   }
 
   if (symbol_table_entry->value.variable.isStatic && array->ptr2->type == NUM) {
@@ -76,6 +80,7 @@ enum terminal arrayType(struct ArrayNode *array) {
     index = array->ptr2->value.num;
     if (index < lower_bound || index > upper_bound) {
       printf("Semantic Error: Array out of bounds\n");
+      is_input_code_error_free = false;
     }
   }
 
@@ -104,13 +109,17 @@ enum terminal logicalExpressionType(struct N7Node *logical_expression) {
   
   if (left_operand_type != BOOLEAN_) {
     printf("Type Error: Operator %s expects type BOOLEAN, found %s\n",
-      terminalStringRepresentations[logical_expression->logicalOp], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[logical_expression->logicalOp],
+      terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
   if (right_operand_type != BOOLEAN_) {
     printf("Type Error: Operator %s expects type BOOLEAN, found %s\n",
-      terminalStringRepresentations[logical_expression->logicalOp], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[logical_expression->logicalOp],
+      terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
   
   return BOOLEAN_;
@@ -124,13 +133,17 @@ enum terminal relationalExpressionType(struct N8Node *relational_expression) {
   
   if (left_operand_type != INTEGER && left_operand_type != REAL) {
     printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-      terminalStringRepresentations[relational_expression->relationalOp], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[relational_expression->relationalOp],
+      terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-      terminalStringRepresentations[relational_expression->relationalOp], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[relational_expression->relationalOp],
+      terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
   
   return BOOLEAN_;
@@ -143,20 +156,26 @@ enum terminal ArithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
   right_operand_type = expressionType(arithmetic_expression->ptr2);
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-      terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[arithmetic_expression->op],
+      terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
   
   if (arithmetic_expression->is_first) {
     left_operand_type = expressionType(arithmetic_expression->ptr1);
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-        terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-        return EPSILON;
+        terminalStringRepresentations[arithmetic_expression->op],
+        terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
+      return EPSILON;
     }
     if (left_operand_type != right_operand_type) {
       printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+        terminalStringRepresentations[left_operand_type],
+        terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
       return EPSILON;
     }
   }
@@ -165,12 +184,16 @@ enum terminal ArithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
     left_operand_type = expressionType(arithmetic_expression->ptr3);
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-        terminalStringRepresentations[arithmetic_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-        return EPSILON;
+        terminalStringRepresentations[arithmetic_expression->op],
+        terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
+      return EPSILON;
     }
     if (left_operand_type != right_operand_type) {
       printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+        terminalStringRepresentations[left_operand_type],
+        terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
       return EPSILON;
     }
   }
@@ -186,20 +209,26 @@ enum terminal TermExpressionType(struct TermNode *term_expression) {
   right_operand_type = expressionType(term_expression->ptr2);
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-      terminalStringRepresentations[term_expression->op], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
-      return EPSILON;
+      terminalStringRepresentations[term_expression->op],
+      terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+    is_input_code_error_free = false;
+    return EPSILON;
   }
 
   if (term_expression->is_first) {
     left_operand_type = expressionType(term_expression->ptr1);
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-        terminalStringRepresentations[term_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-        return EPSILON;
+        terminalStringRepresentations[term_expression->op],
+        terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
+      return EPSILON;
     }
     if (left_operand_type != right_operand_type) {
       printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+        terminalStringRepresentations[left_operand_type],
+        terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
       return EPSILON;
     }
   }
@@ -208,12 +237,16 @@ enum terminal TermExpressionType(struct TermNode *term_expression) {
     left_operand_type = expressionType(term_expression->ptr3);
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       printf("Type Error: Operator %s expects type INTEGER or REAL, found %s\n",
-        terminalStringRepresentations[term_expression->op], terminalStringRepresentations[left_operand_type]); // TO DO: print line number
-        return EPSILON;
+        terminalStringRepresentations[term_expression->op],
+        terminalStringRepresentations[left_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
+      return EPSILON;
     }
     if (left_operand_type != right_operand_type) {
       printf("Type Error: Mismatching operand types while evaluating expression, found %s and %s\n",
-        terminalStringRepresentations[left_operand_type], terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+        terminalStringRepresentations[left_operand_type],
+        terminalStringRepresentations[right_operand_type]); // TO DO: print line number
+      is_input_code_error_free = false;
       return EPSILON;
     }
   }
@@ -226,7 +259,8 @@ enum terminal TermExpressionType(struct TermNode *term_expression) {
 enum terminal expressionType(struct Attribute *expression) {
   switch (expression->type) {
     case U_NODE:
-      return expressionType(expression->node.u->ptr1);
+      expression->node.u->data_type = expressionType(expression->node.u->ptr1);
+      return expression->node.u->data_type;
       break;
     case N7_NODE:
       return logicalExpressionType(expression->node.n7);
@@ -291,11 +325,15 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
     printf("Type Error: Mismatching types for array assignment, found %s and %s\n",
       terminalStringRepresentations[lhs_symbol_table_entry->datatype],
       terminalStringRepresentations[rhs_symbol_table_entry->datatype]);
+    
+    is_input_code_error_free = false;
   }
 
-  if (lhs_type != EPSILON && rhs_type != EPSILON && lhs_type != rhs_type)
+  if (lhs_type != EPSILON && rhs_type != EPSILON && lhs_type != rhs_type) {
     printf("Type Error: expression evaluates to type %s, expected %s\n",
       terminalStringRepresentations[rhs_type], terminalStringRepresentations[lhs_type]);
+    is_input_code_error_free = false;
+  }
 }
 
 
@@ -328,12 +366,14 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
     module_reuse_type = leafType(input_module_reuse->ptr1);
     if (module_definition_type != module_reuse_type) {
       printf("Type Error: 5\n");
+      is_input_code_error_free = false;
     }
     input_module_definition = input_module_definition->ptr3;
     input_module_reuse = input_module_reuse->ptr2;
   }
   if (input_module_definition != NULL || input_module_reuse != NULL) {
     printf("Type Error: 6\n");
+    is_input_code_error_free = false;
   }
 
   // iterate over input parameter and identifier list from module definition and reuse
@@ -343,12 +383,14 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
     module_reuse_type = leafType(output_module_reuse->ptr1);
     if (module_definition_type != module_reuse_type) {
       printf("Type Error: 7\n");
+      is_input_code_error_free = false;
     }
     output_module_definition = output_module_definition->ptr3;
     output_module_reuse = output_module_reuse->ptr2;
   }
   if (output_module_definition != NULL || output_module_reuse != NULL) {
     printf("Type Error: 8\n");
+    is_input_code_error_free = false;
   }
 }
 
@@ -363,6 +405,7 @@ void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
   switch (switch_type) {
     case REAL:
       printf("Type Error: Conditional switch over type REAL not allowed\n");
+      is_input_code_error_free = false;
       case_node = conditional_node->ptr2;
       while (case_node != NULL) {
         statementListSemanticChecker(case_node->ptr2);
@@ -379,6 +422,7 @@ void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
         if (switch_type != case_type) {
           printf("Type Error: Conditional switch over type INTEGER can take only INTEGER case values, type %s found",
             terminalStringRepresentations[case_type]);
+          is_input_code_error_free = false;
         }
         statementListSemanticChecker(case_node->ptr2);
         case_node = case_node->ptr3;

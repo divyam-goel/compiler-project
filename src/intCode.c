@@ -21,6 +21,44 @@ ICAddr newTemporary() {
 }
 
 
+ICAddr newTemporaryV2(struct SymbolTable *scope, enum terminal datatype) {
+  ICAddr ic_addr;
+  ic_addr.type = IDENTIFIER;
+  ic_addr.value.symbol = stNewTemporaryVariable (scope, datatype);
+  return ic_addr;
+}
+
+
+struct SymbolTable * findScope(struct Attribute *attr) {
+  switch (attr->type) {
+    case U_NODE:
+      return findScope(attr->node.u->ptr1);
+    case N7_NODE:
+      return findScope(attr->node.n7->ptr1);
+      break;
+    case N8_NODE:
+      return findScope(attr->node.n8->ptr1);
+      break;
+    case ARITHMETIC_EXPR_NODE:
+      return findScope(attr->node.ari_exp->ptr2);
+      break;
+    case TERM_NODE:
+      return findScope(attr->node.ter->ptr2);
+      break;
+    case ARRAY_NODE:
+      return attr->node.arr->ptr1->scope;
+      break;
+    case LEAF_NODE:
+      return attr->node.lea->scope;
+      break;
+    default:
+      printf("ERROR!! Invalid case type in find scope: %d\n", attr->type);
+      return NULL;
+      break;
+  }
+}
+
+
 ICAddr newLabel() {
   ICAddr ic_addr;
   ic_addr.type = IDENTIFIER;
@@ -75,6 +113,7 @@ void icArray(struct ArrayNode *array) {
   icLeaf(array->ptr2);
 
   /* check array bounds for dynamic arrays OR variable index */
+  struct SymbolTable *scope = array->ptr1->scope;
   struct SymbolTableNode *array_symbol_node;
   struct VariableEntry *array_symbol_entry;
   array_symbol_node = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
@@ -88,7 +127,8 @@ void icArray(struct ArrayNode *array) {
     
     /* Greater than / equal to lower bound */
     ic_instr = newICInstruction();
-    ic_addr = newTemporary();
+    // ic_addr = newTemporary();
+    ic_addr = newTemporaryV2(scope, BOOLEAN_);
     ic_instr->addr1 = array->ptr2->addr;
     ic_instr->addr2 = array_symbol_entry->lower_bound->addr;
     ic_instr->addr3 = ic_addr;
@@ -106,7 +146,8 @@ void icArray(struct ArrayNode *array) {
 
     /* Less than / equal to upper bound */
     ic_instr = newICInstruction();
-    ic_addr = newTemporary();
+    // ic_addr = newTemporary();
+    ic_addr = newTemporaryV2(scope, BOOLEAN_);
     ic_instr->addr1 = array->ptr2->addr;
     ic_instr->addr2 = array_symbol_entry->upper_bound->addr;
     ic_instr->addr3 = ic_addr;
@@ -153,9 +194,12 @@ void icArray(struct ArrayNode *array) {
 void icUnaryExpression(struct UNode *unary_expression) {
   icExpression(unary_expression->ptr1);
   
+  struct SymbolTable *scope = findScope(unary_expression->ptr1);
+  enum terminal data_type = unary_expression->data_type;
   ICInstr *ic_instr = newICInstruction();
   ic_instr->addr1 = unary_expression->ptr1->addr;
-  ic_instr->addr3 = newTemporary();
+  // ic_instr->addr3 = newTemporary();
+  ic_instr->addr3 = newTemporaryV2(scope, data_type);
   switch (unary_expression->op) {
     case PLUS:
       ic_instr->op = icPLUS;
@@ -177,10 +221,12 @@ void icLogicalExpression(struct N7Node *logical_expression) {
   icExpression(logical_expression->ptr1);
   icExpression(logical_expression->ptr2);
 
+  struct SymbolTable *scope = findScope(logical_expression->ptr1);
   ICInstr *ic_instr = newICInstruction();
   ic_instr->addr1 = logical_expression->ptr1->addr;
   ic_instr->addr2 = logical_expression->ptr2->addr;
-  ic_instr->addr3 = newTemporary();
+  // ic_instr->addr3 = newTemporary();
+  ic_instr->addr3 = newTemporaryV2(scope, BOOLEAN_);
   switch (logical_expression->logicalOp) {
     case AND:
       ic_instr->op = icAND;
@@ -203,10 +249,12 @@ void icRelationalExpression(struct N8Node *relational_expression) {
   icExpression(relational_expression->ptr1);
   icExpression(relational_expression->ptr2);
 
+  struct SymbolTable *scope = findScope(relational_expression->ptr1);
   ICInstr *ic_instr = newICInstruction();
   ic_instr->addr1 = relational_expression->ptr1->addr;
   ic_instr->addr2 = relational_expression->ptr2->addr;
-  ic_instr->addr3 = newTemporary();
+  // ic_instr->addr3 = newTemporary();
+  ic_instr->addr3 = newTemporaryV2(scope, BOOLEAN_);
   switch (relational_expression->relationalOp) {
     case EQ:
       ic_instr->op = icEQ;
@@ -244,10 +292,12 @@ void icArithmeticExpression(struct ArithmeticExprNode *arithmetic_expression) {
   
   icExpression(arithmetic_expression->ptr2);
 
+  struct SymbolTable *scope = findScope(arithmetic_expression->ptr2);
   ICInstr *ic_instr = newICInstruction();
   ic_instr->addr1 = arithmetic_expression->ptr1->addr;
   ic_instr->addr2 = arithmetic_expression->ptr2->addr;
-  ic_instr->addr3 = newTemporary();
+  // ic_instr->addr3 = newTemporary();
+  ic_instr->addr3 = newTemporaryV2(scope, arithmetic_expression->data_type);
   switch (arithmetic_expression->op) {
     case PLUS:
       switch (arithmetic_expression->data_type) {
@@ -299,10 +349,12 @@ void icTermExpression(struct TermNode *term_expression) {
 
   icExpression(term_expression->ptr2);
 
+  struct SymbolTable *scope = findScope(term_expression->ptr2);
   ICInstr *ic_instr = newICInstruction();
   ic_instr->addr1 = term_expression->ptr1->addr;
   ic_instr->addr2 = term_expression->ptr2->addr;
-  ic_instr->addr3 = newTemporary();
+  // ic_instr->addr3 = newTemporary();
+  ic_instr->addr3 = newTemporaryV2(scope, term_expression->data_type);
   switch (term_expression->op) {
     case MUL:
       switch (term_expression->data_type) {
@@ -429,12 +481,14 @@ void icConditionalStatement(struct ConditionalStmtNode *conditional) {
   struct CaseStmtNode *case_statement = NULL;
   ICAddr label_test, label_end;
   ICAddr temporary;
+  struct SymbolTable *scope = conditional->ptr1->scope;
 
   icLeaf(conditional->ptr1);
   label_end = newLabel();
 
   case_statement = conditional->ptr2;
-  temporary = newTemporary();
+  // temporary = newTemporary();
+  temporary = newTemporaryV2(scope, BOOLEAN_);
   while (case_statement != NULL) {
     label_test = newLabel();
 
@@ -524,8 +578,10 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration) {
   global_ic_instr = ic_instr;
 
   /* test counter */
+  struct SymbolTable *scope = for_iteration->ptr1->scope;
   icLeaf(for_iteration->ptr2->ptr2);
-  temporary = newTemporary();
+  // temporary = newTemporary();
+  temporary = newTemporaryV2(scope, BOOLEAN_);
   ic_instr = newICInstruction();
   ic_instr->addr1 = for_iteration->ptr1->addr;
   ic_instr->addr2 = for_iteration->ptr2->ptr2->addr;
