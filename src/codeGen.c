@@ -405,7 +405,6 @@ void cgJUMP_NZ_Z(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
   char instr[10];
   char label[20];
-  char compared_value[30];
   cgICAddr(instr_list, label, &(ic_instr->addr2)); //label
 
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
