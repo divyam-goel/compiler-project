@@ -19,6 +19,8 @@ char reg_al[] = "AL";
 char reg_bl[] = "BL";
 char reg_cl[] = "CL";
 
+/* Global number for labels used */
+int rel_op_label_no = 0;
 /* Utility functions */
 
 void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
@@ -57,11 +59,16 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   }
 }
 
-void addLabel(char *instr_list, char *label){
+void assignRelOpLabel(char *label){
+  sprintf(label,"RelOpL%d",rel_op_label_no);
+  rel_op_label_no++;
+}
+
+void addLabel(char *instr_list, char *label)
+{
   strcat(instr_list,label);
   strcat(instr_list, ":\n");
 }
-
 
 void loadConstReg(char *instr_list, char *reg1, int num) {
   char asm_instr[50] = "";
@@ -296,10 +303,12 @@ void cgSTOREVALUE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elem
 void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
   // for now, using 1 as truth value, 0 as false value:
   char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
-  char label1[] = "L1";
-  char label2[] = "L2";
+  char label1[10];
+  char label2[10];
   char operator[10];
 
+  assignRelOpLabel(label1);
+  assignRelOpLabel(label2);
   switch (ic_instr->op){
     case icEQ:
       strcpy(operator, "JE");
@@ -503,7 +512,3 @@ void printCodeGen(ICInstr *ic_instr){
 }
 
 
-/* Those with '-' next to them have been implemented*/
-// void cgJUMP(ICInstr *ic_instr) {}
-// void cgTJUMP(ICInstr *ic_instr) {}
-// void cgFJUMP(ICInstr *ic_instr) {}
