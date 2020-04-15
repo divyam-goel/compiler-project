@@ -8,7 +8,7 @@ start
     x := 10 + 20;
 
     ** lvalue ARR Stmt **
-    arr[3] := 5;
+    ** arr[3] := 5; **
 
     ** basic arithmetic expressions using variables **
     z := x + y;
@@ -17,12 +17,12 @@ start
     z := x / y;
 
     ** basic arithmetic expressions using arrays **
-    z := arr[1] + y;
+    ** z := arr[1] + y;
     z := x + arr[2];
     z := arr[1] + arr[2];
     z := arr[1] * y;
     z := x * arr[2];
-    z := arr[1] * arr[2];
+    z := arr[1] * arr[2]; **
 
     ** basic relational expressions **
     ** w := x < y;
@@ -45,7 +45,7 @@ start
     z := z / (x * y); **
 
     ** relational operations **
-    z := w >= y;
+    ** w := x >= y; **
 
     
 
