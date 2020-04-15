@@ -6,19 +6,19 @@ int semantic_error_count = 0;
 extern struct ProgramNode AST;
 struct SymbolTable *global_symbol_table = NULL;
 
-char *module_redecleration_error_message = "Semantic Error: Redeclaration of module \"%s\" on line number %d \
+char *module_redecleration_error_message = "Line %d: (Semantic Error) Redeclaration of module \"%s\" on line number %d \
 (originally declared on line number %d)\n";
-char *module_redefinition_error_message = "Semantic Error: Redefintion of module \"%s\" on line number %d \
+char *module_redefinition_error_message = "Line %d: (Semantic Error) Redefintion of module \"%s\" on line number %d \
 (originally defined on line number %d)\n";
-char *module_missing_declaration_error_message = "Semantic Error: Module \"%s\" is being defined on line \
+char *module_missing_declaration_error_message = "Line %d: (Semantic Error) Module \"%s\" is being defined on line \
 number %d but it has not been declared.\n";
-char *variable_redecleration_error_message = "Semantic Error: Redeclaration of variable \"%s\" on line number %d \
+char *variable_redecleration_error_message = "Line %d: (Semantic Error) Redeclaration of variable \"%s\" on line number %d \
 (originally declared on line number %d)\n";
-char *variable_undeclared_error_message = "Semantic Error: Variable \"%s\" used on line number %d has not been \
+char *variable_undeclared_error_message = "Line %d: (Semantic Error) Variable \"%s\" used on line number %d has not been \
 declared.\n";
-char *incorrectly_used_as_array_error_message = "Semantic Error: Variable \"%s\" is declared on line %d, but not \
+char *incorrectly_used_as_array_error_message = "Line %d: (Semantic Error) Variable \"%s\" is declared on line %d, but not \
 as an array. On line number %d it is being used as an array.\n";
-char *module_undeclared_error_message = "Semantic Error: Module \"%s\" used on line number %d has not been \
+char *module_undeclared_error_message = "Line %d: (Semantic Error) Module \"%s\" used on line number %d has not been \
 declared.\n";
 char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
 may be detected after resolving the above).\n";
@@ -72,8 +72,8 @@ stAddModuleDeclerations (struct ModuleDeclarationNode *declaration_ll)
       if (existing_node != NULL)
         {
           original_line_no = existing_node->value.module.dec_line_number;
-          fprintf(stderr, module_redecleration_error_message, module_name,
-                  current_line_no, original_line_no);
+          fprintf(stderr, module_redecleration_error_message, current_line_no,
+                  module_name, current_line_no, original_line_no);
           semantic_error_count += 1;
         }
       else
@@ -129,8 +129,8 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
           else
             {
               original_line_no = existing_node->value.module.dec_line_number;
-              fprintf(stderr, module_redefinition_error_message, module_name,
-                      current_line_no, original_line_no);
+              fprintf(stderr, module_redefinition_error_message, current_line_no,
+                      module_name, current_line_no, original_line_no);
               semantic_error_count += 1;
             }
         }
@@ -138,7 +138,8 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
         {
           if (requires_prior_declaration)
             {
-              fprintf(stderr, module_missing_declaration_error_message, module_name, current_line_no);
+              fprintf(stderr, module_missing_declaration_error_message, current_line_no,
+                      module_name, current_line_no);
               semantic_error_count += 1;
             }
           else
@@ -299,8 +300,8 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
       existing_node = symbolTableGet(scope, variable_name);
       if (existing_node)
         {
-          fprintf(stderr, variable_redecleration_error_message, variable_name,
-                  new_value.variable.line_number, existing_node->value.variable.line_number);
+          fprintf(stderr, variable_redecleration_error_message, new_value.variable.line_number,
+                  variable_name, new_value.variable.line_number, existing_node->value.variable.line_number);
           semantic_error_count += 1;
         }
       else
@@ -335,8 +336,8 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
       existing_node = symbolTableGet(scope, variable_name);
       if (existing_node)
         {
-          fprintf(stderr, variable_redecleration_error_message, variable_name,
-                  new_value.variable.line_number, existing_node->value.variable.line_number);
+          fprintf(stderr, variable_redecleration_error_message, new_value.variable.line_number,
+                  variable_name, new_value.variable.line_number, existing_node->value.variable.line_number);
           semantic_error_count += 1;
         }
       else
@@ -550,7 +551,8 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
   resolved_variable = resolveVariable(variable_name, scope);
   if (resolved_variable == NULL)
     {
-      fprintf(stderr, variable_undeclared_error_message, variable_name, variable_instance->line_number);
+      fprintf(stderr, variable_undeclared_error_message, variable_instance->line_number,
+              variable_name, variable_instance->line_number);
       semantic_error_count += 1;
     }
   assert(agn_stmt->ptr2->type == LVALUE_ARR_NODE || agn_stmt->ptr2->type == LVALUE_ID_NODE);
@@ -558,8 +560,8 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
     {
       if (resolved_variable != NULL && resolved_variable->isArray == false)
         {
-          fprintf(stderr, incorrectly_used_as_array_error_message, variable_name,
-                  resolved_variable->line_number, variable_instance->line_number);
+          fprintf(stderr, incorrectly_used_as_array_error_message, variable_instance->line_number,
+                  variable_name, resolved_variable->line_number, variable_instance->line_number);
           semantic_error_count += 1;
         }
       agn_stmt->ptr2->node.lva_arr->ptr1->scope = scope;  /* This refers to the array index. */
@@ -596,7 +598,7 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
 
   if (resolveModule(module_name) == NULL)
     {
-      fprintf(stderr, module_undeclared_error_message, module_name, line_number);
+      fprintf(stderr, module_undeclared_error_message, line_number, module_name, line_number);
       semantic_error_count += 1;
     }
   mr_stmt->ptr2->scope = global_symbol_table;
@@ -640,8 +642,8 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
       existing_node = symbolTableGet(scope, variable_name);
       if (existing_node != NULL)
         {
-          fprintf(stderr, variable_redecleration_error_message, variable_name,
-                  variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
+          fprintf(stderr, variable_redecleration_error_message, variable_ll->ptr1->line_number,
+                  variable_name, variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
           semantic_error_count += 1;
         }
       /* If the variable does not already exist in this scope, add it to
@@ -679,8 +681,8 @@ stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct Symbo
   conditional_variable->scope = scope;
   if (resolveVariable(conditional_variable_name, scope) == NULL)
     {
-      fprintf(stderr, variable_undeclared_error_message, conditional_variable_name,
-              conditional_variable->line_number);
+      fprintf(stderr, variable_undeclared_error_message, conditional_variable->line_number,
+              conditional_variable_name, conditional_variable->line_number);
       semantic_error_count += 1;
     }
   while (cases_ll != NULL)
@@ -731,8 +733,8 @@ stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scop
   loop_variable_name = loop_variable->value.entry;
   if (resolveVariable(loop_variable_name, scope) == NULL)
     {
-      fprintf(stderr, variable_undeclared_error_message, loop_variable_name,
-              loop_variable->line_number);
+      fprintf(stderr, variable_undeclared_error_message, loop_variable->line_number,
+              loop_variable_name, loop_variable->line_number);
       semantic_error_count += 1;
     }
   /* Checking the type of the loop variable and making sure that it is an integer type will
@@ -833,8 +835,8 @@ stUpdateLeafNode (struct LeafNode *lea, struct SymbolTable *scope)
     {
       if (resolveVariable(lea->value.entry, scope) == NULL)
         {
-          fprintf(stderr, variable_undeclared_error_message, lea->value.entry,
-                  lea->line_number);
+          fprintf(stderr, variable_undeclared_error_message, lea->line_number,
+                  lea->value.entry, lea->line_number);
           semantic_error_count += 1;
         }
     }
