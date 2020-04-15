@@ -50,6 +50,8 @@ generateSymbolTables ()
       fprintf(stderr, semantic_errors_detected_message, semantic_error_count);
       exit(EXIT_FAILURE);
     }
+  global_symbol_table->opening_line_no = AST.starting_line_number;
+  global_symbol_table->closing_line_no = AST.ending_line_number;
 }
 
 
@@ -152,6 +154,8 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
       /* Even if there's a semantic error, parse it. No harm. */
       module_scope = newSymbolTable(global_symbol_table, module_name, NULL);
       module_scope->is_module_scope = true;
+      module_scope->opening_line_no = module->starting_line_number;
+      module_scope->closing_line_no = module->ending_line_number;
       stAddInputPlistToScope(module->ptr2, module_scope);
       stAddOutputPlistToScope(module->ptr3, module_scope);
       stWalkThroughStatements(module->ptr4, module_scope);
@@ -376,6 +380,9 @@ stAddDriverModuleDefinition (struct StatementNode *statements_ll)
       printSymbolTable(driver_scope);
       printf("\n");
     }
+
+  driver_scope->opening_line_no = AST.driver_starting_line_number;
+  driver_scope->closing_line_no = AST.driver_ending_line_number;
 }
 
 
@@ -693,6 +700,9 @@ stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct Symbo
       printSymbolTable(scope);
       printf("\n");
     }
+
+  scope->opening_line_no = con_stmt->starting_line_number;
+  scope->closing_line_no = con_stmt->ending_line_number;
 }
 
 
@@ -726,6 +736,9 @@ stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scop
       printSymbolTable(loop_scope);
       printf("\n");
     }
+  
+  scope->opening_line_no = for_loop->starting_line_number;
+  scope->closing_line_no = for_loop->ending_line_number;
 }
 
 
@@ -750,6 +763,9 @@ stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable
       printSymbolTable(loop_scope);
       printf("\n");
     }
+  
+  scope->opening_line_no = while_loop->starting_line_number;
+  scope->closing_line_no = while_loop->ending_line_number;
 }
 
 

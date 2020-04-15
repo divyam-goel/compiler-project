@@ -69,6 +69,8 @@ struct SymbolTable {
   /* The scope tag is just for better visibility of what's going
    * on to make debugging easier. E.g. for functions, it's just
    * the function name.*/
+  int opening_line_no;
+  int closing_line_no;
 };
 
 #endif
