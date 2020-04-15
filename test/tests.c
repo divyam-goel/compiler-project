@@ -359,7 +359,7 @@ int main() {
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_2.erplag";
+    char source_file[] = "./test/fixtures/stage 2/semantic/t1.txt";
     // char source_file[] = "./test/fixtures/stage 2/adv_tests/prhf.erplag";
     // test_removeComments();
     // test_getStream(source_file);
@@ -369,10 +369,10 @@ int main() {
     // test_parseInputSourceCode(grammar_file, adv_source_file);
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    // test_createSymbolTables(grammar_file, source_file);
+    test_createSymbolTables(grammar_file, source_file);
     // test_semanticCheck(grammar_file, source_file);
     // test_intermediateCodeGeneration(grammar_file, source_file);
-    test_CodeGeneration(grammar_file, source_file);
+    // test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

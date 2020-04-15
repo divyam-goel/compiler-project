@@ -32,6 +32,7 @@ struct VariableEntry {
   bool isArray;
   bool isStatic;
   bool isTemporary;
+  bool isInput;
   struct LeafNode *lower_bound;  /* Only valid when isArray == true */
   struct LeafNode *upper_bound;  /* Only valid when isArray == true */
   int mem_offset;

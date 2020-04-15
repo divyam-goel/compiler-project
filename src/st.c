@@ -209,7 +209,7 @@ stCreateSymbolTableValueForModule (char *name, int dec_line_no, int def_line_no,
  */
 union SymbolTableValue
 stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute *dtnode,
-                                     struct SymbolTable *scope)
+                                     struct SymbolTable *scope, bool is_input)
 {
   char *name;
   bool is_array, is_static;
@@ -267,6 +267,7 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   strcpy(new_value.variable.name, name);
   new_value.variable.isArray = is_array;
   new_value.variable.isStatic = is_static;
+  new_value.variable.isInput = is_input;
   new_value.variable.datatype = basetype;
   new_value.variable.line_number = line_number;
   new_value.variable.lower_bound = lower_bound;
@@ -306,7 +307,7 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
         }
       else
         {
-          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope);
+          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, true);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
         }
       plist_ll = plist_ll->ptr3;
@@ -342,7 +343,7 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
         }
       else
         {
-          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope);
+          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, false);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
         }
       plist_ll = plist_ll->ptr3;
@@ -632,6 +633,7 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
   struct IdListNode *variable_ll = dec_stmt->ptr1;
   union SymbolTableValue new_value;
   struct SymbolTableNode *existing_node;
+  bool overwrite = false;
   while (variable_ll != NULL)
     {
       assert(variable_ll->ptr1->type == IDENTIFIER);
@@ -640,19 +642,20 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
       variable_ll->ptr1->scope = scope;
       /* Make sure that the variable does not already exist in this scope. */
       existing_node = symbolTableGet(scope, variable_name);
-      if (existing_node != NULL)
+      if (existing_node != NULL && existing_node->value.variable.isInput == false)
         {
           fprintf(stderr, variable_redecleration_error_message, variable_ll->ptr1->line_number,
                   variable_name, variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
           semantic_error_count += 1;
+          overwrite = true;
         }
       /* If the variable does not already exist in this scope, add it to
        * the symbol table / scope. */
        else
         {
           assert(dtnode != NULL);
-          new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope);
-          symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
+          new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope, false);
+          symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, overwrite);
         }
         variable_ll = variable_ll->ptr2;
     }
@@ -857,6 +860,7 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   new_variable.variable.isArray = false;
   new_variable.variable.isStatic = false;
   new_variable.variable.isTemporary = true;
+  new_variable.variable.isInput = false;
   new_variable.variable.lower_bound = NULL;
   new_variable.variable.upper_bound = NULL;
   new_variable.variable.mem_offset = module->activation_record_size;
