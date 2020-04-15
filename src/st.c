@@ -642,21 +642,22 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
       variable_ll->ptr1->scope = scope;
       /* Make sure that the variable does not already exist in this scope. */
       existing_node = symbolTableGet(scope, variable_name);
-      if (existing_node != NULL && existing_node->value.variable.isInput == false)
+      if (existing_node != NULL)
         {
-          fprintf(stderr, variable_redecleration_error_message, variable_ll->ptr1->line_number,
-                  variable_name, variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
-          semantic_error_count += 1;
-          overwrite = true;
+          if (existing_node->value.variable.isInput) {
+            overwrite = true;
+          } else {
+            fprintf(stderr, variable_redecleration_error_message, variable_ll->ptr1->line_number,
+                    variable_name, variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
+            semantic_error_count += 1;
+          }
         }
+
       /* If the variable does not already exist in this scope, add it to
-       * the symbol table / scope. */
-       else
-        {
-          assert(dtnode != NULL);
-          new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope, false);
-          symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, overwrite);
-        }
+       * the symbol table / scope. This is controlled by overwrite */
+        assert(dtnode != NULL);
+        new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope, false);
+        symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, overwrite);
         variable_ll = variable_ll->ptr2;
     }
   
