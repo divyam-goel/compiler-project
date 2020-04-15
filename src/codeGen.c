@@ -19,6 +19,8 @@ char reg_al[] = "AL";
 char reg_bl[] = "BL";
 char reg_cl[] = "CL";
 
+/* Utility functions */
+
 void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   char op[10];
   
@@ -55,28 +57,29 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   }
 }
 
-
 void addLabel(char *instr_list, char *label){
   strcat(instr_list,label);
   strcat(instr_list, ":\n");
 }
 
 
-// void loadConstReg(char *instr_list, char *reg1, int num) {
-//   char asm_instr[50] = "";
-//   char num_string[50];
-//   itoa(num,num_string, 10);
+void loadConstReg(char *instr_list, char *reg1, int num) {
+  char asm_instr[50] = "";
+  char num_string[50];
 
-//   strcat(asm_instr, "MOV");
-//   strcat(asm_instr, "\t");
+  // itoa(num,num_string, 10);
+  sprintf(num_string, "%d", num);
+
+  strcat(asm_instr, "MOV");
+  strcat(asm_instr, "\t");
   
-//   strcat(asm_instr, reg1);
-//   strcat(asm_instr, " , ");
-//   strcat(asm_instr, num_string);
-//   strcat(asm_instr,"\n");
+  strcat(asm_instr, reg1);
+  strcat(asm_instr, " , ");
+  strcat(asm_instr, num_string);
+  strcat(asm_instr,"\n");
 
-//   strcat(instr_list, asm_instr);
-// }
+  strcat(instr_list, asm_instr);
+}
 
 
 void instrOneOperand(char *instr_list, char *op, char *reg1) {
@@ -149,6 +152,7 @@ void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) {
   // strcat(instr_list, asm_instr);
 }
 
+/* Actual functions for populating asm code */
 
 void cgADD_SUB_INT(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
@@ -365,7 +369,7 @@ void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
   printf("%s", instr_list);
 }
 
-void cgPLUS_MINUS(ICInstr *ic_instr) {
+void cgUNARY(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char op[10] = "";
 
@@ -388,73 +392,34 @@ void cgPLUS_MINUS(ICInstr *ic_instr) {
   printf("%s", instr_list);
 }
 
+void cgJUMP(ICInstr *ic_instr){
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char label[50];
+  cgICAddr(instr_list, label, &(ic_instr->addr1));
+  instrOneOperand(instr_list,"JMP",label);
 
-void generateASMCode(ICInstr *ic_instr) {
-  while (ic_instr != NULL) {
-    switch (ic_instr->op) {
-      case icADD_INT:
-      case icSUB_INT:
-        cgADD_SUB_INT(ic_instr);
-        break;
-      case icMUL_INT:
-        cgMUL_INT(ic_instr);
-        break;
-      case icDIV_INT:
-        cgDIV_INT(ic_instr);
-        break;
-      case icADD_REAL:
-      case icSUB_REAL:
-        cgADD_SUB_REAL(ic_instr);
-        break;
-      case icMUL_REAL:
-        cgMUL_REAL(ic_instr);
-        break;
-      case icDIV_REAL:
-        cgDIV_REAL(ic_instr);
-        break;
-      case icINC:
-        break;
-      case icDEC:
-        break;
-      case icAND:
-        break;
-      case icOR:
-        break;
-      case icEQ:
-        break;
-      case icNE:
-        break;
-      case icLT:
-        break;
-      case icGT:
-        break;
-      case icLE:
-        break;
-      case icGE:
-        break;
-      case icPLUS:
-        break;
-      case icMINUS:
-        break;
-      case icCOPY:
-        break;
-      case icSTORE:
-        break;
-      case icJUMP:
-        break;
-      case icJUMPNZ:
-        break;
-      case icJUMPZ:
-        break;
-      case icLABEL:
-        break;
-      default:
-        break;
-    }
+  printf("%s", instr_list);
+}
 
+void cgJUMP_NZ_Z(ICInstr *ic_instr){
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char instr[10];
+  char label[20];
+  char compared_value[30];
+  cgICAddr(instr_list, label, &(ic_instr->addr2)); //label
+
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  instrTwoOperand(instr_list,"CMP",reg_ax,"0");
+  if(ic_instr->op == icJUMPZ){
+    strcpy(instr,"JE");
   }
-} 
+  else{
+    strcpy(instr, "JNE");
+  }
+  instrOneOperand(instr_list,instr,label);
 
+  printf("%s", instr_list);
+}
 
 //for testing
 
@@ -462,41 +427,32 @@ void printInstrCG(ICInstr *ic_instr){
   switch (ic_instr->op){
     case icADD_INT:
     case icSUB_INT:
-      // printf("ADD_SUB_INT \n");
       cgADD_SUB_INT(ic_instr);
       break;
     case icADD_REAL:
     case icSUB_REAL:
-      // printf("ADD_SUB_REAL\n");
       cgADD_SUB_INT(ic_instr);
       break;
     case icMUL_INT:
-      // printf("MUL_INT\n");
       cgMUL_INT(ic_instr);
       break;
     case icMUL_REAL:
-      // printf("MUL_REAL\n");
       cgMUL_REAL(ic_instr);
       break;
     case icDIV_INT:
-      // printf("DIV_INT\n");
       cgDIV_INT(ic_instr);
       break;
     case icDIV_REAL:
-      // printf("DIV_REAL\n");
       cgDIV_INT(ic_instr);
       break;
     case icINC:
-      // printf("INC\n");
       cgINC(ic_instr);
       break;
     case icDEC:
-      // printf("DEC\n");
       cgDEC(ic_instr);
       break;
     case icAND:
     case icOR:
-      // printf("Logical\n");
       cgLogicalOp(ic_instr);
       break;
     case icEQ:
@@ -505,13 +461,11 @@ void printInstrCG(ICInstr *ic_instr){
     case icGT:
     case icLE:
     case icGE:
-      // printf("Relational\n");
       cgRelationalOp(ic_instr);
       break;
     case icPLUS:
     case icMINUS:
-      // printf("DIV_INT\n");
-      cgPLUS_MINUS(ic_instr);
+      cgUNARY(ic_instr);
     // case icCOPY:
     //   printf("COPY\t");
     //   break;
@@ -519,25 +473,14 @@ void printInstrCG(ICInstr *ic_instr){
     //   printf("LOAD\t");
     //   break;
     case icSTORE:
-      // printf("STORE\n");
       cgSTOREVALUE_INT(ic_instr);
       break;
     case icJUMP:
-      printf("JUMP\t");
-      printf("\t");
-      printICAddress(ic_instr->addr1);
+      cgJUMP(ic_instr);
       break;
     case icJUMPNZ:
-      printf("JUMPNZ\t");
-      printf("\t");
-      printICAddress(ic_instr->addr1);
-      printICAddress(ic_instr->addr2);
-      break;
     case icJUMPZ:
-      printf("JUMPZ\t");
-      printf("\t");
-      printICAddress(ic_instr->addr1);
-      printICAddress(ic_instr->addr2);
+      cgJUMP_NZ_Z(ic_instr);
       break;
     // case icCALL:
     //   printf("CALL\t\t\t");
@@ -560,9 +503,8 @@ void printCodeGen(ICInstr *ic_instr){
   }
 }
 
+
 /* Those with '-' next to them have been implemented*/
-// void cgPLUS(ICInstr *ic_instr) {}
-// void cgMINUS(ICInstr *ic_instr) {}
 // void cgJUMP(ICInstr *ic_instr) {}
 // void cgTJUMP(ICInstr *ic_instr) {}
 // void cgFJUMP(ICInstr *ic_instr) {}
