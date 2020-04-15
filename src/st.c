@@ -495,7 +495,7 @@ void
 stHandleInputStatement (struct InputNode *input_stmt, struct SymbolTable *scope)
 {
   struct LeafNode *variable = input_stmt->ptr1;
-  variable->scope = scope;
+  stUpdateLeafNode(variable, scope);
 }
 
 
@@ -519,7 +519,7 @@ stHandlePrintStatement (struct PrintNode *pri_stmt, struct SymbolTable *scope)
       index = pri_stmt->ptr1->node.arr->ptr2;
       index->scope = scope;
     }
-  variable->scope = scope;
+  stUpdateLeafNode(variable, scope);
 }
 
 
@@ -570,7 +570,7 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
     }
   else
     stWalkThroughExpression(agn_stmt->ptr2->node.lva_id->ptr1, scope);
-  variable_instance->scope = scope;
+  stUpdateLeafNode(variable_instance, scope);
 }
 
 
@@ -604,12 +604,12 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
   mr_stmt->ptr2->scope = global_symbol_table;
   while (inputs_ll != NULL)
     {
-      inputs_ll->ptr1->scope = scope;
+      stUpdateLeafNode(inputs_ll->ptr1, scope);
       inputs_ll = inputs_ll->ptr2;
     }
   while (outputs_ll != NULL)
     {
-      outputs_ll->ptr1->scope = scope;
+      stUpdateLeafNode(outputs_ll->ptr1, scope);
       outputs_ll = outputs_ll->ptr2;
     }
 }
@@ -670,24 +670,16 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
 void
 stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct SymbolTable *scope)
 {
-  char *conditional_variable_name;
   struct LeafNode *conditional_variable = con_stmt->ptr1;
   struct CaseStmtNode *cases_ll = con_stmt->ptr2;
   struct StatementNode *default_case_statements = con_stmt->ptr3;
   struct SymbolTable *case_scope;
 
   assert(conditional_variable->type == IDENTIFIER);
-  conditional_variable_name = conditional_variable->value.entry;
-  conditional_variable->scope = scope;
-  if (resolveVariable(conditional_variable_name, scope) == NULL)
-    {
-      fprintf(stderr, variable_undeclared_error_message, conditional_variable->line_number,
-              conditional_variable_name, conditional_variable->line_number);
-      semantic_error_count += 1;
-    }
+  stUpdateLeafNode(conditional_variable, scope);
   while (cases_ll != NULL)
     {
-      cases_ll->ptr1->scope = scope;
+      stUpdateLeafNode(cases_ll->ptr1, scope);
       case_scope = newSymbolTable(scope, "case", NULL);
       stWalkThroughStatements(cases_ll->ptr2, case_scope);
       cases_ll = cases_ll->ptr3;  
@@ -720,23 +712,14 @@ stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct Symbo
 void
 stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope)
 {
-  char *loop_variable_name;
   struct LeafNode *loop_variable = for_loop->ptr1;
   struct StatementNode *loop_body = for_loop->ptr3;
   struct SymbolTable *loop_scope = newSymbolTable(scope, "for loop", NULL);
 
   for_loop->ptr2->ptr1->scope = scope;
   for_loop->ptr2->ptr2->scope = scope;
-  loop_variable->scope = scope;
+  stUpdateLeafNode(loop_variable, scope);
 
-  /* This loop variable must have already been declared before the for loop. */
-  loop_variable_name = loop_variable->value.entry;
-  if (resolveVariable(loop_variable_name, scope) == NULL)
-    {
-      fprintf(stderr, variable_undeclared_error_message, loop_variable->line_number,
-              loop_variable_name, loop_variable->line_number);
-      semantic_error_count += 1;
-    }
   /* Checking the type of the loop variable and making sure that it is an integer type will
    * be left to later stages of semantic checking. */
 
@@ -763,7 +746,7 @@ stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable
 {
   struct Attribute *conditional_expression = while_loop->ptr1;
   struct StatementNode *loop_body = while_loop->ptr2;
-  struct SymbolTable *loop_scope = newSymbolTable(scope, "for loop", NULL);
+  struct SymbolTable *loop_scope = newSymbolTable(scope, "while loop", NULL);
   stWalkThroughExpression(conditional_expression, scope);
   stWalkThroughStatements(loop_body, loop_scope);
   if (st_debug_mode)
