@@ -5,6 +5,8 @@ extern struct parseTree PT;
 struct ProgramNode AST;
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
 
+int module_start_line_no, module_end_line_no;
+
 /* BEGIN : Function Declarations */
 void traverseParseTree(struct treeNode *curr_node);
 void traverseChildren(struct treeNode *curr_node);
@@ -14,11 +16,14 @@ struct Attribute *newAttribute(struct Attribute attr);
 /* END : Function Declarations */
 
 void createAST() {
+  extern int line_no;
   traverseParseTree(PT.head);
   AST.ptr1 = PT.head->syn.node.pro->ptr1;
   AST.ptr2 = PT.head->syn.node.pro->ptr2;
   AST.ptr3 = PT.head->syn.node.pro->ptr3;
   AST.ptr4 = PT.head->syn.node.pro->ptr4;
+  AST.starting_line_number = 0;
+  AST.ending_line_number = line_no;
 }
 
 void traverseParseTree(struct treeNode *curr_node) {
@@ -543,6 +548,9 @@ void case_7(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   /* <driverModule>.syn = <moduleDef>.syn */
   curr_node->syn = child_node->syn;
+
+  AST.driver_starting_line_number = module_start_line_no;
+  AST.driver_ending_line_number = module_end_line_no;
 }
 
 
@@ -566,6 +574,10 @@ void case_8(struct treeNode *curr_node) {
   /* <module>.syn = new ModuleNode(new LeafNode(ID, ID.entry), <input_plist>.syn, <ret>.syn, <moduleDef>.syn) */
   curr_node->syn.node.mod = module_node;
   curr_node->syn.type = MODULE_NODE;
+
+
+  module_node->starting_line_number = module_start_line_no;
+  module_node->ending_line_number = module_end_line_no;
 }
 
 
@@ -772,11 +784,17 @@ void case_24(struct treeNode *curr_node) {
 void case_25(struct treeNode *curr_node) {
   /* <moduleDef> := START <statements> END */
   struct treeNode *child_node = curr_node->child;
+  // HACK: we use global variables to set and retrieve these values.
+  module_start_line_no = child_node->symbol.terminal.line_no;
   traverseChildren(child_node);
+
 
   child_node = nextNonTerminalNode(child_node);
   /* <moduleDef>.syn = <statements>.syn */
   curr_node->syn = child_node->syn;
+
+  child_node = child_node->next;
+  module_end_line_no = child_node->symbol.terminal.line_no;
 }
 
 
@@ -1617,10 +1635,14 @@ void case_93(struct treeNode *curr_node) {
   struct ConditionalStmtNode *cond_stmt_node = (struct ConditionalStmtNode *) malloc(sizeof(struct ConditionalStmtNode));
   child_node = child_node->next->next;
   cond_stmt_node->ptr1 = newLeafNode(IDENTIFIER, &(child_node->symbol.terminal.lexeme.str), child_node->symbol.terminal.line_no);
+  child_node = child_node->next->next;
+  cond_stmt_node->starting_line_number = child_node->symbol.terminal.line_no;
   child_node = nextNonTerminalNode(child_node);
   cond_stmt_node->ptr2 = child_node->syn.node.cas_stm;
   child_node = nextNonTerminalNode(child_node);
   cond_stmt_node->ptr3 = child_node->syn.node.stm;
+  child_node = child_node->next;
+  cond_stmt_node->ending_line_number = child_node->symbol.terminal.line_no;
 
   /* <conditionalStmt>.syn = new CoditionalStmtNode(new LeafNode(ID, ID.entry), <caseStmt>.syn, <default>.syn) */
   curr_node->syn.node.con_stm = cond_stmt_node;
@@ -1718,8 +1740,12 @@ void case_102(struct treeNode *curr_node) {
   for_iter_node->ptr1 = newLeafNode(IDENTIFIER, child_node->symbol.terminal.lexeme.str, child_node->symbol.terminal.line_no);
   child_node = nextNonTerminalNode(child_node);
   for_iter_node->ptr2 = child_node->syn.node.ran;
+  child_node = child_node->next->next;
+  for_iter_node->starting_line_number = child_node->symbol.terminal.line_no;
   child_node = nextNonTerminalNode(child_node);
   for_iter_node->ptr3 = child_node->syn.node.stm;
+  child_node = child_node->next;
+  for_iter_node->ending_line_number = child_node->symbol.terminal.line_no;
 
   /* <iterativeStmt>.syn = new ForIterativeStmtNode(new LeafNode(ID, ID.entry), <range>.syn, <statements>.syn) */
   curr_node->syn.node.for_ite_stm = for_iter_node;
@@ -1735,8 +1761,12 @@ void case_103(struct treeNode *curr_node) {
   struct WhileIterativeStmtNode * while_iter_node = (struct WhileIterativeStmtNode *) malloc(sizeof(struct WhileIterativeStmtNode));
   child_node = nextNonTerminalNode(child_node);
   while_iter_node->ptr1 = newAttribute(child_node->syn);
+  child_node = child_node->next->next;
+  while_iter_node->starting_line_number = child_node->symbol.terminal.line_no;
   child_node = nextNonTerminalNode(child_node);
   while_iter_node->ptr2 = child_node->syn.node.stm;
+  child_node = child_node->next;
+  while_iter_node->ending_line_number = child_node->symbol.terminal.line_no;
 
   /* <iterativeStmt>.syn = new WhileIterativeStmtNode(<expression>.syn, <statements>.syn) */
   curr_node->syn.node.whi_ite_stm = while_iter_node;

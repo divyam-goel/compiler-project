@@ -90,6 +90,10 @@ struct ProgramNode {
   struct OtherModuleNode *ptr2;
   struct StatementNode *ptr3;
   struct OtherModuleNode *ptr4;
+  int driver_starting_line_number;
+  int driver_ending_line_number;
+  int starting_line_number;
+  int ending_line_number;
 };
 
 struct ModuleDeclarationNode {
@@ -107,6 +111,8 @@ struct ModuleNode {
   struct InputPlistNode *ptr2;
   struct OutputPlistNode *ptr3;
   struct StatementNode *ptr4;
+  int starting_line_number;
+  int ending_line_number;
 };
 
 struct InputPlistNode {
@@ -240,6 +246,8 @@ struct ConditionalStmtNode {
   struct LeafNode *ptr1;
   struct CaseStmtNode *ptr2;
   struct StatementNode *ptr3;
+  int starting_line_number;
+  int ending_line_number;
 };
 
 struct CaseStmtNode {
@@ -252,11 +260,15 @@ struct ForIterativeStmtNode {
   struct LeafNode *ptr1;
   struct RangeNode *ptr2;
   struct StatementNode *ptr3;
+  int starting_line_number;
+  int ending_line_number;
 };
 
 struct WhileIterativeStmtNode {
   struct Attribute *ptr1;
   struct StatementNode *ptr2;
+  int starting_line_number;
+  int ending_line_number;
 };
 
 struct RangeNode {
