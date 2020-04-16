@@ -1,0 +1,59 @@
+declare module function;
+
+<<<driver program>>>
+start
+    ** DECLARE STMT **
+    declare x, y, z : integer;
+    declare a, b, c : real;
+    declare u, v, w : boolean;
+    declare arr1, arr2, arr3 : array[10..15] of integer;
+
+    ** No Error **
+    for(x in 1..5)
+    start
+        print(x);
+    end
+
+    ** Error : loop variable type is REAL **
+    for(a in 1..5)
+    start
+        print(x);
+    end
+
+    ** Error : loop variable type is BOOLEAN **
+    for(u in 1..5)
+    start
+        print(x);
+    end
+
+    ** Error : loop variable type is ARRAY **
+    for(arr in 1..5)
+    start
+        print(x);
+    end
+
+    ** Error : loop variable type is MODULE **
+    ** for(function in 1..5)
+    start
+        print(x);
+    end **
+
+    ** Error : lower bound is GREATER than upper bound **
+    for(x in 5..1)
+    start
+        print(x);
+    end
+
+    ** Error : loop variable IS assigned a value inside the loop **
+    for(x in 1..5)
+    start
+        print(x);
+        x := x + 1;
+    end
+end
+
+<<module function>>
+takes input [a:integer];
+returns [c:integer];
+start
+end

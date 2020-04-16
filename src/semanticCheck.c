@@ -26,36 +26,41 @@ char *module_incorrect_input_type = "Line %d: (Type Error) Module reuse expects 
 char *module_incorrect_input_array_type = "Line %d: (Type Error) Module reuse expects array type array[%d...%d] of %s \
 in input list, found array[%d...%d] of %s\n";
 char *module_input_list_missing_args = "Line %d: (Semantic Error) Insufficient number of arguments were provided \
-in input list for module reuse";
+in input list for module reuse\n";
 char *module_input_list_too_many_args = "Line %d: (Semantic Error) Too many arguments were provided in input list \
-for module reuse";
+for module reuse\n";
 char *module_incorrect_output_type = "Line %d: (Type Error) Module reuse expects type %s in output list, found %s\n";
 char *module_output_list_missing_args = "Line %d: (Semantic Error) Insufficient number of arguments were provided \
-in output list for module reuse";
+in output list for module reuse\n";
 char *module_output_list_too_many_args = "Line %d: (Semantic Error) Too many arguments were provided in output list \
-for module reuse";
+for module reuse\n";
 
 /* error messages: conditionals */
 char *conditional_incorrect_switch_type_error_message = "Line %d: (Type Error) Construct 'switch' expects type \
 INTEGER or BOOLEAN, found %s\n";
 char *conditional_incorrect_case_type_error_message = "Line %d: (Type Error) Construct 'switch' is over type %s. \
-So, 'case' expects type %s for values, found %s";
+So, 'case' expects type %s for values, found %s\n";
 char *integer_conditional_missing_default_error_message = "Line %d: (Semantic Error) Construct 'switch' is over \
 type INTEGER. So, it MUST have a default case\n";
 char *boolean_conditional_missing_case_error_message = "Line %d: (Semantic Error) Construct 'switch' is over type \
 BOOLEAN. So, it MUST have a case for value %s\n";
 char *boolean_conditional_contains_default_error_message = "Line %d: (Semantic Error) Construct 'switch' is over \
-type BOOLEAN. So, it can NOT have a default case\n";
+type BOOLEAN. So, it must NOT have a default case\n";
 
 /* error messages: for iteration */
 char *for_incorrect_variable_type_error_message = "Line %d: (Type Error) Construct 'for' expects type INTEGER for \
 loop variable, found %s\n";
-char *for_incorrect_bounds_error_message = "Line %d: (Semantic Error) Construct 'for' expects lower bound to be less \
+char *for_incorrect_bounds_error_message = "Line %d: (Semantic Error) Construct 'for' should get a lower bound less \
 than / equal to the upper bound\n";
+char *for_loop_var_unassigned_error_message = "Line %d: (Semantic Error) Construct 'for' loop variable should NOT \
+be assigned a value inside the loop body\n";
 
 /* error messages: while iteration */
 char *while_incorrect_expression_type_error_message = "Line %d: (Type Error) Construct 'while' excepts type BOOLEAN \
 for loop expression, found %s\n";
+
+char *semantic_errors_count_message = "\nDetected %d semantic error(s) while checking the input code.\n";
+
 
 /* utility strings */
 char *integer_str = "INTEGER";
@@ -67,13 +72,11 @@ char *true_str = "TRUE";
 char *false_str = "FALSE";
 
 /* global variables */
-bool st_debug_mode = false;
-int semantic_error_count = 0;
+extern int semantic_error_count;
 
 
 enum terminal leafType(struct LeafNode *leaf) {
-  enum terminal data_type;
-  struct SymbolTableNode *symbol_table_entry = NULL;
+  struct VariableEntry *symbol_table_entry;
 
   switch (leaf->type) {
 
@@ -88,13 +91,14 @@ enum terminal leafType(struct LeafNode *leaf) {
       break;
     
     case IDENTIFIER:
-      symbol_table_entry = symbolTableGet(leaf->scope, leaf->value.entry);
-      if (symbol_table_entry == NULL || symbol_table_entry->value_type == ST_MODULE)
+      symbol_table_entry = resolveVariable((char *) leaf->value.entry, leaf->scope);
+      if (symbol_table_entry == NULL) {
         return EPSILON;
-      else if (symbol_table_entry->value.variable.isArray)
+      }
+      else if (symbol_table_entry->isArray)
         return ARRAY;
       else
-        return symbol_table_entry->value.variable.datatype;
+        return symbol_table_entry->datatype;
       break;
     
     case TRUE_:
@@ -112,17 +116,17 @@ enum terminal leafType(struct LeafNode *leaf) {
 
 
 enum terminal arrayType(struct ArrayNode *array) {
-  struct SymbolTableNode *symbol_table_entry;
+  struct VariableEntry *symbol_table_entry;
   enum terminal array_type, index_type;
   int index, lower_bound, upper_bound;
   int line_number;
 
-  symbol_table_entry = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
-  if (symbol_table_entry == NULL || symbol_table_entry->value_type == ST_MODULE)
+  symbol_table_entry = resolveVariable(array->ptr1->value.entry, array->ptr1->scope);
+  if (symbol_table_entry == NULL)
     return EPSILON;
   
   /* determine array type, index type and line number of array use */
-  array_type = symbol_table_entry->value.variable.datatype;
+  array_type = symbol_table_entry->datatype;
   index_type = leafType(array->ptr2);
   line_number = array->ptr1->line_number;
 
@@ -139,12 +143,13 @@ enum terminal arrayType(struct ArrayNode *array) {
     check: array index should be greater than / equal to lower bound &&
     should be less than / equal to upper bound
   */
-  if (symbol_table_entry->value.variable.isStatic && array->ptr2->type == NUM) {
-    lower_bound = symbol_table_entry->value.variable.lower_bound->value.num;
-    upper_bound = symbol_table_entry->value.variable.upper_bound->value.num;
+  if (symbol_table_entry->isStatic && array->ptr2->type == NUM) {
+    lower_bound = symbol_table_entry->lower_bound->value.num;
+    upper_bound = symbol_table_entry->upper_bound->value.num;
     index = array->ptr2->value.num;
     if (index < lower_bound || index > upper_bound) {
-      fprintf(stderr, array_index_out_of_bounds_error_message, line_number);
+      fprintf(stderr, array_index_out_of_bounds_error_message,
+      line_number, lower_bound, upper_bound);
       semantic_error_count += 1;
     }
   }
@@ -185,10 +190,10 @@ void operatorIncompatibleTypesError(
   int line_number, enum terminal op,
   enum terminal left_type, enum terminal right_type) {
   
-  fprintf(stderr, operator_incorrect_type_error_message,
+  fprintf(stderr, operator_incompatible_types_error_message,
           line_number,
           terminalLiteralRepresentations[op],
-          terminalLiteralRepresentations[left_type],
+          terminalStringRepresentations[left_type],
           terminalStringRepresentations[right_type]);
   
   semantic_error_count += 1;
@@ -200,7 +205,12 @@ enum terminal logicalExpressionType(struct N7Node *logical_expression) {
   int line_number;
   
   left_operand_type = expressionType(logical_expression->ptr1);
+  if (left_operand_type == EPSILON)
+    return EPSILON;
+
   right_operand_type = expressionType(logical_expression->ptr2);
+  if (right_operand_type == EPSILON)
+    return EPSILON;
   
   line_number = logical_expression->line_number;
   
@@ -227,7 +237,12 @@ enum terminal relationalExpressionType(struct N8Node *relational_expression) {
   int line_number;
   
   left_operand_type = expressionType(relational_expression->ptr1);
+  if (left_operand_type == EPSILON)
+    return EPSILON;
+
   right_operand_type = expressionType(relational_expression->ptr2);
+  if (right_operand_type == EPSILON)
+    return EPSILON;
 
   line_number = relational_expression->line_number;
   
@@ -256,15 +271,20 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
   line_number = arithmetic_expression->line_number;
   
   right_operand_type = expressionType(arithmetic_expression->ptr2);
+  if (right_operand_type == EPSILON)
+    return EPSILON;
+  
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, arithmetic_expression->op,
-      integer_or_real_str, left_operand_type);
+      integer_or_real_str, right_operand_type);
     return EPSILON;
   }
   
   if (arithmetic_expression->is_first) {
     left_operand_type = expressionType(arithmetic_expression->ptr1);
+    if (left_operand_type == EPSILON)
+      return EPSILON;
     
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
@@ -283,6 +303,9 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
   
   if (arithmetic_expression->ptr3->type != NULL_NODE) {
     left_operand_type = expressionType(arithmetic_expression->ptr3);
+    if (left_operand_type == EPSILON)
+      return EPSILON;
+
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, arithmetic_expression->op,
@@ -309,6 +332,9 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
   line_number = term_expression->line_number;
 
   right_operand_type = expressionType(term_expression->ptr2);
+  if (right_operand_type == EPSILON)
+    return EPSILON;
+  
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, term_expression->op,
@@ -318,6 +344,9 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
 
   if (term_expression->is_first) {
     left_operand_type = expressionType(term_expression->ptr1);
+    if (left_operand_type == EPSILON)
+      return EPSILON;
+
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, term_expression->op,
@@ -334,6 +363,9 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
   
   if (term_expression->ptr3->type != NULL_NODE) {
     left_operand_type = expressionType(term_expression->ptr3);
+    if (left_operand_type == EPSILON)
+      return EPSILON;
+
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, term_expression->op,
@@ -386,22 +418,19 @@ enum terminal expressionType(struct Attribute *expression) {
 
 
 void arrayAssignemntTypeCheck(struct LeafNode *lhs_array, struct LeafNode *rhs_array) {
-  struct SymbolTableNode *symbol_table_node;
   struct VariableEntry *st_entry_lhs, *st_entry_rhs;
   enum terminal data_type_lhs, data_type_rhs;
   int lower_bound_lhs, lower_bound_rhs;
   int upper_bound_lhs, upper_bound_rhs;
   int line_number;
   
-  symbol_table_node = symbolTableGet(lhs_array->scope, lhs_array->value.entry);
-  if (symbol_table_node == NULL)
+  st_entry_lhs = resolveVariable(lhs_array->value.entry, lhs_array->scope);
+  if (st_entry_lhs == NULL)
     return;
-  st_entry_lhs = &symbol_table_node->value.variable;
 
-  symbol_table_node = symbolTableGet(rhs_array->scope, rhs_array->value.entry);
-  if (symbol_table_node == NULL)
+  st_entry_rhs = resolveVariable(rhs_array->value.entry, rhs_array->scope);
+  if (st_entry_rhs == NULL)
     return;
-  st_entry_rhs = &symbol_table_node->value.variable;
 
   /* proceed further with semantic checks only if both arrays are static */
   if (!(st_entry_lhs->isStatic) || !(st_entry_rhs->isStatic))
@@ -430,8 +459,10 @@ void arrayAssignemntTypeCheck(struct LeafNode *lhs_array, struct LeafNode *rhs_a
   line_number = lhs_array->line_number;
   fprintf(stderr, operator_incompatible_array_types_error_message,
           line_number, terminalLiteralRepresentations[ASSIGNOP],
-          lower_bound_lhs, upper_bound_lhs, data_type_lhs,
-          lower_bound_rhs, upper_bound_rhs, data_type_rhs);
+          lower_bound_lhs, upper_bound_lhs,
+          terminalStringRepresentations[data_type_lhs],
+          lower_bound_rhs, upper_bound_rhs,
+          terminalStringRepresentations[data_type_rhs]);
   semantic_error_count += 1;
 }
 
@@ -439,6 +470,7 @@ void arrayAssignemntTypeCheck(struct LeafNode *lhs_array, struct LeafNode *rhs_a
 void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {  
   enum terminal lhs_type, rhs_type;
   struct Attribute *rhs_expression;
+  struct ArrayNode array_node;
   int line_number;
 
   /* determine data type of LHS */
@@ -449,6 +481,9 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
     rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;
   }
   else {
+    array_node.ptr1 = assignment_node->ptr1;
+    array_node.ptr2 = assignment_node->ptr2->node.lva_arr->ptr1;
+    lhs_type = arrayType(&array_node);
     rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;
   }
   rhs_type = expressionType(rhs_expression);
@@ -481,7 +516,6 @@ void arrayModuleReuseTypeCheck(
   struct LeafNode *actual_array) {
   
   bool is_static_formal;
-  struct SymbolTableNode *symbol_table_node;
   struct VariableEntry *st_entry_actual;
   enum terminal data_type_formal, data_type_actual;
   int lower_bound_formal, lower_bound_actual;
@@ -496,11 +530,10 @@ void arrayModuleReuseTypeCheck(
     is_static_formal = true;
   }
 
-  symbol_table_node = symbolTableGet(actual_array->scope, actual_array->value.entry);
-  if (symbol_table_node == NULL)
+  st_entry_actual = resolveVariable(actual_array->value.entry, actual_array->scope);
+  if (st_entry_actual == NULL)
     return;
-  st_entry_actual = &symbol_table_node->value.variable;
-
+  
   /* proceed further with semantic checks only if both arrays are static */
   if (!is_static_formal || !(st_entry_actual->isStatic))
     return;
@@ -528,8 +561,10 @@ void arrayModuleReuseTypeCheck(
   line_number = actual_array->line_number;
   fprintf(stderr, module_incorrect_input_array_type,
           line_number,
-          lower_bound_formal, upper_bound_formal, data_type_formal,
-          lower_bound_actual, upper_bound_actual, data_type_actual);
+          lower_bound_formal, upper_bound_formal,
+          terminalStringRepresentations[data_type_formal],
+          lower_bound_actual, upper_bound_actual,
+          terminalStringRepresentations[data_type_actual]);
   semantic_error_count += 1;
 }
 
@@ -548,7 +583,7 @@ void inputModuleReuseTypeCheck(
       (i.e. lower & upper bound and base data type)
     */
     if (formal_input->ptr2->type == ARRAY_TYPE_NODE) {
-      inputModuleReuseTypeCheck(
+      arrayModuleReuseTypeCheck(
         formal_input->ptr2->node.arr_typ,
         actual_input->ptr1);
     }
@@ -559,6 +594,7 @@ void inputModuleReuseTypeCheck(
       actual_input_type = leafType(actual_input->ptr1);
       
       if (formal_input_type != actual_input_type) {
+        line_number = actual_input->ptr1->line_number;
         fprintf(stderr, module_incorrect_input_type,
           line_number,
           terminalStringRepresentations[formal_input_type],
@@ -590,9 +626,11 @@ void outputModuleReuseTypeCheck(
   enum terminal formal_output_type, actual_output_type;
   int line_number;
 
+  line_number = actual_output->ptr1->line_number;
+
   while (formal_output != NULL && actual_output != NULL) {
     /* determine formal and actual output parameter types */
-    formal_output_type = leafType(formal_output->ptr2);
+    formal_output_type = leafType(formal_output->ptr2->node.lea);
     actual_output_type = leafType(actual_output->ptr1);
 
     /* check: formal and actual output parameters should have same type */
@@ -623,20 +661,19 @@ void outputModuleReuseTypeCheck(
 
 void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
   /* determine symbol table entry for the module */
-  struct SymbolTableNode *symbol_table_entry;
-  symbol_table_entry = symbolTableGet(
-    global_symbol_table, module_reuse_node->ptr2->value.entry);
-  if (symbol_table_entry == NULL || symbol_table_entry->value_type == ST_VARIABLE)
+  struct ModuleEntry *symbol_table_entry;
+  symbol_table_entry = resolveModule(module_reuse_node->ptr2->value.entry);
+  if (symbol_table_entry == NULL)
     return;
 
   /* semantic checks for formal and actual input parameters */
   inputModuleReuseTypeCheck(
-    symbol_table_entry->value.module.inputplist,
+    symbol_table_entry->inputplist,
     module_reuse_node->ptr3);
   
   /* semantic checks for formal and actual output parameters */
   outputModuleReuseTypeCheck(
-    symbol_table_entry->value.module.outputplist,
+    symbol_table_entry->outputplist,
     module_reuse_node->ptr1);
 }
 
@@ -658,7 +695,8 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
     /* check: case value should be integer */
     if (case_type != INTEGER) {
       fprintf(stderr, conditional_incorrect_case_type_error_message,
-              line_number, integer_str, integer_str, case_type);
+              line_number, integer_str, integer_str,
+              terminalStringRepresentations[case_type]);
       semantic_error_count += 1;
     }
     
@@ -672,7 +710,7 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
 
   /* check: integer conditional should have a default case */
   if (conditional_node->ptr3 == NULL) {
-    line_number = conditional_node->ptr1->line_number;
+    line_number = conditional_node->ending_line_number;
     fprintf(stderr, integer_conditional_missing_default_error_message,
             line_number, integer_str, integer_str, case_type);
     semantic_error_count += 1;
@@ -699,13 +737,14 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
   */
   case_node = conditional_node->ptr2;
   while (case_node != NULL) {
-    case_type = leafType(case_node->ptr1->type);
+    case_type = leafType(case_node->ptr1);
     line_number = case_node->ptr1->line_number;
 
     /* check: case value should be boolean */
     if (case_type != BOOLEAN_) {
       fprintf(stderr, conditional_incorrect_case_type_error_message,
-              line_number, boolean_str, boolean_str, case_type);
+              line_number, boolean_str, boolean_str,
+              terminalStringRepresentations[case_type]);
       semantic_error_count += 1;
     }
     
@@ -739,8 +778,8 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
   }
 
   /* check: boolean conditional should NOT have a default case */
-  if (conditional_node->ptr3 == NULL) {
-    line_number = conditional_node->ptr1->line_number;
+  if (conditional_node->ptr3 != NULL) {
+    line_number = conditional_node->ending_line_number;
     fprintf(stderr, boolean_conditional_contains_default_error_message,
             line_number);
     semantic_error_count += 1;
@@ -766,11 +805,135 @@ void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
     case REAL:
     case ARRAY:
       fprintf(stderr, conditional_incorrect_switch_type_error_message,
-              line_number, conditional_type);
+              line_number, terminalStringRepresentations[conditional_type]);
       break;
     default:
       printf("ERROR!! Invalid type for switch variable: %d\n", conditional_type);
       break;
+  }
+}
+
+
+bool cmpIdentifier(struct LeafNode *leaf1, struct LeafNode *leaf2) {
+  struct VariableEntry *variable_entry1, *variable_entry2;
+  int is_same;
+
+  if (leaf1->type != IDENTIFIER || leaf2->type != IDENTIFIER) {
+    printf("ERROR!! cmpIdentifier got a non-identifier\n");
+    return false;
+  }
+  
+  is_same = strcmp (leaf1->value.entry, leaf2->value.entry);
+
+  variable_entry1 = resolveVariable(leaf1->value.entry, leaf1->scope);
+  variable_entry2 = resolveVariable(leaf2->value.entry, leaf2->scope);
+  if (is_same == 0 && variable_entry1 != variable_entry2) {
+    is_same = 1;
+  }
+
+  if (is_same == 0)
+    return true;
+  return false;
+}
+
+
+void forIterationVariableUpdateCheck(
+  struct LeafNode *loop_var,
+  struct StatementNode *statement_node) {
+
+  struct IdListNode *id_list_node;
+  struct CaseStmtNode *case_node;
+  bool is_same;
+  int line_number;
+
+  /*
+    if statement assigns value to identifier loop_var,
+    then set is variable updated to true and return
+  */
+  while (statement_node != NULL) {
+    is_same = false;
+
+    switch (statement_node->ptr1->type) {
+      case ASSIGN_STMT_NODE:
+        /* check: compare loop var with lhs */
+        is_same = cmpIdentifier(
+                    loop_var,
+                    statement_node->ptr1->node.agn_stm->ptr1);
+        if (is_same) {
+          line_number = statement_node->ptr1->node.agn_stm->ptr1->line_number;
+          fprintf(stderr, for_loop_var_unassigned_error_message, line_number);
+          semantic_error_count += 1;
+        }
+        break;
+      
+      case MODULE_REUSE_STMT_NODE:
+        /* check: compare loop var with output parameter list */
+        id_list_node = statement_node->ptr1->node.mod_reu_stm->ptr3;
+        while (id_list_node != NULL) {
+          is_same = cmpIdentifier(loop_var, id_list_node->ptr1);
+          if (is_same) {
+            line_number = id_list_node->ptr1->line_number;
+            fprintf(stderr, for_loop_var_unassigned_error_message, line_number);
+            semantic_error_count += 1;
+          }
+          id_list_node = id_list_node->ptr2;
+          is_same = false;
+        }
+        break;
+      
+      case CONDITIONAL_STMT_NODE:
+        /*
+          check: recursively find if loop var is assigned a value
+          in any case body of the conditional statement
+        */
+        case_node = statement_node->ptr1->node.con_stm->ptr2;
+        while (case_node != NULL) {
+          forIterationVariableUpdateCheck(loop_var, case_node->ptr2);
+          case_node = case_node->ptr3;
+        }
+        break;
+      
+      case FOR_ITERATIVE_STMT_NODE:
+        /*
+          check: recursively find if loop var is assigned a value
+          in the for loop body
+        */
+        forIterationVariableUpdateCheck(
+          loop_var,
+          statement_node->ptr1->node.for_ite_stm->ptr3);
+        break;
+      
+      case WHILE_ITERATIVE_STMT_NODE:
+        /*
+          check: recursively find if loop var is assigned a value
+          in the while loop body
+        */
+        forIterationVariableUpdateCheck(
+          loop_var,
+          statement_node->ptr1->node.whi_ite_stm->ptr2);
+        break;
+      
+      case INPUT_NODE:
+        /* check: compare loop var with input variable */
+        is_same = cmpIdentifier(loop_var, statement_node->ptr1->node.inp->ptr1);
+        if (is_same) {
+          line_number = statement_node->ptr1->node.inp->ptr1->line_number;
+          fprintf(stderr, for_loop_var_unassigned_error_message, line_number);
+          semantic_error_count += 1;
+        }
+        break;
+      
+      /* following statement types don't assign any variable a value */
+      case PRINT_NODE:
+      case DECLARE_STMT_NODE:
+        break;
+      
+      default:
+        printf("ERROR!! Invalid type for statement node %d\n", statement_node->ptr1->type);
+        break;
+    }
+
+    statement_node = statement_node->ptr2;
   }
 }
 
@@ -785,15 +948,16 @@ void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
   line_number = for_iter_node->ptr1->line_number;
   if (loop_var_type != INTEGER) {
     fprintf(stderr, for_incorrect_variable_type_error_message,
-            line_number, loop_var_type);
+            line_number,
+            terminalStringRepresentations[loop_var_type]);
     semantic_error_count += 1;
   }
 
   /* check: lower bound should be less than / equal to upper bound */
   lower_bound = for_iter_node->ptr2->ptr1->value.num;
   upper_bound = for_iter_node->ptr2->ptr2->value.num;
-  line_number = for_iter_node->ptr2->ptr1->line_number;
   if (lower_bound > upper_bound) {
+    line_number = for_iter_node->ptr2->ptr1->line_number;
     fprintf(stderr, for_incorrect_bounds_error_message,
             line_number);
     semantic_error_count += 1;
@@ -806,6 +970,7 @@ void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
     check: for loop variable should NOT be
     assigned a value inside the loop
   */
+ forIterationVariableUpdateCheck(for_iter_node->ptr1, for_iter_node->ptr3);
 }
 
 
@@ -815,10 +980,11 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
 
   /* check: while loop expression should be of type boolean */
   loop_expression_type = expressionType(while_iter_node->ptr1);
-  line_number = getLineNumber(while_iter_node->ptr1);
   if (loop_expression_type != BOOLEAN_ && loop_expression_type != EPSILON) {
+    line_number = while_iter_node->starting_line_number;
     fprintf(stderr, while_incorrect_expression_type_error_message,
-            line_number, loop_expression_type);
+            line_number,
+            terminalStringRepresentations[loop_expression_type]);
     semantic_error_count += 1;
   }
 
@@ -829,6 +995,7 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
     check: at least one variable in the loop expression
     should be assigned a value inside the loop
   */
+
 }
 
 
@@ -839,11 +1006,9 @@ void statementSemanticChecker(struct StatementNode *statement_node) {
   switch (statement_node->ptr1->type) {
     case ASSIGN_STMT_NODE:
       assignmentTypeChecker(statement_node->ptr1->node.agn_stm);
-      printf("\n");
       break;
     case MODULE_REUSE_STMT_NODE:
       moduleReuseTypeChecker(statement_node->ptr1->node.mod_reu_stm);
-      printf("\n");
       break;
     case CONDITIONAL_STMT_NODE:
       conditionalSemanticChecker(statement_node->ptr1->node.con_stm);
@@ -890,4 +1055,6 @@ void semanticChecker(struct ProgramNode *AST) {
   modulesSemanticChecker(AST->ptr2);
   moduleDefinitionSemanticChecker(AST->ptr3);
   modulesSemanticChecker(AST->ptr4);
+
+  fprintf(stdout, semantic_errors_count_message, semantic_error_count);
 }

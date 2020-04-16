@@ -8,6 +8,10 @@
 #include "../src/intCode.h"
 #include "../src/codeGen.h"
 
+
+char *st_value_types[] = {"ST_MODULE", "ST_MODULE", "ST_VARIABLE"};
+
+
 void test_removeComments(){
     /*
     *  Test the removeComments function against a manually generated expected file
@@ -164,32 +168,32 @@ void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     printf("Loading grammar ...\n");
     loadGrammar(grammar_file);
 
-    printf("Intializing first and follow\n");
+    // printf("Intializing first and follow\n");
     initializeFirstAndFollow();
 
-    printf("Computing first and follow ...\n");
+    // printf("Computing first and follow ...\n");
     computeFirstAndFollowSets();
 
-    printf("Intializing parse table ...\n");
+    // printf("Intializing parse table ...\n");
     intializeParseTable();
 
-    printf("Creating parse table ...\n");
+    // printf("Creating parse table ...\n");
     createParseTable();
 
-    printf("Creating a buffer ...\n");
+    // printf("Creating a buffer ...\n");
     defineBuffer();
 
-    printf("Populating terminal and terminal literal hash map ...\n");
+    // printf("Populating terminal and terminal literal hash map ...\n");
     extern struct hashMap *terminalMap;
     terminalMap = getTerminalMap();
 
     extern struct hashMap *terminalLiteralMap;
     terminalLiteralMap = getTerminalLiteralMap();
 
-    printf("Parsing input source code ...\n");
+    printf("Creating Parse Tree from input source code...\n");
     parseInputSourceCode(source_file);
 
-    printParseTree("test/test_result_parse_tree_output.txt");
+    // printParseTree("test/test_result_parse_tree_output.txt");
 }
 
 
@@ -198,13 +202,9 @@ void test_createAST(char *grammar_file, char *source_file) {
 
     printf("Creating AST ...\n");
     createAST();
-    
-    // printf("Printing AST ...\n");
     // printAST();
 }
 
-
-char *st_value_types[] = {"ST_MODULE", "ST_MODULE", "ST_VARIABLE"};
 
 void printSymbolTableNode(struct SymbolTableNode *node, const char *key) {
     if (node == NULL)
@@ -321,56 +321,65 @@ void symbolTableCoreTests() {
 void test_createSymbolTables(char *grammar_file, char *source_file) {
     extern bool st_debug_mode;
     st_debug_mode = false;
+
     test_createAST(grammar_file, source_file);
+
     printf("Generating symbol tables... \n");
     generateSymbolTables();
 }
 
 
 void test_semanticCheck(char *grammar_file, char *source_file) {
-  test_createSymbolTables(grammar_file, source_file);
   extern struct ProgramNode AST;
-  printf("Checking AST for Semantic Errors...\n");
+  
+  test_createSymbolTables(grammar_file, source_file);
+  
+  printf("Checking AST for Semantic Errors...\n\n");
   semanticChecker(&AST);
 }
 
 
 void test_intermediateCodeGeneration(char *grammar_file, char *source_file) {
-  test_semanticCheck(grammar_file, source_file);
   extern struct ProgramNode AST;
+  extern ICInstr *start_global_ic_instr;
+  
+  test_semanticCheck(grammar_file, source_file);
+  
   printf("Generating Intermediate Code ...\n\n");
   generateIntermediateCode(&AST);
-  extern ICInstr *start_global_ic_instr;
+  
   printICInstructionList(start_global_ic_instr);
 }
 
-void test_CodeGeneration(char *grammar_file, char *source_file)
-{
-    test_semanticCheck(grammar_file, source_file);
+
+void test_CodeGeneration(char *grammar_file, char *source_file) {
     extern struct ProgramNode AST;
-    printf("Generating Intermediate Code ...\n\n");
-    generateIntermediateCode(&AST);
     extern ICInstr *start_global_ic_instr;
+    
+    test_intermediateCodeGeneration(grammar_file, source_file);
+    
+    printf("Generating Intermediate Code ...\n\n");    
     printCodeGen(start_global_ic_instr);
 }
+
 
 int main() {
     setvbuf(stdout, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/semantic/t8.txt";
-    // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_2.erplag";
+    char source_file[] = "./test/fixtures/stage 2/semantic/t10.txt";
+    // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_expression.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
     // test_loadGrammar(grammar_file);
     // test_computeFirstAndFollow(grammar_file);
-    // test_parseInputSourceCode(grammar_file, adv_source_file);
+    // test_parseInputSourceCode(grammar_file, source_file);
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    test_createSymbolTables(grammar_file, source_file);
-    // test_semanticCheck(grammar_file, source_file);
+    // test_createSymbolTables(grammar_file, source_file);
+    test_semanticCheck(grammar_file, source_file);
     // test_intermediateCodeGeneration(grammar_file, source_file);
     // test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");

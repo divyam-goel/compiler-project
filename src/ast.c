@@ -1705,8 +1705,7 @@ void case_98(struct treeNode *curr_node) {
   /* <value> := TRUE */
 
   /* <value> = new LeafNode(BOOL, "TRUE") */
-  bool val = true;
-  curr_node->syn.node.lea = newLeafNode(BOOLEAN_, &(val), curr_node->child->symbol.terminal.line_no);
+  curr_node->syn.node.lea = newLeafNode(TRUE_, NULL, curr_node->child->symbol.terminal.line_no);
   curr_node->syn.type = LEAF_NODE;
 }
 
@@ -1715,8 +1714,7 @@ void case_99(struct treeNode *curr_node) {
   /* <value> := FALSE */
 
   /* <value> = new LeafNode(BOOL, "FALSE") */
-  bool val = false;
-  curr_node->syn.node.lea = newLeafNode(BOOLEAN_, &(val), curr_node->child->symbol.terminal.line_no);
+  curr_node->syn.node.lea = newLeafNode(FALSE_, NULL, curr_node->child->symbol.terminal.line_no);
   curr_node->syn.type = LEAF_NODE;
 }
 

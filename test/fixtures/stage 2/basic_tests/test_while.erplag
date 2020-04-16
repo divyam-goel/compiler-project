@@ -1,0 +1,78 @@
+declare module function;
+
+<<<driver program>>>
+start
+    ** DECLARE STMT **
+    declare x, y, z : integer;
+    declare a, b, c : real;
+    declare u, v, w : boolean;
+    declare arr : array[10..15] of integer;
+
+    ** No Error : simple test expression **
+    while(x < 10)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** No Error : simple test expression **
+    while(u)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** No Error : simple test expression **
+    while(TRUE)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** No Error : simple test expression **
+    while(FALSE)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** No Error : complex test expression **
+    while(x * x + y < (z - 10) * (z / x + y))
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** Error : test expression type is INTEGER **
+    while(x + y)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** Error : test expression type is REAL **
+    while(a + b)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** Error : test expression type is ARRAY **
+    while(arr)
+    start
+        print(x);
+        x := x + 1;
+    end
+
+    ** Error : NO variable in test expression IS EVER assigned a value **
+    while(x < 10)
+    start
+        print(x);
+    end
+end
+
+<<module function>>
+takes input [a:integer];
+returns [c:integer];
+start
+end
