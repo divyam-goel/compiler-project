@@ -200,6 +200,7 @@ struct UNode {
   enum terminal op;
   struct Attribute *ptr1;
   enum terminal data_type;
+  int line_number;
   ICAddr addr;
 };
 
@@ -207,6 +208,7 @@ struct N7Node {
   struct Attribute *ptr1;
   enum terminal logicalOp;
   struct Attribute *ptr2;
+  int line_number;
   ICAddr addr;
 };
 
@@ -214,6 +216,7 @@ struct N8Node {
   struct Attribute *ptr1; /* The inherited attribute. */
   enum terminal relationalOp;
   struct Attribute *ptr2;
+  int line_number;
   ICAddr addr;
 };
 
@@ -224,6 +227,7 @@ struct ArithmeticExprNode {
   struct Attribute *ptr2; /* Term */
   struct Attribute *ptr3;
   enum terminal data_type;
+  int line_number;
   ICAddr addr;
 };
 
@@ -234,6 +238,7 @@ struct TermNode {
   struct Attribute *ptr2; /* Factor - If TermNode* == NULL then we use this.*/
   struct Attribute *ptr3;
   enum terminal data_type;
+  int line_number;
   ICAddr addr;
 };
 

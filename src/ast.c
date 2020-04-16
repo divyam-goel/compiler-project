@@ -1220,10 +1220,12 @@ void case_61(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
-  child_node = nextNonTerminalNode(child_node);
   struct UNode *u_node = (struct UNode *)malloc(sizeof(struct UNode));
   u_node->op = PLUS;
+  u_node->line_number = child_node->symbol.terminal.line_no;
+  child_node = nextNonTerminalNode(child_node);
   u_node->ptr1 = newAttribute(child_node->syn);
+
   /* < u >.syn = new UNode(“PLUS”, <sub_u>.syn) */
   curr_node->syn.type = U_NODE;
   curr_node->syn.node.u = u_node;
@@ -1235,9 +1237,10 @@ void case_62(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
 
-  child_node = nextNonTerminalNode(child_node);
   struct UNode *u_node = (struct UNode *)malloc(sizeof(struct UNode));
   u_node->op = MINUS;
+  u_node->line_number = child_node->symbol.terminal.line_no;
+  child_node = nextNonTerminalNode(child_node);
   u_node->ptr1 = newAttribute(child_node->syn);
   /* < u >.syn = new UNode(“MINUS”, <sub_u>.syn) */
   curr_node->syn.type = U_NODE;
@@ -1294,6 +1297,7 @@ void case_66(struct treeNode *curr_node) {
   struct treeNode *child_node = curr_node->child;
   traverseParseTree(child_node);
   enum terminal val = child_node->val;
+  int line_number = child_node->child->symbol.terminal.line_no;
   child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
 
@@ -1309,6 +1313,7 @@ void case_66(struct treeNode *curr_node) {
   struct N7Node *n7_node = (struct N7Node *)malloc(sizeof(struct N7Node));
   n7_node->ptr1 = newAttribute(curr_node->inh);
   n7_node->logicalOp = val;
+  n7_node->line_number = line_number;
   
   if(next_node->syn.type == NULL_NODE) {
     n7_node->ptr2 = newAttribute(child_node->syn);
@@ -1367,6 +1372,7 @@ void case_70(struct treeNode *curr_node) {
   /* <N8> := <relationalOp> <arithmeticExpr> */
   struct treeNode *child_node = curr_node->child;
   traverseChildren(child_node);
+  int line_number = child_node->child->symbol.terminal.line_no;
 
   /* <N8>.syn = new N8Node(<N8>.inh, <relationalOp>.val, <arithmeticExpr>.syn) */
   struct N8Node *n8_node = (struct N8Node *)malloc(sizeof(struct N8Node));
@@ -1374,6 +1380,7 @@ void case_70(struct treeNode *curr_node) {
   n8_node->relationalOp = child_node->val;
   child_node = nextNonTerminalNode(child_node);
   n8_node->ptr2 = newAttribute(child_node->syn);
+  n8_node->line_number = line_number;
 
   curr_node->syn.node.n8 = n8_node;
   curr_node->syn.type = N8_NODE;
@@ -1415,6 +1422,7 @@ void case_72(struct treeNode *curr_node){
 void case_73(struct treeNode *curr_node){
   /* <sub_arithmeticExpr> := <op1> <term> <sub_arithmeticExpr>1 */
   struct treeNode *child_node = curr_node->child;
+  int line_number = child_node->child->symbol.terminal.line_no;
 
   /* 1. <sub_arithmeticExpr>.syn = new ArithmeticExprNode(<sub_arithmeticExpr>.inh, <op1>.val, <term>.syn) */
   struct ArithmeticExprNode *arithmetic_expr_node = (struct ArithmeticExprNode *)malloc(sizeof(struct ArithmeticExprNode));
@@ -1425,6 +1433,7 @@ void case_73(struct treeNode *curr_node){
   child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
   arithmetic_expr_node->ptr2 = newAttribute(child_node->syn);
+  arithmetic_expr_node->line_number = line_number;
 
   curr_node->syn.node.ari_exp = arithmetic_expr_node;
   curr_node->syn.type = ARITHMETIC_EXPR_NODE;
@@ -1474,6 +1483,7 @@ void case_76(struct treeNode *curr_node){
   /* <sub_term> := <op2> <factor> <sub_term>1 */
   struct treeNode *child_node = curr_node->child;
   traverseParseTree(child_node);
+  int line_number = child_node->child->symbol.terminal.line_no;
 
   /* 1. <sub_term>.syn = new TermNode(<sub_term>.inh, <op2>.val, <factor>.syn) */
   struct TermNode *term_node = (struct TermNode *)malloc(sizeof(struct TermNode));
@@ -1483,6 +1493,7 @@ void case_76(struct treeNode *curr_node){
   child_node = nextNonTerminalNode(child_node);
   traverseParseTree(child_node);
   term_node->ptr2 = newAttribute(child_node->syn);
+  term_node->line_number = line_number;
 
   curr_node->syn.node.ter = term_node;
   curr_node->syn.type = TERM_NODE;
