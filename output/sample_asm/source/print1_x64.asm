@@ -40,21 +40,30 @@ main:				; the program label for the entry point
 
 	; print integer out
 	mov	rdi,print_fmt_int		; format for printf
-	mov	rsi,[a]         ; first parameter for printf
+	mov	rsi,-40         ; first parameter for printf
 	mov	rax,0		; no xmm registers
     call printf		; Call C function
 
 	; addition time
-	mov dword[tmp1] , __float32__(0.030000)
+	mov dword[tmp1] , __float32__(0.040000)
 	; mov dword[tmp2] , __float32__(23.0)
 	fld dword[tmp1]
 	fmul qword[f1]
 	fstp qword[f1]
+
 	; print float
+	fld dword[tmp1]
+	fstp qword[tmp1]
 	mov rdi,print_fmt_float
-	movq xmm0,qword[f1]
+	movq xmm0,qword[tmp1]
 	mov	rax,1		; 1 xmm register
 	call printf
+
+	; print boolean
+	mov	rdi,print_fmt_bool_false
+	mov rax,0
+	call printf
+
 
 	pop	rbp		; restore stack
 

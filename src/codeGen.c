@@ -461,10 +461,52 @@ void cgJUMP_NZ_Z(ICInstr *ic_instr){
   printf("%s", instr_list);
 }
 
-void print(ICInstr *ic_instr){
+void print_var(ICInstr *ic_instr){
   //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
-  
-
+  // also, assumption that the concerned data needed for formats etc. are in data section
+  // needed- print_fmt_int, print_fmt_float, print_fmt_bool_false, print_fmt_bool_true
+  char instr_list[MAX_SIZE_INSTR] = "";
+  ICAddr *ic_addr = &(ic_instr->addr1);
+  int num;
+  char rhs[20];
+  char fmt_smt[25];
+  instrOneOperand(instr_list,"push","rbp");
+  switch (ic_instr->op){
+    case NUM:
+      num = ic_addr->value.num;
+      char ch_num[10];
+      sprintf(ch_num,"%d",num);
+      instrTwoOperand(instr_list,"mov","rdi","print_fmt_int");
+      instrTwoOperand(instr_list, "mov", "rsi", ch_num);
+      instrTwoOperand(instr_list, "mov", "rax", "0");
+      instrOneOperand(instr_list,"call","printf");
+      break;
+    case RNUM:
+      instrTwoOperand(instr_list, "mov", "rdi", "print_fmt_float");
+      cgLoadRealConstIntoTmp(instr_list, "dword", tmp_float_var1, ic_addr);
+      cgRealOneOp(instr_list,"fld","dword",tmp_float_var1);
+      cgRealOneOp(instr_list, "fstp", "qword", tmp_float_var1);
+      sprintf(rhs,"%s[%s]","qword",tmp_float_var1);
+      instrTwoOperand(instr_list,"movq","xmm0",rhs);
+      instrTwoOperand(instr_list, "mov", "rax", "1");
+      instrOneOperand(instr_list, "call", "printf");
+      break;
+    case BOOLEAN_:
+      if (ic_addr->value.boolean == true)
+        strcpy(fmt_smt, "print_fmt_bool_true");
+      else
+        strcpy(fmt_smt, "print_fmt_bool_false");
+      instrTwoOperand(instr_list, "mov", "rdi", fmt_smt);
+      instrTwoOperand(instr_list, "mov", "rax", "0");
+      instrOneOperand(instr_list, "call", "printf");
+      break;
+    case IDENTIFIER:
+      /* code */
+      break;
+    default:
+      break;
+  }
+  instrOneOperand(instr_list, "pop", "rbp");
 }
 
 //for testing
