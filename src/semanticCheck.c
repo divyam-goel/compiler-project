@@ -8,18 +8,23 @@ extern char terminalLiteralRepresentations[NUM_TERMINALS][16];
 extern struct ProgramNode AST;
 extern struct SymbolTable *global_symbol_table;
 
+/* error messages: array */
 char *array_incorrect_index_type_error_message = "Line %d: (Type Error) Array index should be of type INTEGER, \
 found %s\n";
 char *array_index_out_of_bounds_error_message = "Line %d: (Semantic Error) Array index is out of bounds, should \
 be in the range %d to %d\n";
 
+/* error messages: expressions */
 char *operator_incorrect_type_error_message = "Line %d: (Type Error) Operator '%s' expects type %s, found %s\n";
 char *operator_incompatible_types_error_message = "Line %d: (Type Error) Operator '%s' received incompatible \
 operand types, found %s and %s\n";
 char *operator_incompatible_array_types_error_message = "Line %d: (Type Error) Operator '%s' received incompatible \
 operand types, found array[%d...%d] of %s and array[%d...%d] of %s\n";
 
+/* error messages: module reuse */
 char *module_incorrect_input_type = "Line %d: (Type Error) Module reuse expects type %s in input list, found %s\n";
+char *module_incorrect_input_array_type = "Line %d: (Type Error) Module reuse expects array type array[%d...%d] of %s \
+in input list, found array[%d...%d] of %s\n";
 char *module_input_list_missing_args = "Line %d: (Semantic Error) Insufficient number of arguments were provided \
 in input list for module reuse";
 char *module_input_list_too_many_args = "Line %d: (Semantic Error) Too many arguments were provided in input list \
@@ -30,6 +35,7 @@ in output list for module reuse";
 char *module_output_list_too_many_args = "Line %d: (Semantic Error) Too many arguments were provided in output list \
 for module reuse";
 
+/* error messages: conditionals */
 char *conditional_incorrect_switch_type_error_message = "Line %d: (Type Error) Construct 'switch' expects type \
 INTEGER or BOOLEAN, found %s\n";
 char *conditional_incorrect_case_type_error_message = "Line %d: (Type Error) Construct 'switch' is over type %s. \
@@ -41,14 +47,17 @@ BOOLEAN. So, it MUST have a case for value %s\n";
 char *boolean_conditional_contains_default_error_message = "Line %d: (Semantic Error) Construct 'switch' is over \
 type BOOLEAN. So, it can NOT have a default case\n";
 
+/* error messages: for iteration */
 char *for_incorrect_variable_type_error_message = "Line %d: (Type Error) Construct 'for' expects type INTEGER for \
 loop variable, found %s\n";
 char *for_incorrect_bounds_error_message = "Line %d: (Semantic Error) Construct 'for' expects lower bound to be less \
 than / equal to the upper bound\n";
 
+/* error messages: while iteration */
 char *while_incorrect_expression_type_error_message = "Line %d: (Type Error) Construct 'while' excepts type BOOLEAN \
 for loop expression, found %s\n";
 
+/* utility strings */
 char *integer_str = "INTEGER";
 char *real_str = "REAL";
 char *integer_or_real_str = "INTEGER or REAL";
@@ -57,6 +66,7 @@ char *array_str = "ARRAY";
 char *true_str = "TRUE";
 char *false_str = "FALSE";
 
+/* global variables */
 bool st_debug_mode = false;
 int semantic_error_count = 0;
 
@@ -118,8 +128,8 @@ enum terminal arrayType(struct ArrayNode *array) {
 
   /* check: data type of array index should be integer */
   if (index_type != INTEGER) {
-    printf("Type Error: Array index should be of type INTEGER, found %s\n",
-    terminalStringRepresentations[index_type]);
+    fprintf(stderr, array_incorrect_index_type_error_message,
+            line_number, terminalStringRepresentations[index_type]);
     semantic_error_count += 1;
     return array_type;
   }
@@ -134,7 +144,7 @@ enum terminal arrayType(struct ArrayNode *array) {
     upper_bound = symbol_table_entry->value.variable.upper_bound->value.num;
     index = array->ptr2->value.num;
     if (index < lower_bound || index > upper_bound) {
-      printf("Semantic Error: Array out of bounds\n");
+      fprintf(stderr, array_index_out_of_bounds_error_message, line_number);
       semantic_error_count += 1;
     }
   }
@@ -419,7 +429,7 @@ void arrayAssignemntTypeCheck(struct LeafNode *lhs_array, struct LeafNode *rhs_a
 
   line_number = lhs_array->line_number;
   fprintf(stderr, operator_incompatible_array_types_error_message,
-          line_number,
+          line_number, terminalLiteralRepresentations[ASSIGNOP],
           lower_bound_lhs, upper_bound_lhs, data_type_lhs,
           lower_bound_rhs, upper_bound_rhs, data_type_rhs);
   semantic_error_count += 1;
@@ -516,7 +526,7 @@ void arrayModuleReuseTypeCheck(
   }
 
   line_number = actual_array->line_number;
-  fprintf(stderr, operator_incompatible_array_types_error_message,
+  fprintf(stderr, module_incorrect_input_array_type,
           line_number,
           lower_bound_formal, upper_bound_formal, data_type_formal,
           lower_bound_actual, upper_bound_actual, data_type_actual);
