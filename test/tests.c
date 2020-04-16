@@ -379,9 +379,13 @@ int main() {
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
     // test_createSymbolTables(grammar_file, source_file);
+<<<<<<< HEAD
     test_semanticCheck(grammar_file, source_file);
+=======
+    // test_semanticCheck(grammar_file, source_file);
+>>>>>>> codeGen: Float operations finished
     // test_intermediateCodeGeneration(grammar_file, source_file);
-    // test_CodeGeneration(grammar_file, source_file);
+    test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }

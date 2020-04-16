@@ -19,6 +19,8 @@ char reg_al[] = "AL";
 char reg_bl[] = "BL";
 char reg_cl[] = "CL";
 
+char tmp_float_var1[] = "float_temp1";
+char tmp_float_var2[] = "float_temp2";
 /* Global number for labels used */
 int rel_op_label_no = 0;
 /* Utility functions */
@@ -128,15 +130,21 @@ void cgLoadINT(char *instr_list, char *reg, ICAddr *ic_addr) {
 }
 
 
-void cgLoadREAL(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char op[50];
-  char addr[50];
-
-  strcpy(op, "MOVAPS");
-  cgICAddr(instr_list, addr, ic_addr);  
-  instrTwoOperand(instr_list, op, reg, addr);
+void cgRealOneOp(char *instr_list, char *op, char *type, char *addr) { // FLD dword[tmp1]
+  char rhs[50];
+  sprintf(rhs,"%s[%s]",type,addr);
+  instrOneOperand(instr_list, op, rhs);
 }
 
+void cgLoadRealConstIntoTmp(char *instr_list, char *type, char *tmp_var, ICAddr *ic_addr){ // mov dword[tmp1] , __float32__(23.0)
+  char op[] = "MOV";
+  char addr1[30];
+  char addr2[30];
+
+  sprintf(addr1,"%s[%s]",type,tmp_var);
+  sprintf(addr2, "__float32__(%f)", ic_addr->value.rnum);
+  instrTwoOperand(instr_list, op, addr1, addr2);
+}
 
 void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
   char asm_instr[50];
@@ -148,16 +156,6 @@ void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) {
   // strcat(instr_list, asm_instr);
 }
 
-
-void cgStoreREAL(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char asm_instr[50];
-  char addr[50];
-  
-  strcpy(asm_instr, "MOVAPS");
-  cgICAddr(instr_list, addr, ic_addr);
-  instrTwoOperand(instr_list, asm_instr, addr, reg);
-  // strcat(instr_list, asm_instr);
-}
 
 /* Actual functions for populating asm code */
 
@@ -187,27 +185,61 @@ void cgADD_SUB_INT(ICInstr *ic_instr) {
 }
 
 
-void cgADD_SUB_REAL(ICInstr *ic_instr) {
+void cgArithmetic_REAL(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
+  char addr1[20];
+  char type1[20];
+  char addr2[20];
+  char type2[20];
+  char addr3[20];
   char op[10] = "";
 
-  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
-  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
+  // num1
+  if((&(ic_instr->addr1))->type == RNUM){
+    cgLoadRealConstIntoTmp(instr_list, "dword", tmp_float_var1, &(ic_instr->addr1));
+    sprintf(addr1, "%s", tmp_float_var1);
+    strcpy(type1,"dword");
+  }
+  else{
+    sprintf(addr1, "%s", (char*)(&(ic_instr->addr1))->value.symbol);
+    strcpy(type1, "qword");
+  }
+  // num 2
+  if((&(ic_instr->addr2))->type == RNUM){
+    cgLoadRealConstIntoTmp(instr_list, "dword", tmp_float_var2, &(ic_instr->addr2));
+    sprintf(addr2, "%s", tmp_float_var2);
+    strcpy(type2,"dword");
+  }
+  else{
+    sprintf(addr2, "%s", (char*)(&(ic_instr->addr2))->value.symbol);
+    strcpy(type2, "qword");
+  }
   
+  //now to load first number into float stack -eg. FLD dword[tmp1]
+  cgRealOneOp(instr_list,"FLD",type1,addr1);
+
   switch (ic_instr->op) {
   case icADD_REAL:
-    strcpy(op, "ADDPS");
-    instrTwoOperand(instr_list, op, reg_xmm0, reg_xmm1);
+    strcpy(op, "FADD");
     break;
   case icSUB_REAL:
-    strcpy(op, "SUBPS");
-    instrTwoOperand(instr_list, op, reg_xmm0, reg_xmm1);
+    strcpy(op, "FSUB");
+    break;
+  case icMUL_REAL:
+    strcpy(op, "FMUL");
+    break;
+  case icDIV_REAL:
+    strcpy(op, "FDIV");
     break;
   default:
     printf("Error: Invalid Integer Operation\n");
   }
 
-  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
+  // now, apply operation with the second number on the first number
+  cgRealOneOp(instr_list,op,type2,addr2);
+  // finally to store it in addr3 variable
+  sprintf(addr3, "%s", (char *)(&(ic_instr->addr3))->value.symbol);
+  cgRealOneOp(instr_list,"FSTP","qword",addr3);
 
   printf("%s", instr_list);
 }
@@ -245,30 +277,30 @@ void cgDIV_INT(ICInstr *ic_instr){
 }
 
 
-void cgMUL_REAL(ICInstr *ic_instr){
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+// void cgMUL_REAL(ICInstr *ic_instr){
+//   char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
 
-  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
-  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
+//   cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
+//   cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
 
-  instrTwoOperand(instr_list, "MULPS", reg_xmm0 , reg_xmm1);
-  // result in reg_xmm0
-  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
-  printf("%s", instr_list);
-}
+//   instrTwoOperand(instr_list, "MULPS", reg_xmm0 , reg_xmm1);
+//   // result in reg_xmm0
+//   cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
+//   printf("%s", instr_list);
+// }
 
 
-void cgDIV_REAL(ICInstr *ic_instr){
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+// void cgDIV_REAL(ICInstr *ic_instr){
+//   char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
 
-  cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
-  cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
+//   cgLoadREAL(instr_list, reg_xmm0, &(ic_instr->addr1));
+//   cgLoadREAL(instr_list, reg_xmm1, &(ic_instr->addr2));
 
-  instrTwoOperand(instr_list, "DIVPS", reg_xmm0, reg_xmm1);
-  // result in reg_xmm0
-  cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
-  printf("%s", instr_list);
-}
+//   instrTwoOperand(instr_list, "DIVPS", reg_xmm0, reg_xmm1);
+//   // result in reg_xmm0
+//   cgStoreREAL(instr_list, reg_xmm0, &(ic_instr->addr3));
+//   printf("%s", instr_list);
+// }
 
 
 void cgINC(ICInstr *ic_instr) {
@@ -429,6 +461,12 @@ void cgJUMP_NZ_Z(ICInstr *ic_instr){
   printf("%s", instr_list);
 }
 
+void print(ICInstr *ic_instr){
+  //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
+  
+
+}
+
 //for testing
 
 void printInstrCG(ICInstr *ic_instr){
@@ -439,18 +477,14 @@ void printInstrCG(ICInstr *ic_instr){
       break;
     case icADD_REAL:
     case icSUB_REAL:
-      cgADD_SUB_INT(ic_instr);
+    case icMUL_REAL:
+    case icDIV_REAL:
+      cgArithmetic_REAL(ic_instr);
       break;
     case icMUL_INT:
       cgMUL_INT(ic_instr);
       break;
-    case icMUL_REAL:
-      cgMUL_REAL(ic_instr);
-      break;
     case icDIV_INT:
-      cgDIV_INT(ic_instr);
-      break;
-    case icDIV_REAL:
       cgDIV_INT(ic_instr);
       break;
     case icINC:

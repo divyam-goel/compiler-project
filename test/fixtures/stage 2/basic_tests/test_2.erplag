@@ -2,11 +2,11 @@
 start
     declare x, y, z: integer;
     declare u, v, w: boolean;
+    declare a ,b, c: real;
     declare arr: array[1..5] of integer;
 
     ** lvalue ID Stmt **
     x := 10 + 20;
-
     ** lvalue ARR Stmt **
     ** arr[3] := 5; **
 
@@ -15,6 +15,7 @@ start
     z := x - y;
     z := x * y;
     z := x / y;
+
 
     ** basic arithmetic expressions using arrays **
     ** z := arr[1] + y;
@@ -43,5 +44,17 @@ start
     z := x * y * z;
     z := x * y + x / y;
     z := z / (x * y); **
+
+    ** relational operations **
+    ** w := x >= y; **
+
+    ** Float expressions **
+    a := b + c;
+    a := b - c;
+    a := b * c;
+    a := b / c;
+    a := b / 0.03;
+
+    
 
 end
