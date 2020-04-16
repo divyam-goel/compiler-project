@@ -44,9 +44,4 @@ start
     z := x * y + x / y;
     z := z / (x * y); **
 
-    ** relational operations **
-    ** w := x >= y; **
-
-    
-
 end
