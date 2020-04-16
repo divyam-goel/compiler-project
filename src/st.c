@@ -10,8 +10,8 @@ char *module_redecleration_error_message = "Line %d: (Semantic Error) Redeclarat
 (originally declared on line number %d)\n";
 char *module_redefinition_error_message = "Line %d: (Semantic Error) Redefintion of module \"%s\" on line number %d \
 (originally defined on line number %d)\n";
-char *module_missing_declaration_error_message = "Line %d: (Semantic Error) Module \"%s\" is being defined on line \
-number %d but it has not been declared.\n";
+char *module_declared_and_defined_before_call_error_message = "Line %d: (Semantic Error) Module \"%s\" can't be declared \
+and defined before it has been called.\n";
 char *variable_redecleration_error_message = "Line %d: (Semantic Error) Redeclaration of variable \"%s\" on line number %d \
 (originally declared on line number %d)\n";
 char *variable_undeclared_error_message = "Line %d: (Semantic Error) Variable \"%s\" used on line number %d has not been \
@@ -19,7 +19,7 @@ declared.\n";
 char *incorrectly_used_as_array_error_message = "Line %d: (Semantic Error) Variable \"%s\" is declared on line %d, but not \
 as an array. On line number %d it is being used as an array.\n";
 char *module_undeclared_error_message = "Line %d: (Semantic Error) Module \"%s\" used on line number %d has not been \
-declared.\n";
+declared or defined.\n";
 char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
 may be detected after resolving the above).\n";
 char *invalid_datatype_error_message = "%d is not a valid datatype and does not have a memory requirement value.\n";
@@ -36,9 +36,9 @@ generateSymbolTables ()
 {
   global_symbol_table = newSymbolTable(NULL, "Global", NULL);
   stAddModuleDeclerations(AST.ptr1);
-  stAddModuleDefinitions(AST.ptr2, false);
+  stAddModuleDefinitions(AST.ptr2);
   stAddDriverModuleDefinition(AST.ptr3);
-  stAddModuleDefinitions(AST.ptr4, true);
+  stAddModuleDefinitions(AST.ptr4);
   if (st_debug_mode)
     {
       fprintf(stdout, "Global symbol table after generation of symbol tables:\n");
@@ -102,7 +102,7 @@ stAddModuleDeclerations (struct ModuleDeclarationNode *declaration_ll)
  *                                        already been declared before this definition.
  */
 void
-stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_declaration)
+stAddModuleDefinitions (struct OtherModuleNode *module_ll)
 {
   char *module_name;
   int current_line_no, original_line_no;
@@ -121,36 +121,33 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll, bool requires_prior_d
       if (existing_node)
         {
           existing_module = existing_node->value.module;
-          if (requires_prior_declaration && existing_module.def_line_number == -1)
+          /* If there was this is a re-definition then print an error message
+           * and continue processing but don't add this to the symbol table.
+           * We consider the first definition to be the true definition. */
+          if (existing_module.def_line_number != -1)
             {
-              new_value = stCreateSymbolTableValueForModule(module_name,
-                existing_module.dec_line_number, current_line_no,
-                module->ptr2, module->ptr3);
-              symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, true);
-            }
-          else
-            {
-              original_line_no = existing_node->value.module.dec_line_number;
+              original_line_no = existing_module.def_line_number;
               fprintf(stderr, module_redefinition_error_message, current_line_no,
                       module_name, current_line_no, original_line_no);
               semantic_error_count += 1;
             }
-        }
-       else
-        {
-          if (requires_prior_declaration)
+          /* If the function has been defined before but not called then that's also
+           * a special kind of error (check test case "stage 2/semantic/t8.txt" line
+           * number 130. I didn't make the rules, I'm just following them. The dec
+           * check is kinda redundant. */
+          else if (existing_module.dec_line_number != -1 && !existing_module.called)
             {
-              fprintf(stderr, module_missing_declaration_error_message, current_line_no,
-                      module_name, current_line_no);
+              fprintf(stderr, module_declared_and_defined_before_call_error_message,
+                      current_line_no, module_name);
               semantic_error_count += 1;
             }
-          else
-            {
-              new_value = stCreateSymbolTableValueForModule(module_name,
-                current_line_no, current_line_no, module->ptr2, module->ptr3);
-              symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, false);
-            }
         }
+      /* We can directly add this module to the symbol table. The false in the symbol table
+       * set call will prevent overwriting of an existing definition in the symbol table. */
+      new_value = stCreateSymbolTableValueForModule(module_name,
+        current_line_no, current_line_no, module->ptr2, module->ptr3);
+      symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, false);
+
       /* Even if there's a semantic error, parse it. No harm. */
       module_scope = newSymbolTable(global_symbol_table, module_name, NULL);
       module_scope->is_module_scope = true;
@@ -190,6 +187,7 @@ stCreateSymbolTableValueForModule (char *name, int dec_line_no, int def_line_no,
   strcpy(new_value.module.name, name);
   new_value.module.dec_line_number = dec_line_no;
   new_value.module.def_line_number = def_line_no;
+  new_value.module.called = false;
   new_value.module.inputplist = ipl;
   new_value.module.outputplist = opl;
   return new_value;
@@ -459,6 +457,8 @@ resolveModule (char *module_name)
   st_node = symbolTableGet(global_symbol_table, module_name);
   if (st_node != NULL)
     assert(st_node->value_type == ST_MODULE);
+  else
+    return NULL;
   module = &(st_node->value.module);
   return module;
 }
@@ -597,6 +597,7 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
 {
   int line_number;
   char *module_name;
+  struct ModuleEntry *module;
   struct IdListNode *inputs_ll, *outputs_ll;
   assert(mr_stmt->ptr2->type == IDENTIFIER);
   module_name = mr_stmt->ptr2->value.entry;
@@ -604,11 +605,14 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
   inputs_ll = mr_stmt->ptr3;
   outputs_ll = mr_stmt->ptr1;
 
-  if (resolveModule(module_name) == NULL)
+  module = resolveModule(module_name);
+  if (module == NULL)
     {
       fprintf(stderr, module_undeclared_error_message, line_number, module_name, line_number);
       semantic_error_count += 1;
     }
+  else
+      module->called = true;
   mr_stmt->ptr2->scope = global_symbol_table;
   while (inputs_ll != NULL)
     {

@@ -37,7 +37,7 @@ void printSymbolTable(struct SymbolTable *st);
 
 void generateSymbolTables();
 void stAddModuleDeclerations(struct ModuleDeclarationNode *declaration_ll);
-void stAddModuleDefinitions(struct OtherModuleNode *module_ll, bool requires_prior_declaration);
+void stAddModuleDefinitions(struct OtherModuleNode *module_ll);
 union SymbolTableValue stCreateSymbolTableValueForModule(
   char *name, int dec_line_no, int def_line_no,
   struct InputPlistNode *ipl, struct OutputPlistNode *opl);
