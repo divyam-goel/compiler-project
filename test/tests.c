@@ -359,7 +359,7 @@ void test_CodeGeneration(char *grammar_file, char *source_file) {
     test_intermediateCodeGeneration(grammar_file, source_file);
     
     printf("Generating Intermediate Code ...\n\n");    
-    printCodeGen(start_global_ic_instr);
+    generateASMCode(start_global_ic_instr);
 }
 
 
@@ -368,7 +368,8 @@ int main() {
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/semantic/t9.txt";
+    // char source_file[] = "./test/fixtures/stage 2/semantic/t9.txt";
+    char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
     // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_2.erplag";
     // test_removeComments();
     // test_getStream(source_file);
@@ -378,10 +379,10 @@ int main() {
     // test_parseInputSourceCode(grammar_file, source_file);
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    test_createSymbolTables(grammar_file, source_file);
+    // test_createSymbolTables(grammar_file, source_file);
     // test_semanticCheck(grammar_file, source_file);
     // test_intermediateCodeGeneration(grammar_file, source_file);
-    // test_CodeGeneration(grammar_file, source_file);
+    test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");
     return 0;
 }
