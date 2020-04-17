@@ -467,7 +467,7 @@ void icAssignmentStatement(struct AssignStmtNode *assignment) {
   printf("\n");
 
   ICInstr *ic_instr = newICInstruction();
-  ic_instr->op = icSTORE;
+  ic_instr->op = icMOV;
   ic_instr->addr1 = assignment->ptr2->addr;
   ic_instr->addr3 = assignment->ptr1->addr;
 
@@ -555,7 +555,7 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration) {
   ic_instr = newICInstruction();
   ic_instr->addr1 = for_iteration->ptr2->ptr1->addr;
   ic_instr->addr3 = for_iteration->ptr1->addr;
-  ic_instr->op = icSTORE;
+  ic_instr->op = icMOV;
   global_ic_instr->next = ic_instr;
   global_ic_instr = ic_instr;
   
@@ -821,7 +821,7 @@ void printICInstruction(ICInstr *ic_instr) {
     // case icLOAD:
     //   printf("LOAD\t");
     //   break;
-    case icSTORE:
+    case icMOV:
       printf("STORE\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);

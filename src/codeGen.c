@@ -1,6 +1,6 @@
 #include "codeGen.h"
 
-char *output_file = "output/main_asm.asm";
+char *output_file = "output/code.asm";
 
 char reg_eax[] = "EAX";
 char reg_ebx[] = "EBX";
@@ -23,29 +23,45 @@ char reg_cl[] = "cl";
 
 char tmp_float_var1[] = "float_temp1";
 char tmp_float_var2[] = "float_temp2";
+
 /* Global number for labels used */
 int rel_op_label_no = 0;
+
+
 /* Utility functions */
 
-void insertVarFloat(char *tmp_var, char *name, char *type, float value)
-{
+void insertVarFloat(char *tmp_var, char *name, char *type, float value) {
   sprintf(tmp_var, "\t%s:\t%s\t%f\n", name, type, value);
 }
-void insertVarInt(char *tmp_var, char *name, char *type, int value)
-{
+
+
+void insertVarInt(char *tmp_var, char *name, char *type, int value) {
   sprintf(tmp_var, "\t%s:\t%s\t%d\n", name, type, value);
 }
 
-void insert_fmt(char *tmp_var, char *name, char *per_val)
-{
+
+void insert_fmt(char *tmp_var, char *name, char *per_val) {
   sprintf(tmp_var, "\t%s:\tdb\t\"Output: %s\", 10, 0\n", name, per_val);
 }
-void populateASMdata(char *output_file){
+
+
+void initializeASMOutputFile(char *output_file){
   char data_list[400];
   char tmp_var[50];
   printf("\nWriting assembled code to: %s\n",output_file);
-  strcpy(data_list,"extern printf\n");
+
+  /* initialize variables */
+  strcpy(data_list, "");
+
+  /* directives */
+  strcat(data_list, "global main\n");
+  strcat(data_list,"extern printf\n");
+  strcat(data_list,"\n");
+
+  /* introduce DATA section */
   strcat(data_list,"SECTION .data\n");
+  
+  /* populate data section */
   insertVarFloat(tmp_var,"float_temp1","dq",0.0);
   strcat(data_list, tmp_var);
   insertVarFloat(tmp_var,"float_temp2", "dq", 0.0);
@@ -58,16 +74,23 @@ void populateASMdata(char *output_file){
   strcat(data_list, tmp_var);
   insert_fmt(tmp_var,"print_fmt_true","true");
   strcat(data_list, tmp_var);
+  strcat(data_list,"\n");
+  
+  /* introduce TEXT section */
   strcat(data_list, "SECTION .text\n");
-  strcat(data_list, "\tglobal main\n");
+  strcat(data_list,"\n");
+  
+  /* label for MAIN */
   strcat(data_list,"main:\n");
-  //add to file
+  
+  /* write to output file */
   FILE *fptr = fopen(output_file,"w");
   fputs(data_list,fptr);
   fclose(fptr);
 }
 
-void appendData(char *data){
+
+void writeInstructionToOutput(char *data){
   FILE *fptr = fopen(output_file,"a");
   char instr[MAX_SIZE_INSTR];
   strcpy(instr,data);
@@ -75,6 +98,7 @@ void appendData(char *data){
   fputs(instr,fptr);
   fclose(fptr);
 }
+
 
 void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   char op[10];
@@ -112,16 +136,18 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   }
 }
 
-void assignRelOpLabel(char *label){
-  sprintf(label,"RelOpL%d",rel_op_label_no);
+
+void newRelationalOpLabel(char *label){
+  sprintf(label, "RelOpL%d", rel_op_label_no);
   rel_op_label_no++;
 }
 
-void addLabel(char *instr_list, char *label)
-{ 
+
+void addLabel(char *instr_list, char *label) { 
   strcat(instr_list,label);
   strcat(instr_list, ":\n");
 }
+
 
 void loadConstReg(char *instr_list, char *reg1, int num) {
   char asm_instr[30] = "";
@@ -189,6 +215,7 @@ void cgRealOneOp(char *instr_list, char *op, char *type, char *addr) { // FLD dw
   instrOneOperand(instr_list, op, rhs);
 }
 
+
 void cgLoadRealConstIntoTmp(char *instr_list, char *type, char *tmp_var, ICAddr *ic_addr){ // mov dword[tmp1] , __float32__(23.0)
   char op[] = "mov";
   char addr1[30];
@@ -199,6 +226,7 @@ void cgLoadRealConstIntoTmp(char *instr_list, char *type, char *tmp_var, ICAddr 
   instrTwoOperand(instr_list, op, addr1, addr2);
 }
 
+
 void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
   char asm_instr[50];
   char addr[50];
@@ -208,36 +236,97 @@ void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) {
   instrTwoOperand(instr_list, asm_instr, addr, reg);
 }
 
+/* -- end -- */
 
-/* Actual functions for populating asm code */
 
-void cgADD_SUB_INT(ICInstr *ic_instr) {
+/* Functions for populating asm code */
+
+void cgArithmeticOpInteger(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char op[10] = "";
 
-  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
-  cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
-  
   switch (ic_instr->op) {
   case icADD_INT:
     strcpy(op, "add");
-    instrTwoOperand(instr_list, op, reg_ax, reg_bx);
     break;
   case icSUB_INT:
     strcpy(op, "sub");
-    instrTwoOperand(instr_list, op, reg_ax, reg_bx);
     break;
   default:
-    printf("Error: Invalid Integer Operation\n");
+    printf("ERROR!! Invalid Integer Operation: %d\n", ic_instr->op);
   }
 
+  /* instruction: load from mem addr1 to reg AX */
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+
+  /* instruction: load from mem addr2 to reg BX */
+  cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
+  
+  /*
+    instruction: perform arithmetic op between values in regs
+    AX and BX, and store the result in reg AX
+  */
+  instrTwoOperand(instr_list, op, reg_ax, reg_bx);
+
+  /* instruction: store the Quotient from reg AX to mem addr3 */
   cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
   
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
 
-void cgArithmetic_REAL(ICInstr *ic_instr) {
+void cgMultiplyInteger(ICInstr *ic_instr){ //---> so far only int
+  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+
+  /* instruction: load from mem addr1 to reg AX */
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  
+  /* instruction: load from mem addr2 to reg BX */
+  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
+
+  /*
+    instruction: multiply value in reg AX with value in reg BX
+    the result is store in DX:AX, as follow:
+      1. DX stores the upper 16 bytes
+      2. AX stores the lower 16 bytes
+  */
+  instrTwoOperand(instr_list,"imul",reg_ax,reg_cx);
+  
+  /*
+    instruction: store the last 16 bytes of the result
+    from reg AX to mem addr3
+  */
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+
+  writeInstructionToOutput(instr_list);
+}
+
+
+void cgDivisionInteger(ICInstr *ic_instr){
+  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+
+  /* instruction: load from mem addr1 to reg AX */
+  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  
+  /* instruction: load from mem addr2 to reg BX */
+  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
+
+  /*
+    instruction: divide value in reg AX by value in reg BX
+    the result is store in DX:AX, as follow:
+      1. DX stores the remainder
+      2. AX stores the quotient
+  */
+  instrOneOperand(instr_list, "idiv", reg_cx);
+  
+  /* instruction: store the Quotient from reg AX to mem addr3 */
+  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
+ 
+  writeInstructionToOutput(instr_list);
+}
+
+
+void cgArithmeticOpReal(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char addr1[20];
   char type1[20];
@@ -293,197 +382,231 @@ void cgArithmetic_REAL(ICInstr *ic_instr) {
   sprintf(addr3, "%s", (char *)(&(ic_instr->addr3))->value.symbol);
   cgRealOneOp(instr_list,"FSTP","qword",addr3); 
 
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
 
-void cgMUL_INT(ICInstr *ic_instr){ //---> so far only int
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
-
-  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
-  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
-
-  // strcat(instr_list,"imul\tax , cx\n");
-  instrTwoOperand(instr_list,"imul",reg_ax,reg_cx);
-  // The result of this MUL goes into DX:AX- for now we just store AX
-  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
-
-  appendData(instr_list);
-}
-
-
-void cgDIV_INT(ICInstr *ic_instr){
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
-
-  cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
-  cgLoadINT(instr_list, reg_cx, &(ic_instr->addr2));
-
-  // strcat(instr_list, "idiv\tcx\n");
-  instrOneOperand(instr_list,"idiv",reg_cx);
-  // The result of this IDIV goes into DX:AX- AX has the quotient
-  cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
- 
-  appendData(instr_list);
-}
-
-void cgINC(ICInstr *ic_instr) {
+void cgIncrement(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
+
+  /* instruction: load from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+
+  /* instruction: increment value in reg AX and store it in reg AX */
   strcat(instr_list, "inc\tax\n");
+
+  /* instruction: store from reg AX to mem addr1 */
   cgStoreINT(instr_list, reg_ax, &(ic_instr->addr1));
   
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
 
-void cgDEC(ICInstr *ic_instr) {
+void cgDecrement(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
+  
+  /* instruction: load from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  
+  /* instruction: decrement value in reg AX and store it in reg AX */
   strcat(instr_list, "dec\tax\n");
+  
+  /* instruction: store from reg AX to mem addr1 */
   cgStoreINT(instr_list, reg_ax, &(ic_instr->addr1));
   
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
 
-void cgSTOREVALUE_INT(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
+void cgMoveFromMemToMem(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
   char instr_list[MAX_SIZE_INSTR] = "";
 
+  /* instruction: load from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  
+  /* instruction: store from reg AX to mem addr3 */
   cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
 
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
 
 void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
-  // for now, using 1 as truth value, 0 as false value:
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+  char instr_list[MAX_SIZE_INSTR] = "";
   char label1[10];
   char label2[10];
-  char operator[10];
+  char op[10];
 
-  assignRelOpLabel(label1);
-  assignRelOpLabel(label2);
+  newRelationalOpLabel(label1);
+  newRelationalOpLabel(label2);
   switch (ic_instr->op){
     case icEQ:
-      strcpy(operator, "je");
+      strcpy(op, "je");
       break;
     case icNE:
-      strcpy(operator, "jne");
+      strcpy(op, "jne");
       break;
     case icLT:
-      strcpy(operator,"jl");
+      strcpy(op,"jl");
       break;
     case icGT:
-      strcpy(operator, "jg");
+      strcpy(op, "jg");
       break;
     case icLE:
-      strcpy(operator, "jle");
+      strcpy(op, "jle");
       break;
     case icGE:
-      strcpy(operator, "jge");
+      strcpy(op, "jge");
       break;
     default:
-      strcpy(operator, "BLAH1");
+      strcpy(op, "err");
       break;
   } 
+  
+  /* instruction: load first operand from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
+  
+  /* instruction: load second operand from mem addr2 to reg BX */
   cgLoadINT(instr_list, reg_bx, &(ic_instr->addr2));
 
-  instrTwoOperand(instr_list,"cmp",reg_ax,reg_bx);
-  //instr eg -> "JLE L1"
-  instrOneOperand(instr_list,operator,label1); 
-  //this runs if above condition isnt true
+  /* instruction: compare values in regs AX and BX */
+  instrTwoOperand(instr_list, "cmp", reg_ax, reg_bx);
+  
+  /* instruction: perform jump operation w.r.t relational op */
+  instrOneOperand(instr_list, op, label1); 
+  
+  /*
+    False Case:
+    if the result of above relational comparison is false,
+    then execute:
+      1. instruction: store value false (0x00) in reg CL
+      2. instruction: jump to label2 (end of set of relational instrutions)
+  */
   instrTwoOperand(instr_list, "mov", reg_cl, "0x00"); //false
   instrOneOperand(instr_list, "jmp", label2); //jump to label2
 
-  addLabel(instr_list,label1); //true => it comes here
-  instrTwoOperand(instr_list, "mov", reg_cl, "0x11"); //true
+  /*
+    True Case:
+    if the result of above relational comparison is true,
+    then jump to label1, and execute:
+      1. instruction: set label for value for label1
+      2. instruction: store value true (0x11) in reg CL
+  */
+  addLabel(instr_list, label1);
+  instrTwoOperand(instr_list, "mov", reg_cl, "0x11");
 
-  addLabel(instr_list,label2); // if false, the other condition jumps here
-  // store value in addr3
+  /* instruction: set label for value of label2*/
+  addLabel(instr_list,label2);
+  
+  /* instruction: store value from reg CL to mem addr3 */
   cgStoreINT(instr_list, reg_cl, &(ic_instr->addr3));
   
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
+
 
 void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
   char instr_list[MAX_SIZE_INSTR] = "";
   char op[10] = "";
 
-  //assuming that booleans are a byte long
+  switch (ic_instr->op){
+    case icAND:
+      strcpy(op, "and");
+      break;
+    case icOR:
+      strcpy(op, "or");
+      break;
+    default:
+      printf("ERROR!! Invalid Logical Operation: %d\n", ic_instr->op);
+      strcpy(op, "err");
+  }
+
+  /* instruction: load first operand from mem addr1 to reg AL */
   cgLoadINT(instr_list, reg_al, &(ic_instr->addr1));
+  
+  /* instruction: load second operand from mem addr2 to reg BL */
   cgLoadINT(instr_list, reg_bl, &(ic_instr->addr2));
 
-  switch (ic_instr->op){
-  case icAND:
-    strcpy(op, "and");
-    instrTwoOperand(instr_list, op, reg_al, reg_bl);
-    break;
-  case icOR:
-    strcpy(op, "or");
-    instrTwoOperand(instr_list, op, reg_al, reg_bl);
-    break;
-  default:
-    printf("Error: Invalid Integer Operation\n");
-  }
-  //store result in reg_al to memory
+  /*
+    instruction: perform logical operation AND or OR
+    between regs AL and BL, and store the result in AL
+  */
+  instrTwoOperand(instr_list, op, reg_al, reg_bl);
+  
+  /* instruction: store the value from reg AL to mem addr3  */
   cgStoreINT(instr_list, reg_al, &(ic_instr->addr3));
 
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
-void cgUNARY(ICInstr *ic_instr) {
+
+void cgUnaryOp(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char op[10] = "";
 
-  // we take the positive or negative of addr1 and pass it to addr3
+  /*
+    if op is icPLUS then do nothing as PLUS
+    has NO effect on a value
+  */
+  if (ic_instr->op == icPLUS)
+    return;
+
+  /* instruction: load the value of mem addr1 in reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
 
-  switch (ic_instr->op){
-  case icPLUS:
-    break;
-  case icMINUS:
-    strcpy(op, "neg");
-    instrOneOperand(instr_list, op, reg_ax);
-    break;
-  default:
-    printf("Error: Invalid Unary Op\n");
-  }
-  //store result in reg_al to memory
+  /* instruction: negate the value in reg AX using unary minus */
+  strcpy(op, "neg");
+  instrOneOperand(instr_list, op, reg_ax);
+
+  /* instruction: store the value of reg AX in mem addr3 */
   cgStoreINT(instr_list, reg_ax, &(ic_instr->addr3));
  
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
-void cgJUMP(ICInstr *ic_instr){
+
+void cgJumpUnconditional(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
   char label[50];
+  
+  /* intialize label with the jump label value */
   cgICAddr(instr_list, label, &(ic_instr->addr1));
+  
+  /* instruction: jump to the label (unconditionally) */
   instrOneOperand(instr_list,"jmp",label);
  
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
 
-void cgJUMP_NZ_Z(ICInstr *ic_instr){
+
+void cgJumpConditional(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
   char instr[10];
   char label[20];
-  cgICAddr(instr_list, label, &(ic_instr->addr2)); //label
+  
+  /* intialize label with the jump label value */
+  cgICAddr(instr_list, label, &(ic_instr->addr2));
 
+  /* instruction: load test value in reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
-  instrTwoOperand(instr_list,"cmp",reg_ax,"0");
-  if(ic_instr->op == icJUMPZ){
-    strcpy(instr,"je");
-  }
-  else{
+  
+  /* instruction: compare the test value with 0 */
+  instrTwoOperand(instr_list, "cmp", reg_ax, "0");
+  
+  /*
+    instruction: jump to the label
+      1. if test value IS 0 (if 'je')
+      2. if test value is NOT 0 (if 'jne')
+  */
+  if(ic_instr->op == icJUMPZ)
+    strcpy(instr, "je");
+  else
     strcpy(instr, "jne");
-  }
-  instrOneOperand(instr_list,instr,label);
+  instrOneOperand(instr_list, instr, label);
  
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
+
 
 void print_var(ICInstr *ic_instr){
   //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
@@ -532,46 +655,43 @@ void print_var(ICInstr *ic_instr){
   }
   instrOneOperand(instr_list, "pop", "rbp");
 
-  appendData(instr_list);
+  writeInstructionToOutput(instr_list);
 }
+
 
 void cgLabel(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
-  ICAddr *a = &(ic_instr->addr1);
-  char *label = (char *)(a->value.symbol);
-  addLabel(instr_list,label);
-  appendData(instr_list);
-}
-//for testing
+  char *label;
 
-void printInstrCG(ICInstr *ic_instr){
+  /* intialize variables */
+  label = (char *)(ic_instr->addr1.value.symbol);
+  
+  /* asm code for label */
+  addLabel(instr_list, label);
+
+  writeInstructionToOutput(instr_list);
+}
+
+/* -- end -- */
+
+
+/* Functions for interfacing with ASM Code Generation */
+
+void generateASMInstruction(ICInstr *ic_instr){
   switch (ic_instr->op){
-    case icADD_INT:
-    case icSUB_INT:
-      cgADD_SUB_INT(ic_instr);
+    /* unary op */
+    case icPLUS:
+    case icMINUS:
+      cgUnaryOp(ic_instr);
       break;
-    case icADD_REAL:
-    case icSUB_REAL:
-    case icMUL_REAL:
-    case icDIV_REAL:
-      cgArithmetic_REAL(ic_instr);
-      break;
-    case icMUL_INT:
-      cgMUL_INT(ic_instr);
-      break;
-    case icDIV_INT:
-      cgDIV_INT(ic_instr);
-      break;
-    case icINC:
-      cgINC(ic_instr);
-      break;
-    case icDEC:
-      cgDEC(ic_instr);
-      break;
+    
+    /* logical op */
     case icAND:
     case icOR:
       cgLogicalOp(ic_instr);
       break;
+    
+    /* relational op */
     case icEQ:
     case icNE:
     case icLT:
@@ -580,30 +700,59 @@ void printInstrCG(ICInstr *ic_instr){
     case icGE:
       cgRelationalOp(ic_instr);
       break;
-    case icPLUS:
-    case icMINUS:
-      cgUNARY(ic_instr);
-    // case icCOPY:
-    //   printf("COPY\t");
-    //   break;
-    // case icLOAD:
-    //   printf("LOAD\t");
-    //   break;
-    case icSTORE:
-      cgSTOREVALUE_INT(ic_instr);
+    
+    /* arithmetic op - integer */
+    case icADD_INT:
+    case icSUB_INT:
+      cgArithmeticOpInteger(ic_instr);
       break;
+
+    /* term op - integer */
+    case icMUL_INT:
+      cgMultiplyInteger(ic_instr);
+      break;
+    case icDIV_INT:
+      cgDivisionInteger(ic_instr);
+      break;
+
+    /* arithmetic & term op - real */
+    case icADD_REAL:
+    case icSUB_REAL:
+    case icMUL_REAL:
+    case icDIV_REAL:
+      cgArithmeticOpReal(ic_instr);
+      break;
+
+    /* increment & decrement */
+    case icINC:
+      cgIncrement(ic_instr);
+      break;
+    case icDEC:
+      cgDecrement(ic_instr);
+      break;
+
+    case icMOV:
+      cgMoveFromMemToMem(ic_instr);
+      break;
+
+    /* unconditional jump */
     case icJUMP:
-      cgJUMP(ic_instr);
+      cgJumpUnconditional(ic_instr);
       break;
+
+    /* conditional jump */
     case icJUMPNZ:
     case icJUMPZ:
-      cgJUMP_NZ_Z(ic_instr);
+      cgJumpConditional(ic_instr);
       break;
+
     // case icCALL:
     //   printf("CALL\t\t\t");
     //   break;
+
     case icLABEL:
       cgLabel(ic_instr);
+
       break;
     default:
       break;
@@ -611,13 +760,19 @@ void printInstrCG(ICInstr *ic_instr){
   // printf("\n");
 }
 
-void printCodeGen(ICInstr *ic_instr){
-  populateASMdata(output_file);
-  while (ic_instr != NULL)
-  {
-    printInstrCG(ic_instr);
+
+void generateASMCode(ICInstr *ic_instr){
+  /* write boiler-plate ASM code to output file */
+  initializeASMOutputFile(output_file);
+  
+  /*
+    iterate through intermediate code instructions to
+    generate corresponding asm instructions
+  */
+  while (ic_instr != NULL) {
+    generateASMInstruction(ic_instr);
     ic_instr = ic_instr->next;
   }
 }
 
-
+/* -- end -- */
