@@ -433,9 +433,9 @@ void cgMoveFromMemToMem(ICInstr *ic_instr){ //---> not fully working- indexed el
 
 void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
   char instr_list[MAX_SIZE_INSTR] = "";
-  char label1[10];
-  char label2[10];
-  char op[10];
+  char label1[20];
+  char label2[20];
+  char op[5];
 
   newRelationalOpLabel(label1);
   newRelationalOpLabel(label2);
@@ -607,22 +607,21 @@ void cgJumpConditional(ICInstr *ic_instr){
   writeInstructionToOutput(instr_list);
 }
 
-
-void print_var(ICInstr *ic_instr){
-  //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
-  // also, assumption that the concerned data needed for formats etc. are in data section
-  // needed- print_fmt_int, print_fmt_float, print_fmt_bool_false, print_fmt_bool_true
-  char instr_list[MAX_SIZE_INSTR] = "";
-  ICAddr *ic_addr = &(ic_instr->addr1);
+void print_output_type(char *instr_list, enum terminal type,ICAddr *ic_addr, int is_identifier){
   int num;
   char rhs[20];
   char fmt_smt[25];
-  instrOneOperand(instr_list,"push","rbp");
-  switch (ic_instr->op){
+  char ch_num[20];
+  char float_mem_var[20];
+  switch (type){
     case NUM:
       num = ic_addr->value.num;
-      char ch_num[10];
-      sprintf(ch_num,"%d",num);
+      if(is_identifier == 0){
+        sprintf(ch_num,"%d",num);
+      }
+      else{
+        sprintf(ch_num, "[%s]", "Identifier name"); // ------------->to be done
+      }      
       instrTwoOperand(instr_list,"mov","rdi","print_fmt_int");
       instrTwoOperand(instr_list, "mov", "rsi", ch_num);
       instrTwoOperand(instr_list, "mov", "rax", "0");
@@ -630,10 +629,16 @@ void print_var(ICInstr *ic_instr){
       break;
     case RNUM:
       instrTwoOperand(instr_list, "mov", "rdi", "print_fmt_float");
-      cgLoadRealConstIntoTmp(instr_list, "dword", tmp_float_var1, ic_addr);
-      cgRealOneOp(instr_list,"fld","dword",tmp_float_var1);
-      cgRealOneOp(instr_list, "fstp", "qword", tmp_float_var1);
-      sprintf(rhs,"%s[%s]","qword",tmp_float_var1);
+      if(is_identifier == 0){
+        cgLoadRealConstIntoTmp(instr_list, "dword", tmp_float_var1, ic_addr);
+        cgRealOneOp(instr_list,"fld","dword",tmp_float_var1);
+        cgRealOneOp(instr_list, "fstp", "qword", tmp_float_var1);
+        strcpy(float_mem_var,tmp_float_var1);
+      }
+      else{
+        strcpy(float_mem_var, "Identifier name");
+      }  
+      sprintf(rhs,"qword[%s]",float_mem_var);
       instrTwoOperand(instr_list,"movq","xmm0",rhs);
       instrTwoOperand(instr_list, "mov", "rax", "1");
       instrOneOperand(instr_list, "call", "printf");
@@ -647,11 +652,23 @@ void print_var(ICInstr *ic_instr){
       instrTwoOperand(instr_list, "mov", "rax", "0");
       instrOneOperand(instr_list, "call", "printf");
       break;
-    case IDENTIFIER:
-      /* code */
-      break;
     default:
       break;
+  }
+}
+
+void print_var(ICInstr *ic_instr){
+  //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
+  // also, assumption that the concerned data needed for formats etc. are in data section
+  // needed- print_fmt_int, print_fmt_float, print_fmt_bool_false, print_fmt_bool_true
+  char instr_list[MAX_SIZE_INSTR] = "";
+  ICAddr *ic_addr = &(ic_instr->addr1);
+  instrOneOperand(instr_list,"push","rbp");
+  if(ic_addr->type != IDENTIFIER){
+    print_output_type(instr_list,ic_addr->type,ic_addr,0);
+  }
+  else{
+    print_output_type(instr_list, ic_addr->type, ic_addr, 1); //to be implemented
   }
   instrOneOperand(instr_list, "pop", "rbp");
 
