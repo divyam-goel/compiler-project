@@ -59,8 +59,11 @@ be assigned a value inside the loop body\n";
 char *while_incorrect_expression_type_error_message = "Line %d: (Type Error) Construct 'while' excepts type BOOLEAN \
 for loop expression, found %s\n";
 
-char *semantic_errors_count_message = "\nDetected %d semantic error(s) while checking the input code.\n";
+/* error message: module definition */
+char *module_output_variable_unassigned = "Line %d: (Semantic Error) Parameter in output list is never assigned a \
+value in the module definition\n";
 
+char *semantic_errors_count_message = "\nDetected %d semantic error(s) while checking the input code.\n";
 
 /* utility strings */
 char *integer_str = "INTEGER";
@@ -121,13 +124,17 @@ enum terminal arrayType(struct ArrayNode *array) {
   int index, lower_bound, upper_bound;
   int line_number;
 
+  /* determine array primitive type */
   symbol_table_entry = resolveVariable(array->ptr1->value.entry, array->ptr1->scope);
   if (symbol_table_entry == NULL)
     return EPSILON;
-  
-  /* determine array type, index type and line number of array use */
   array_type = symbol_table_entry->datatype;
+  
+  /* determine index type */
   index_type = leafType(array->ptr2);
+  if (index_type == EPSILON)
+    return EPSILON;
+
   line_number = array->ptr1->line_number;
 
   /* check: data type of array index should be integer */
@@ -158,20 +165,11 @@ enum terminal arrayType(struct ArrayNode *array) {
 }
 
 
-enum terminal attributeType(struct Attribute *attribute) {
-  switch (attribute->type) {
-    case ARRAY_TYPE_NODE:
-      return leafType(attribute->node.arr->ptr1);
-    case LEAF_NODE:
-      return leafType(attribute->node.lea);
-      break;
-    default:
-      printf("Attribute Type %d doesn't have a data type", attribute->type);
-      return EPSILON;
-  }
-}
-
-
+/*
+  utility function to improve reusability for printing
+  the "operator_incorrect_type_error_message", which is
+  needed many times while calculating expression type
+*/
 void operatorIncorrectTypeError(
   int line_number, enum terminal op,
   char *expected_type, enum terminal received_type) {
@@ -186,6 +184,11 @@ void operatorIncorrectTypeError(
 }
 
 
+/*
+  utility function to improve reusability for printing
+  the "operator_incorrect_type_error_message", which is
+  needed many times while calculating expression type
+*/
 void operatorIncompatibleTypesError(
   int line_number, enum terminal op,
   enum terminal left_type, enum terminal right_type) {
@@ -204,16 +207,19 @@ enum terminal logicalExpressionType(struct N7Node *logical_expression) {
   enum terminal left_operand_type, right_operand_type;
   int line_number;
   
+  /* determine left operand type */
   left_operand_type = expressionType(logical_expression->ptr1);
   if (left_operand_type == EPSILON)
     return EPSILON;
 
+  /* determine right operand type */
   right_operand_type = expressionType(logical_expression->ptr2);
   if (right_operand_type == EPSILON)
     return EPSILON;
   
   line_number = logical_expression->line_number;
   
+  /* check: left operand should be of type BOOLEAN */
   if (left_operand_type != BOOLEAN_) {
     operatorIncorrectTypeError(
       line_number, logical_expression->logicalOp,
@@ -221,6 +227,7 @@ enum terminal logicalExpressionType(struct N7Node *logical_expression) {
     return EPSILON;
   }
   
+  /* check: right operand should be of type BOOLEAN */
   if (right_operand_type != BOOLEAN_) {
     operatorIncorrectTypeError(
       line_number, logical_expression->logicalOp,
@@ -236,16 +243,19 @@ enum terminal relationalExpressionType(struct N8Node *relational_expression) {
   enum terminal left_operand_type, right_operand_type;
   int line_number;
   
+  /* determine left operand type */
   left_operand_type = expressionType(relational_expression->ptr1);
   if (left_operand_type == EPSILON)
     return EPSILON;
 
+  /* determine right operand type */
   right_operand_type = expressionType(relational_expression->ptr2);
   if (right_operand_type == EPSILON)
     return EPSILON;
 
   line_number = relational_expression->line_number;
   
+  /* check: left operand should be of type INTEGER or REAL */
   if (left_operand_type != INTEGER && left_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, relational_expression->relationalOp,
@@ -253,6 +263,7 @@ enum terminal relationalExpressionType(struct N8Node *relational_expression) {
     return EPSILON;
   }
   
+  /* check: right operand should be of type INTEGER or REAL */
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, relational_expression->relationalOp,
@@ -270,10 +281,12 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
 
   line_number = arithmetic_expression->line_number;
   
+  /* determine the right operand type */
   right_operand_type = expressionType(arithmetic_expression->ptr2);
   if (right_operand_type == EPSILON)
     return EPSILON;
   
+  /* check: right operand should be of type INTEGER or REAL */
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, arithmetic_expression->op,
@@ -281,11 +294,18 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
     return EPSILON;
   }
   
+  /*
+    if ptr1 of arithmetic expression node points to an orignal 
+    expression, and NOT the previous arithmetic expression node
+    (this is determined by is_first attribute) then perform semantic checks
+  */
   if (arithmetic_expression->is_first) {
+    /* determine the left operand type */
     left_operand_type = expressionType(arithmetic_expression->ptr1);
     if (left_operand_type == EPSILON)
       return EPSILON;
     
+    /* check: left operand should be a INTEGER or REAL */
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, arithmetic_expression->op,
@@ -293,6 +313,7 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
       return EPSILON;
     }
 
+    /* check: left and right operand should have the same types */
     if (left_operand_type != right_operand_type) {
       operatorIncompatibleTypesError(
         line_number, arithmetic_expression->op,
@@ -301,17 +322,27 @@ enum terminal arithmeticExpressionType(struct ArithmeticExprNode *arithmetic_exp
     }
   }
   
+  /*
+    this is the check that will be performed for ALL arithmetic expression
+    nodes unless it's last in the list of arithmetic expression nodes.
+    Here: variables have been interchanged, left operand type should
+    have been right operand type and vice versa
+  */
   if (arithmetic_expression->ptr3->type != NULL_NODE) {
+    /* determine the left operand type */
     left_operand_type = expressionType(arithmetic_expression->ptr3);
     if (left_operand_type == EPSILON)
       return EPSILON;
 
+    /* check: left operand should be a INTEGER or REAL */
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, arithmetic_expression->op,
         integer_or_real_str, left_operand_type);
       return EPSILON;
     }
+    
+    /* check: left and right operand should have the same types */
     if (left_operand_type != right_operand_type) {
       operatorIncompatibleTypesError(
         line_number, arithmetic_expression->op,
@@ -331,10 +362,12 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
 
   line_number = term_expression->line_number;
 
+  /* determine right operand type */
   right_operand_type = expressionType(term_expression->ptr2);
   if (right_operand_type == EPSILON)
     return EPSILON;
   
+  /* check: right operand should be an INTEGER or REAL */
   if (right_operand_type != INTEGER && right_operand_type != REAL) {
     operatorIncorrectTypeError(
       line_number, term_expression->op,
@@ -342,17 +375,26 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
     return EPSILON;
   }
 
-  if (term_expression->is_first) {
+  /*
+    if ptr1 of term expression node points to an orignal 
+    expression, and NOT the previous term expression node
+    (this is determined by is_first attribute) then perform semantic checks
+  */
+if (term_expression->is_first) {
+    /* determine the left operand type */
     left_operand_type = expressionType(term_expression->ptr1);
     if (left_operand_type == EPSILON)
       return EPSILON;
 
+    /* check: left operand should be a INTEGER or REAL */
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, term_expression->op,
         integer_or_real_str, left_operand_type);
       return EPSILON;
     }
+    
+    /* check: left and right operand should have the same types */
     if (left_operand_type != right_operand_type) {
       operatorIncompatibleTypesError(
         line_number, term_expression->op,
@@ -361,17 +403,27 @@ enum terminal termExpressionType(struct TermNode *term_expression) {
     }
   }
   
+  /*
+    this is the check that will be performed for ALL term expression
+    nodes unless it's last in the list of term expression nodes.
+    Here: variables have been interchanged, left operand type should
+    have been right operand type and vice versa
+  */
   if (term_expression->ptr3->type != NULL_NODE) {
+    /* determine the left operand type */
     left_operand_type = expressionType(term_expression->ptr3);
     if (left_operand_type == EPSILON)
       return EPSILON;
 
+    /* check: left operand should be a INTEGER or REAL */
     if (left_operand_type != INTEGER && left_operand_type != REAL) {
       operatorIncorrectTypeError(
         line_number, term_expression->op,
         integer_or_real_str, left_operand_type);
       return EPSILON;
     }
+    
+    /* check: left and right operand should have the same types */
     if (left_operand_type != right_operand_type) {
       operatorIncompatibleTypesError(
         line_number, term_expression->op,
@@ -472,21 +524,26 @@ void assignmentTypeChecker(struct AssignStmtNode *assignment_node) {
   struct Attribute *rhs_expression;
   struct ArrayNode array_node;
   int line_number;
-
-  /* determine data type of LHS */
-  lhs_type = leafType(assignment_node->ptr1);
     
-  /* determine data type of RHS */
+  /* determine data type of LHS & RHS */
   if (assignment_node->ptr2->type == LVALUE_ID_NODE) {
+    lhs_type = leafType(assignment_node->ptr1);
     rhs_expression = assignment_node->ptr2->node.lva_id->ptr1;
   }
   else {
+    /*
+      create a new array node to determine the type of
+      array element in LHS
+    */
     array_node.ptr1 = assignment_node->ptr1;
     array_node.ptr2 = assignment_node->ptr2->node.lva_arr->ptr1;
     lhs_type = arrayType(&array_node);
     rhs_expression = assignment_node->ptr2->node.lva_arr->ptr2;
   }
   rhs_type = expressionType(rhs_expression);
+
+  if (lhs_type == EPSILON || rhs_type == EPSILON)
+    return;
 
   /*
     check: if both LHS & RHS are arrays,
@@ -522,6 +579,7 @@ void arrayModuleReuseTypeCheck(
   int upper_bound_formal, upper_bound_actual;
   int line_number;
   
+  /* determine whether the formal parameter array is static or not */
   if (formal_array->ptr2->ptr1->type == IDENTIFIER ||
       formal_array->ptr2->ptr1->type == IDENTIFIER) {
     is_static_formal = false;
@@ -534,12 +592,27 @@ void arrayModuleReuseTypeCheck(
   if (st_entry_actual == NULL)
     return;
   
+  /* check: actual parameter should be an array */
+  if (!st_entry_actual->isArray) {
+    data_type_formal = ARRAY;
+    data_type_actual = st_entry_actual->datatype;
+    line_number = actual_array->line_number;
+    fprintf(stderr, module_incorrect_input_type,
+            line_number,
+            terminalStringRepresentations[data_type_formal],
+            terminalStringRepresentations[data_type_actual]);
+    semantic_error_count += 1;
+    return;
+  }
+  
   /* proceed further with semantic checks only if both arrays are static */
   if (!is_static_formal || !(st_entry_actual->isStatic))
     return;
 
   /* determine lower & upper bound, and data type of LHS */
   data_type_formal = leafType(formal_array->ptr1);
+  if (data_type_formal == EPSILON)
+    return;
   lower_bound_formal = formal_array->ptr2->ptr1->value.num;
   upper_bound_formal = formal_array->ptr2->ptr2->value.num;
 
@@ -571,28 +644,32 @@ void arrayModuleReuseTypeCheck(
 
 void inputModuleReuseTypeCheck(
   struct InputPlistNode *formal_input,
-  struct IdListNode *actual_input) {
+  struct IdListNode *actual_input,
+  int line_number) {
   
   enum terminal formal_input_type, actual_input_type;
-  int line_number;
+  
+  line_number = actual_input->ptr1->line_number;
 
   while (formal_input != NULL && actual_input != NULL) {
     /*
-      (if formal input is a array)
-      check: formal and actual inputs should have the same array types
-      (i.e. lower & upper bound and base data type)
+      perform semantic checks based on whether the expected
+      input parameter is an array or not
     */
     if (formal_input->ptr2->type == ARRAY_TYPE_NODE) {
+      /* check: formal and actual inputs should have the same array types */
       arrayModuleReuseTypeCheck(
         formal_input->ptr2->node.arr_typ,
         actual_input->ptr1);
     }
-
-    /* check: formal and actual inputs have the same base data types */
     else {
+      /* determine formal & actual input variable types */
       formal_input_type = leafType(formal_input->ptr2->node.lea);
       actual_input_type = leafType(actual_input->ptr1);
+      if (formal_input_type == EPSILON || actual_input_type == EPSILON)
+        continue;
       
+      /* check: formal and actual inputs have the same base data types */
       if (formal_input_type != actual_input_type) {
         line_number = actual_input->ptr1->line_number;
         fprintf(stderr, module_incorrect_input_type,
@@ -621,17 +698,18 @@ void inputModuleReuseTypeCheck(
 
 void outputModuleReuseTypeCheck(
   struct OutputPlistNode *formal_output,
-  struct IdListNode *actual_output) {
+  struct IdListNode *actual_output,
+  int line_number) {
   
   enum terminal formal_output_type, actual_output_type;
-  int line_number;
-
-  line_number = actual_output->ptr1->line_number;
 
   while (formal_output != NULL && actual_output != NULL) {
     /* determine formal and actual output parameter types */
     formal_output_type = leafType(formal_output->ptr2->node.lea);
     actual_output_type = leafType(actual_output->ptr1);
+
+    if (formal_output_type == EPSILON || actual_output_type == EPSILON)
+      return;
 
     /* check: formal and actual output parameters should have same type */
     if (formal_output_type != actual_output_type) {
@@ -660,21 +738,25 @@ void outputModuleReuseTypeCheck(
 
 
 void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
-  /* determine symbol table entry for the module */
   struct ModuleEntry *symbol_table_entry;
+  int line_number;
+  
+  /* determine symbol table entry for the module */
   symbol_table_entry = resolveModule(module_reuse_node->ptr2->value.entry);
   if (symbol_table_entry == NULL)
     return;
 
+  line_number = module_reuse_node->ptr2->line_number;
+
   /* semantic checks for formal and actual input parameters */
   inputModuleReuseTypeCheck(
     symbol_table_entry->inputplist,
-    module_reuse_node->ptr3);
+    module_reuse_node->ptr3, line_number);
   
   /* semantic checks for formal and actual output parameters */
   outputModuleReuseTypeCheck(
     symbol_table_entry->outputplist,
-    module_reuse_node->ptr1);
+    module_reuse_node->ptr1, line_number);
 }
 
 
@@ -689,7 +771,14 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
   */
   case_node = conditional_node->ptr2;
   while (case_node != NULL) {
+
+    /* determine the case value type */
     case_type = leafType(case_node->ptr1);
+    if (case_type == EPSILON) {
+      case_node = case_node->ptr3;
+      continue;
+    }
+
     line_number = case_node->ptr1->line_number;
     
     /* check: case value should be integer */
@@ -698,10 +787,9 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
               line_number, integer_str, integer_str,
               terminalStringRepresentations[case_type]);
       semantic_error_count += 1;
-    }
-    
-    /* semantic checks for case body */
+    }  
     else {
+      /* semantic checks for case body */
       statementListSemanticChecker(case_node->ptr2);
     }
     
@@ -737,7 +825,14 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
   */
   case_node = conditional_node->ptr2;
   while (case_node != NULL) {
+    
+    /* determine the case value type */
     case_type = leafType(case_node->ptr1);
+    if (case_type == EPSILON) {
+      case_node = case_node->ptr3;
+      continue;
+    }
+    
     line_number = case_node->ptr1->line_number;
 
     /* check: case value should be boolean */
@@ -747,7 +842,6 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
               terminalStringRepresentations[case_type]);
       semantic_error_count += 1;
     }
-    
     else {
       case_type = case_node->ptr1->type;
       if (case_type == TRUE_) {
@@ -760,7 +854,6 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
     /* semantic checks for case body */
     statementListSemanticChecker(case_node->ptr2);
     }
-    
     
     case_node = case_node->ptr3;
   }
@@ -792,9 +885,14 @@ void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
   enum terminal conditional_type;
   int line_number;
   
+  /* determine conditional statement type from switch variable type*/
   conditional_type = leafType(conditional_node->ptr1);
+  if (conditional_type == EPSILON)
+    return;
+  
   line_number = conditional_node->ptr1->line_number;
   
+  /* perform semantic checks based on conditional type */
   switch (conditional_type) {    
     case INTEGER:
       integerConditionalSemanticCheck(conditional_node);
@@ -823,10 +921,16 @@ bool cmpIdentifier(struct LeafNode *leaf1, struct LeafNode *leaf2) {
     return false;
   }
   
+  /* check: leaf 1 & 2 have the same identifier */
   is_same = strcmp (leaf1->value.entry, leaf2->value.entry);
 
+  /* determine symbol table variable entries for leaf 1 & 2 */
   variable_entry1 = resolveVariable(leaf1->value.entry, leaf1->scope);
   variable_entry2 = resolveVariable(leaf2->value.entry, leaf2->scope);
+  if (variable_entry1 == NULL || variable_entry2 == NULL)
+    return false;
+
+  /* check: leaf 1 & 2 belong to the same scope */
   if (is_same == 0 && variable_entry1 != variable_entry2) {
     is_same = 1;
   }
@@ -867,9 +971,10 @@ void forIterationVariableUpdateCheck(
         break;
       
       case MODULE_REUSE_STMT_NODE:
-        /* check: compare loop var with output parameter list */
+        /* iterate through list of actual output parameters */
         id_list_node = statement_node->ptr1->node.mod_reu_stm->ptr3;
         while (id_list_node != NULL) {
+          /* check: compare loop var with output parameter list */
           is_same = cmpIdentifier(loop_var, id_list_node->ptr1);
           if (is_same) {
             line_number = id_list_node->ptr1->line_number;
@@ -943,9 +1048,14 @@ void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
   int lower_bound, upper_bound;
   int line_number;
 
-  /* check: for loop variable should be of type integer */
+  /* determine loop variable type */
   loop_var_type = leafType(for_iter_node->ptr1);
+  if (loop_var_type == EPSILON)
+    return;
+  
   line_number = for_iter_node->ptr1->line_number;
+  
+  /* check: for loop variable should be of type integer */
   if (loop_var_type != INTEGER) {
     fprintf(stderr, for_incorrect_variable_type_error_message,
             line_number,
@@ -978,9 +1088,13 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
   enum terminal loop_expression_type;
   int line_number;
 
-  /* check: while loop expression should be of type boolean */
+  /* determine loop expression type */
   loop_expression_type = expressionType(while_iter_node->ptr1);
-  if (loop_expression_type != BOOLEAN_ && loop_expression_type != EPSILON) {
+  if (loop_expression_type == EPSILON)
+    return;
+
+  /* check: while loop expression should be of type boolean */
+  if (loop_expression_type != BOOLEAN_) {
     line_number = while_iter_node->starting_line_number;
     fprintf(stderr, while_incorrect_expression_type_error_message,
             line_number,
@@ -1038,23 +1152,186 @@ void statementListSemanticChecker(struct StatementNode *statement_node) {
 }
 
 
-void moduleDefinitionSemanticChecker(struct StatementNode *statement_node) {
-  statementListSemanticChecker(statement_node);
+void variableListUpdateUtility(
+  struct LeafNode *leaf,
+  struct OutputPlistNode *output_list_node,
+  bool *is_updated) {
+
+  bool is_same;
+  int list_index;
+  
+  is_same = false;
+  list_index = 0;
+
+  while (output_list_node != NULL) {
+    is_same = cmpIdentifier(output_list_node->ptr1, leaf);
+    if (is_same) {
+      is_updated[list_index] = true;
+      return;
+    }
+    list_index += 1;
+    output_list_node = output_list_node->ptr3;
+  }
+
 }
 
 
-void modulesSemanticChecker(struct OtherModuleNode *other_module_node) {
+void variableListUpdateSemanticCheck(
+  struct OutputPlistNode *output_variable_list,
+  bool *is_updated,
+  struct StatementNode *statement_node) {
+
+  /*
+    utility variables for aid in semantic checks with
+    different types of statements
+  */
+  struct IdListNode *id_list_node;
+  struct CaseStmtNode *case_node;
+  
+  /*
+    for every statement type that updates the value of a variable
+    iterate through the variable list to determine if the statement
+    assigns a value to an identifier in this list, and if it does,
+    then set the correspoding element in is_updated_array to true 
+  */
+  while (statement_node != NULL) {
+
+    switch (statement_node->ptr1->type) {
+
+      case ASSIGN_STMT_NODE:
+        /* check: compare with lhs */
+        variableListUpdateUtility(
+          statement_node->ptr1->node.agn_stm->ptr1,
+          output_variable_list, is_updated);
+        break;
+      
+      case MODULE_REUSE_STMT_NODE:
+        /* iterate through list of actual output parameters */
+        id_list_node = statement_node->ptr1->node.mod_reu_stm->ptr3;
+        while (id_list_node != NULL) {
+          /* check: compare with output parameter list */
+          variableListUpdateUtility(id_list_node->ptr1, output_variable_list, is_updated);
+          id_list_node = id_list_node->ptr2;
+        }
+        break;
+      
+      case CONDITIONAL_STMT_NODE:
+        /*
+          check: recursively find if a variable in the variable list is assigned
+          a value in the scope of one of the cases
+        */
+        case_node = statement_node->ptr1->node.con_stm->ptr2;
+        while (case_node != NULL) {
+          variableListUpdateSemanticCheck(output_variable_list, is_updated, case_node->ptr2);
+          case_node = case_node->ptr3;
+        }
+        break;
+      
+      case FOR_ITERATIVE_STMT_NODE:
+        /*
+          check: recursively find if a variable in the variable list 
+          is assigned a value in the for loop body
+        */
+        variableListUpdateSemanticCheck(
+          output_variable_list, is_updated,
+          statement_node->ptr1->node.for_ite_stm->ptr3);
+        break;
+      
+      case WHILE_ITERATIVE_STMT_NODE:
+        /*
+          check: recursively find if a variable in the variable list 
+          is assigned a value in the while loop body
+        */
+        variableListUpdateSemanticCheck(
+          output_variable_list, is_updated,
+          statement_node->ptr1->node.whi_ite_stm->ptr2);
+        break;
+      
+      case INPUT_NODE:
+        /* check: compare with input variable */
+        variableListUpdateUtility(
+          statement_node->ptr1->node.inp->ptr1,
+          output_variable_list, is_updated);
+        break;
+      
+      /* following statement types don't assign any variable a value */
+      case PRINT_NODE:
+      case DECLARE_STMT_NODE:
+        break;
+      
+      default:
+        printf("ERROR!! Invalid type for statement node %d\n", statement_node->ptr1->type);
+        break;
+    }
+
+    statement_node = statement_node->ptr2;
+  }
+}
+
+
+void moduleSemanticChecker(struct ModuleNode *module_node) {
+  struct OutputPlistNode *output_list_node;
+  bool *is_updated, semantic_check;
+  int count_param, line_number;
+  
+  /* semantic checks for statements in the module scope */
+  statementListSemanticChecker(module_node->ptr4);
+
+  /*
+    determine the number of output parameters and allocate
+    a boolean array with number of elements equal to former
+  */
+  count_param = 0;
+  output_list_node = module_node->ptr3;
+  while (output_list_node != NULL) {
+    count_param += 1;
+    output_list_node = output_list_node->ptr3;
+  }
+  is_updated = (bool *) malloc(sizeof(bool) * count_param);
+
+  /*
+    check: ALL output parameters are assigned a value inside
+    the module scope
+  */
+  output_list_node = module_node->ptr3;
+  variableListUpdateSemanticCheck(
+    output_list_node,
+    is_updated,
+    module_node->ptr4);
+  
+  semantic_check = true;
+  for (int idx = 0; idx < count_param; idx++) {
+    semantic_check = semantic_check && is_updated[idx];
+  }
+
+  if (!semantic_check) {
+    line_number = module_node->ending_line_number;
+    fprintf(stderr, module_output_variable_unassigned, line_number);
+    semantic_error_count += 1;
+  }
+}
+
+
+void moduleListSemanticChecker(struct OtherModuleNode *other_module_node) {
   while(other_module_node != NULL) {
-    moduleDefinitionSemanticChecker(other_module_node->ptr1->ptr4);
+    moduleSemanticChecker(other_module_node->ptr1);
     other_module_node = other_module_node->ptr2;
   }
 }
 
 
 void semanticChecker(struct ProgramNode *AST) {
-  modulesSemanticChecker(AST->ptr2);
-  moduleDefinitionSemanticChecker(AST->ptr3);
-  modulesSemanticChecker(AST->ptr4);
+  /* semantic checks for modules defined before the driver */
+  moduleListSemanticChecker(AST->ptr2);
+  
+  /* semantic checks for statements in the driver scope*/
+  statementListSemanticChecker(AST->ptr3);
+  
+  /* semantic checks for modules defined after the driver */
+  moduleListSemanticChecker(AST->ptr4);
 
-  fprintf(stdout, semantic_errors_count_message, semantic_error_count);
+  /* print error statistics */
+  if (semantic_error_count > 0) {
+    fprintf(stdout, semantic_errors_count_message, semantic_error_count);
+  }
 }

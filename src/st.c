@@ -48,7 +48,7 @@ generateSymbolTables ()
   if (semantic_error_count > 0)
     {
       fprintf(stderr, semantic_errors_detected_message, semantic_error_count);
-      exit(EXIT_FAILURE);
+      // exit(EXIT_FAILURE);
     }
   global_symbol_table->opening_line_no = AST.starting_line_number;
   global_symbol_table->closing_line_no = AST.ending_line_number;
