@@ -110,6 +110,7 @@ struct SymbolTableNode *symbolTableGet(struct SymbolTable *st,
   
   checkThrowEmptyKeyError(key);
 
+
   curr_node = &(st->nodes[bucket_number]);
   while (curr_node != NULL) {
     if (!symbolTableNodeIsSet(curr_node))

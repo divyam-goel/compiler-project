@@ -11,7 +11,7 @@
 #include "stDef.h"
 #include "astDef.h"
 
-#define POLYNOMIAL_ROLLING_HASH_FACTOR 17
+#define POLYNOMIAL_ROLLING_HASH_FACTOR 7
 #define ST_DEFAULT_HASH_FUNCTION polynomialRollingHashFunction;
 #define DT_BOOL_SIZE 2
 #define DT_INTEGER_SIZE 2
