@@ -264,11 +264,11 @@ void symbolTableCoreTests() {
     /* Test overwritting. */
     printf("Overwrite test:\n");
 
-    struct LeafNode lower_bound, upper_bound;
-    lower_bound.type = NUM;
-    lower_bound.value.num = 1;
-    upper_bound.type = IDENTIFIER;
-    strcpy(upper_bound.value.entry, "v");
+    struct VariableEntry *lower_bound, *upper_bound;
+    lower_bound = stNewTemporaryVariable(st, INTEGER);
+    lower_bound->value.num = 1;
+    upper_bound = stNewTemporaryVariable(st, INTEGER);
+    upper_bound->value.num = 5;
 
     xtype = ST_VARIABLE;
     strcpy(xval.variable.name, "myArr");
@@ -277,8 +277,8 @@ void symbolTableCoreTests() {
     xval.variable.value.num = 7;
     xval.variable.datatype = INTEGER;
     xval.variable.isArray = true;
-    xval.variable.lower_bound = &lower_bound;
-    xval.variable.upper_bound = &upper_bound;
+    xval.variable.lower_bound = lower_bound;
+    xval.variable.upper_bound = upper_bound;
     xval.variable.mem_offset = -1;
     
     assert(symbolTableSet(st, xkey, xval, xtype, true) == true);

@@ -181,7 +181,7 @@ bool symbolTableSet(struct SymbolTable *st,
 
 
 char *getDataTypeString(struct VariableEntry variable) {
-    char lower_bound[32], upper_bound[32];
+    int lower_bound, upper_bound;
     char *datatype_str;
     char *complete_datatype_str = malloc(sizeof(char) * 128);
     /* Free this string on the user end. */
@@ -196,17 +196,9 @@ char *getDataTypeString(struct VariableEntry variable) {
       datatype_str = "???";
     
     if (variable.isArray) {
-      memset(lower_bound, 0, 32);
-      if (variable.lower_bound->type == IDENTIFIER)
-        sprintf(lower_bound, "%s", variable.lower_bound->value.entry);
-      else
-        sprintf(lower_bound, "%d", variable.lower_bound->value.num);
-      memset(upper_bound, 0, 32);
-      if (variable.upper_bound->type == IDENTIFIER)
-        sprintf(upper_bound, "%s", variable.upper_bound->value.entry);
-      else
-        sprintf(upper_bound, "%d", variable.upper_bound->value.num);
-      sprintf(complete_datatype_str, "%s[%s..%s]", datatype_str,
+      lower_bound = variable.lower_bound->value.num;
+      upper_bound = variable.upper_bound->value.num;
+      sprintf(complete_datatype_str, "%s[%d..%d]", datatype_str,
               lower_bound, upper_bound);
     }
     else

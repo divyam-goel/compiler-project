@@ -217,7 +217,8 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   bool is_array, is_static;
   enum terminal basetype;
   int line_number, datasize;
-  struct LeafNode *lower_bound, *upper_bound;
+  struct LeafNode *lower_bound_leaf_node, *upper_bound_leaf_node;
+  struct VariableEntry *lower_bound, *upper_bound;
   struct ModuleEntry *module;
   struct SymbolTable *module_scope;
   
@@ -236,9 +237,11 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
              dtnode->node.arr_typ->ptr2->ptr2->type == IDENTIFIER);
       is_array = true;
       basetype = dtnode->node.arr_typ->ptr1->type;
-      lower_bound = dtnode->node.arr_typ->ptr2->ptr1;
-      upper_bound = dtnode->node.arr_typ->ptr2->ptr2;
-      if (lower_bound->type == IDENTIFIER || upper_bound->type == IDENTIFIER)
+      lower_bound_leaf_node = dtnode->node.arr_typ->ptr2->ptr1;
+      lower_bound = stNewTemporaryVariable(scope, INTEGER);
+      upper_bound_leaf_node = dtnode->node.arr_typ->ptr2->ptr2;
+      upper_bound = stNewTemporaryVariable(scope, INTEGER);
+      if (lower_bound_leaf_node->type == IDENTIFIER || upper_bound_leaf_node->type == IDENTIFIER)
         is_static = false;
       else
         is_static = true;

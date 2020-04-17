@@ -4,6 +4,9 @@
 
 #include "utils.h"
 
+#define IC_MAX_LABEL_LENGTH 255
+#define IC_MAX_LABEL_BUFFER_SIZE 256
+
 typedef enum IntermediateCodeOperation {
   /* arithmetic */
   icADD_INT, icSUB_INT, icMUL_INT, icDIV_INT,
@@ -35,7 +38,7 @@ typedef enum IntermediateCodeOperation {
 typedef struct IntermediateCodeArrayAddress {
   void *var;
   struct IntermediateCodeAddress *idx;
-}ICArrayAddr;
+} ICArrayAddr;
 
 
 typedef union IntermediateCodeAddressUnion {
@@ -49,8 +52,9 @@ typedef union IntermediateCodeAddressUnion {
 
 typedef struct IntermediateCodeAddress {
   enum terminal type;
+  bool is_label;
   ICAddrUnion value;
-}ICAddr;
+} ICAddr;
 
 
 typedef struct IntermediateCodeInstruction {

@@ -18,7 +18,7 @@ void icForIterativeStatement(struct ForIterativeStmtNode *for_iteration);
 void icWhileIterativeStatement(struct WhileIterativeStmtNode *while_iteration);
 void icStatement(struct Attribute *attribute_node);
 void icStatementList(struct StatementNode *statement_node);
-void generateIntermediateCode(struct ProgramNode *AST);
+void generateIntermediateCode();
 
 void printICAddress(ICAddr ic_addr);
 void printICInstruction(ICInstr *ic_instr);
