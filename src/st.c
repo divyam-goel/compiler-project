@@ -243,8 +243,15 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       upper_bound = stNewTemporaryVariable(scope, INTEGER);
       if (lower_bound_leaf_node->type == IDENTIFIER || upper_bound_leaf_node->type == IDENTIFIER)
         is_static = false;
-      else
+      else {
         is_static = true;
+        /* Populate the lower bound and upper bound here itself instead of in the intermediate code.
+         * Yes, this IS a hack. */
+        lower_bound->datatype = NUM;
+        lower_bound->value.num = lower_bound_leaf_node->value.num;
+        upper_bound->datatype = NUM;
+        upper_bound->value.num = upper_bound_leaf_node->value.num;
+      }
       if (scope != NULL)
         {
           dtnode->node.arr_typ->ptr1->scope = scope;
