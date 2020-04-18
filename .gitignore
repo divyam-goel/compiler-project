@@ -9,3 +9,4 @@ test_result_*
 src/.*
 *.gdb*
 .vscode/*
+output/*
