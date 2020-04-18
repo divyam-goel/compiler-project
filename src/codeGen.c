@@ -81,8 +81,12 @@ void initializeASMOutputFile(char *output_file){
   strcat(data_list, "\n");
   
   /* write to output file */
-  FILE *fptr = fopen(output_file,"w");
-  fputs(data_list,fptr);
+  FILE *fptr = fopen(output_file, "w+");
+  if (fptr == NULL) {
+    fprintf(stderr, "Line number %d: Failed to open output file.\n", __LINE__ - 2);
+    exit(-1);
+  }
+  fputs(data_list, fptr);
   fclose(fptr);
 }
 
