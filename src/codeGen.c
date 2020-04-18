@@ -11,10 +11,10 @@ char reg_ebx[] = "EBX";
 char reg_ecx[] = "ECX";
 char reg_edx[] = "EDX";
 
-char reg_ax[] = "ax";
-char reg_bx[] = "bx";
-char reg_cx[] = "cx";
-char reg_dx[] = "dx";
+char reg_ax[] = "rax";
+char reg_bx[] = "rbx";
+char reg_cx[] = "rcx";
+char reg_dx[] = "rdx";
 char reg_r8w[] = "R8W";
 char reg_r9w[] = "R9W";
 
@@ -30,6 +30,7 @@ char tmp_float_var2[] = "float_temp2";
 
 /* Global number for labels used */
 int rel_op_label_no = 0;
+int bool_label_no = 0;
 
 
 /* Utility functions */
@@ -63,33 +64,6 @@ void initializeASMOutputFile(char *output_file){
   strcat(data_list,"extern scanf\n");
   strcat(data_list,"\n");
 
-  /* introduce DATA section */
-  strcat(data_list,"SECTION .data\n");
-  
-  /* populate data section */
-  // insertVarFloat(tmp_var,"float_temp1","dq",0.0);
-  // strcat(data_list, tmp_var);
-  // insertVarFloat(tmp_var,"float_temp2", "dq", 0.0);
-  // strcat(data_list, tmp_var);
-  // insert_fmt(tmp_var,"print_fmt_int","%d");
-  // strcat(data_list, tmp_var);
-  // insert_fmt(tmp_var,"print_fmt_float","%e");
-  // strcat(data_list, tmp_var);
-  // insert_fmt(tmp_var,"print_fmt_false","false");
-  // strcat(data_list, tmp_var);
-  // insert_fmt(tmp_var,"print_fmt_true","true");
-  // strcat(data_list, tmp_var);
-
-  /* format for printing numbers */
-  strcat(data_list, "format_o:\n");
-  strcat(data_list, "\tdb \"%2hu\", 10, 0\n");
-
-  /* format for taking input numbers */
-  strcat(data_list, "format_i:\n");
-  strcat(data_list, "\tdb \"%2hu\", 0\n");
-
-  strcat(data_list,"\n");
-
   /* introduce TEXT section */
   strcat(data_list, "SECTION .text\n");
   strcat(data_list,"\n");
@@ -113,6 +87,61 @@ void initializeASMOutputFile(char *output_file){
 }
 
 
+void writeDataSectionToOutputFile(char *output_file) {
+  char data_list[1000];
+
+  /* initialize variables */
+  strcpy(data_list, "");
+
+  /* introduce DATA section */
+  strcat(data_list,"SECTION .data\n");
+
+  /* constants true and false (booleans) */
+  strcat(data_list, "true:\n");
+  strcat(data_list, "\tdb \"true\", 0\n");
+  strcat(data_list, "false:\n");
+  strcat(data_list, "\tdb \"false\", 0\n");
+
+  /* message & format for printing integer */
+  strcat(data_list, "output_int_msg:\n");
+  strcat(data_list, "\tdb \"Output: %2ld\", 10, 0\n");
+
+  /* message & format for printing real */
+  strcat(data_list, "output_real_msg:\n");
+  strcat(data_list, "\tdb \"Output: %2f\", 10, 0\n");
+
+  /* message & format for printing boolean */
+  strcat(data_list, "output_bool_msg:\n");
+  strcat(data_list, "\tdb \"Output: %s\", 10, 0\n");
+
+  /* message for taking input integer */
+  strcat(data_list, "input_int_msg:\n");
+  strcat(data_list, "\tdb \"Input: Enter an integer value:\", 10, 0\n");
+  /* format for taking input numbers */
+  strcat(data_list, "input_int_format:\n");
+  strcat(data_list, "\tdb \"%2ld\", 0\n");
+
+  /* message for taking input real */
+  strcat(data_list, "input_real_msg:\n");
+  strcat(data_list, "\tdb \"Input: Enter a real value:\", 10, 0\n");
+  /* format for taking input real */
+  strcat(data_list, "input_real_format:\n");
+  strcat(data_list, "\tdb \"%2f\", 0\n");
+
+  /* message for taking input boolean */
+  strcat(data_list, "input_bool_msg:\n");
+  strcat(data_list, "\tdb \"Input: Enter a boolean value:\", 10, 0\n");
+  /* format for taking input booleans */
+  strcat(data_list, "input_bool_format:\n");
+  strcat(data_list, "\tdb \"%2ld\", 0\n");
+
+  /* write to output file */
+  FILE *fptr = fopen(output_file,"a");
+  fputs(data_list, fptr);
+  fclose(fptr);
+}
+
+
 void writeExitToOutputFile(char *output_file) {
   char data_list[400];
   char tmp_var[50];
@@ -131,9 +160,11 @@ void writeExitToOutputFile(char *output_file) {
   strcat(data_list,"\tret\n");
   
    /* write to output file */
-  FILE *fptr = fopen(output_file,"a");
+  FILE *fptr = fopen(output_file, "a");
   fputs(data_list, fptr);
   fclose(fptr);
+
+  writeDataSectionToOutputFile(output_file);
 }
 
 
@@ -151,20 +182,19 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   char op[10];
   
   switch (ic_addr->type) {
-  case NUM:
+  case INTEGER:
     sprintf(addr, "%d", ic_addr->value.num);
     break;
-  case RNUM:
+  case REAL:
     sprintf(addr, "%f", ic_addr->value.rnum);
     break;
   case BOOLEAN_:
     if (ic_addr->value.boolean == true)
-      sprintf(addr, "True");
+      sprintf(addr, "true");
     else
-      sprintf(addr, "False");
+      sprintf(addr, "false");
     break;
   case IDENTIFIER:
-    // sprintf(addr, "[%s]", (char *)ic_addr->value.symbol);
     sprintf(addr, "[rsp + %d]", ((struct VariableEntry *)ic_addr->value.symbol)->mem_offset);
     break;
   case ARRAY:
@@ -187,7 +217,13 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
 
 void newRelationalOpLabel(char *label){
   sprintf(label, "RelOpL%d", rel_op_label_no);
-  rel_op_label_no++;
+  rel_op_label_no += 1;
+}
+
+
+void newBoolLabel(char *label){
+  sprintf(label, "BoolL%d", bool_label_no);
+  bool_label_no += 1;
 }
 
 
@@ -726,23 +762,71 @@ void print_var(ICInstr *ic_instr){
 
 void cgPrint(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
-  char addr[20];
+  char addr[10], op[10], label1[10], label2[10];
+  struct VariableEntry *symbol_entry;
+  enum terminal data_type;
 
-  /* 
-    load the address of the format (i.e. the predefined message
-    with a format specifier for the second argument of printf)
-  */
-  strcat(instr_list, "\tmov rdi, format_o\n");
-
+  if (ic_instr->addr1.type == IDENTIFIER) {
+    symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
+    data_type = symbol_entry->datatype;
+  }
+  else
+    data_type = ic_instr->addr1.type;
+    
 	/*
     load the address of the second argument for printf
     (i.e. what is to be printed)
   */
   cgICAddr(instr_list, addr, &(ic_instr->addr1));
-  strcat(instr_list, "\tmov si, ");
+
+  if (ic_instr->addr1.type == IDENTIFIER && data_type == BOOLEAN_) {
+    /* load the value of bool in rax */
+    strcat(instr_list, "\tmov rax, ");
+    strcat(instr_list, addr);
+    strcat(instr_list, "\n");
+    
+    newBoolLabel(label1);
+    newBoolLabel(label2);
+    
+    strcat(instr_list, "\tcmp rax, 0\n");
+    strcpy(op, "je");
+    instrOneOperand(instr_list, op, label1);
+  
+    strcat(instr_list, "\tmov rax, true\n");
+    strcpy(op, "jmp");
+    instrOneOperand(instr_list, op, label2);
+  
+    addLabel(instr_list, label1);
+    strcat(instr_list, "\tmov rax, false\n");
+  
+    addLabel(instr_list, label2);
+    strcat(instr_list, "\n");
+  
+    strcpy(addr, "rax");
+  }
+
+  /* 
+    load the address of the format (i.e. the predefined message
+    with a format specifier for the second argument of printf)
+  */
+  switch (data_type) {
+    case INTEGER:
+      strcat(instr_list, "\tmov rdi, output_int_msg\n");
+      break;
+    case REAL:
+      strcat(instr_list, "\tmov rdi, output_real_msg\n");
+      break;
+    case BOOLEAN_:
+      strcat(instr_list, "\tmov rdi, output_bool_msg\n");
+      break;
+    default:
+      break;
+  }
+
+  strcat(instr_list, "\tmov rsi, ");
   strcat(instr_list, addr);
   strcat(instr_list, "\n");
-	
+
   /*
     call printf function
     Note: stack should be aligned before calling the function
@@ -756,18 +840,54 @@ void cgPrint(ICInstr *ic_instr) {
 
 void cgInput(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
+  struct VariableEntry *symbol_entry;
   char offset[10];
   char op[10];
 
+  symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
+
+  /* print appropriate message for taking input from user */
+  switch (symbol_entry->datatype) {
+    case INTEGER:
+      strcat(instr_list, "\tmov rdi, input_int_msg\n");
+      break;
+    case REAL:
+      strcat(instr_list, "\tmov rdi, input_real_msg\n");
+      break;
+    case BOOLEAN_:
+      strcat(instr_list, "\tmov rdi, input_bool_msg\n");
+      break;
+    default:
+      break;
+  }
+  strcat(instr_list, "\txor rax, rax\n");
+  strcat(instr_list, "\tcall printf\n");
+  strcat(instr_list, "\n");
+
   /* 
-    load the address of the format (i.e. the predefined message
-    with a format specifier for the second argument of printf)
+    load the address of the format (i.e. the string containing
+    with a format specifier for the input of scanf)
   */
-  strcat(instr_list, "\tmov rdi, format_i\n");
+  switch (symbol_entry->datatype) {
+    case INTEGER:
+      strcat(instr_list, "\tmov rdi, input_int_format\n");
+      break;
+    case REAL:
+      strcat(instr_list, "\tmov rdi, input_real_format\n");
+      break;
+    case BOOLEAN_:
+      strcat(instr_list, "\tmov rdi, input_bool_format\n");
+      break;
+    default:
+      break;
+  }
 
 	/*
-    load the address of the second argument for printf
-    (i.e. what is to be printed)
+    load the address of the where the input for scanf will
+    be stored
+      1. load rsp in rax
+      2. add the mem offset to value in rax => [rsp + mem offset]
+      3. store the value from rax to rsi
   */
   strcpy(op, "mov");
   instrTwoOperand(instr_list, op, reg_rax, reg_rsp);

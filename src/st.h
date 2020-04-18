@@ -13,10 +13,10 @@
 
 #define POLYNOMIAL_ROLLING_HASH_FACTOR 7
 #define ST_DEFAULT_HASH_FUNCTION polynomialRollingHashFunction;
-#define DT_BOOL_SIZE 2
-#define DT_INTEGER_SIZE 2
-#define DT_REAL_SIZE 4
-#define DT_ARRAY_POINTER_SIZE 4
+#define DT_BOOL_SIZE 8
+#define DT_INTEGER_SIZE 8
+#define DT_REAL_SIZE 8
+#define DT_ARRAY_POINTER_SIZE 8
 #define ST_TEMP_VAR_FORMAT "@%.5d"
 
 /* Functions from stCore.c */

@@ -1,6 +1,6 @@
 #include "intCode.h"
 
-#define MAX_SIZE_INSTR 150
+#define MAX_SIZE_INSTR 300
 void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr);
 void addLabel(char *instr_list, char *label);
 void loadConstReg(char *instr_list, char *reg1, int num);

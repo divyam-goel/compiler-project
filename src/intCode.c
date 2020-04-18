@@ -110,12 +110,12 @@ icLeaf (struct LeafNode *leaf)
     {
       case NUM:
         new_ic_representation.value.num = leaf->value.num;
-        new_ic_representation.type = NUM;
+        new_ic_representation.type = INTEGER;
         break;
 
       case RNUM:
         new_ic_representation.value.rnum = leaf->value.rnum;
-        new_ic_representation.type = RNUM;
+        new_ic_representation.type = REAL;
         break;
 
       case TRUE_:
