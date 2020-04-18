@@ -22,7 +22,7 @@ typedef enum IntermediateCodeOperation {
   icPLUS, icMINUS,
 
   /* data */
-  icMOV,
+  icMOV, icPRINT, icGET,
 
   /* control */
   icJUMP, icJUMPZ, icJUMPNZ, icCALL,

@@ -1,0 +1,9 @@
+<<<driver program>>>
+start
+	declare a, b, c:integer;
+	** a:= 5; **
+    get_value(a);
+	b:= 9;
+	c:= a + b;
+    print(c);
+end

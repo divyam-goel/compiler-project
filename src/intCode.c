@@ -90,8 +90,8 @@ void icLeaf(struct LeafNode *leaf) {
       ic_addr.type = BOOLEAN_;
       break;
     case IDENTIFIER:
-      // ic_addr.value.symbol = symbolTableGet(leaf->scope, leaf->value.entry);
-      ic_addr.value.symbol = leaf->value.entry;
+      ic_addr.value.symbol = resolveVariable(leaf->value.entry, leaf->scope);
+      // ic_addr.value.symbol = leaf->value.entry;
       ic_addr.type = IDENTIFIER;
     default:
       break;
@@ -642,6 +642,41 @@ void icWhileIterativeStatement(struct WhileIterativeStmtNode *while_iteration) {
 }
 
 
+void icInputStatement(struct InputNode *input) {
+  ICInstr *ic_instr;
+
+  icLeaf(input->ptr1);
+  if (leafType(input->ptr1) == ARRAY) {
+    // take input for all multiple elements
+  }
+  else {
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = input->ptr1->addr;
+    ic_instr->op = icGET;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+  }
+}
+
+
+void icPrintStatement(struct PrintNode *print) {
+  ICInstr *ic_instr;
+
+  ic_instr = newICInstruction();
+  if (print->ptr1->type == ARRAY_NODE) {
+    icArray(print->ptr1->node.arr);
+    ic_instr->addr1 = print->ptr1->node.arr->addr;
+  }
+  else {
+    icLeaf(print->ptr1->node.lea);
+    ic_instr->addr1 = print->ptr1->node.lea->addr;
+  }
+  ic_instr->op = icPRINT;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+}
+
+
 void icStatement(struct Attribute *attribute_node) {
   switch (attribute_node->type) {
     case ASSIGN_STMT_NODE:
@@ -651,10 +686,10 @@ void icStatement(struct Attribute *attribute_node) {
       // return icModuleReuseStatement(attribute_node->node.mod_reu_stm);
       break;
     case INPUT_NODE:
-      // return icInputStatement(attribute_node->node.inp);
+      return icInputStatement(attribute_node->node.inp);
       break;
     case PRINT_NODE:
-      // return icPrintStatement(attribute_node->node.pri);
+      return icPrintStatement(attribute_node->node.pri);
       break;
     case DECLARE_STMT_NODE:
       break;
@@ -815,17 +850,18 @@ void printICInstruction(ICInstr *ic_instr) {
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
       break;
-    // case icCOPY:
-    //   printf("COPY\t");
-    //   break;
-    // case icLOAD:
-    //   printf("LOAD\t");
-    //   break;
     case icMOV:
-      printf("STORE\t");
+      printf("MOV\t");
       printICAddress(ic_instr->addr3);
       printICAddress(ic_instr->addr1);
-      // cgSTORE(ic_instr);
+      break;
+    case icPRINT:
+      printf("PRINT\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icGET:
+      printf("GET\t");
+      printICAddress(ic_instr->addr1);
       break;
     case icJUMP:
       printf("JUMP\t");

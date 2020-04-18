@@ -2,6 +2,10 @@
 
 char *output_file = "output/code.asm";
 
+char reg_rax[] = "rax";
+char reg_rsp[] = "rsp";
+
+
 char reg_eax[] = "EAX";
 char reg_ebx[] = "EBX";
 char reg_ecx[] = "ECX";
@@ -48,44 +52,87 @@ void insert_fmt(char *tmp_var, char *name, char *per_val) {
 void initializeASMOutputFile(char *output_file){
   char data_list[400];
   char tmp_var[50];
-  printf("\nWriting assembled code to: %s\n",output_file);
-
+  struct ModuleEntry *entry;
+  
   /* initialize variables */
   strcpy(data_list, "");
 
   /* directives */
   strcat(data_list, "global main\n");
   strcat(data_list,"extern printf\n");
+  strcat(data_list,"extern scanf\n");
   strcat(data_list,"\n");
 
   /* introduce DATA section */
   strcat(data_list,"SECTION .data\n");
   
   /* populate data section */
-  insertVarFloat(tmp_var,"float_temp1","dq",0.0);
-  strcat(data_list, tmp_var);
-  insertVarFloat(tmp_var,"float_temp2", "dq", 0.0);
-  strcat(data_list, tmp_var);
-  insert_fmt(tmp_var,"print_fmt_int","%d");
-  strcat(data_list, tmp_var);
-  insert_fmt(tmp_var,"print_fmt_float","%e");
-  strcat(data_list, tmp_var);
-  insert_fmt(tmp_var,"print_fmt_false","false");
-  strcat(data_list, tmp_var);
-  insert_fmt(tmp_var,"print_fmt_true","true");
-  strcat(data_list, tmp_var);
+  // insertVarFloat(tmp_var,"float_temp1","dq",0.0);
+  // strcat(data_list, tmp_var);
+  // insertVarFloat(tmp_var,"float_temp2", "dq", 0.0);
+  // strcat(data_list, tmp_var);
+  // insert_fmt(tmp_var,"print_fmt_int","%d");
+  // strcat(data_list, tmp_var);
+  // insert_fmt(tmp_var,"print_fmt_float","%e");
+  // strcat(data_list, tmp_var);
+  // insert_fmt(tmp_var,"print_fmt_false","false");
+  // strcat(data_list, tmp_var);
+  // insert_fmt(tmp_var,"print_fmt_true","true");
+  // strcat(data_list, tmp_var);
+
+  /* format for printing numbers */
+  strcat(data_list, "format_o:\n");
+  strcat(data_list, "\tdb \"%2hu\", 10, 0\n");
+
+  /* format for taking input numbers */
+  strcat(data_list, "format_i:\n");
+  strcat(data_list, "\tdb \"%2hu\", 0\n");
+
   strcat(data_list,"\n");
-  
+
   /* introduce TEXT section */
   strcat(data_list, "SECTION .text\n");
   strcat(data_list,"\n");
   
   /* label for MAIN */
   strcat(data_list,"main:\n");
+  strcat(data_list,"\tpush rbx\n");
+  strcat(data_list,"\tsub rsp, 32\n");
+  
+  strcpy(tmp_var, "driver");
+  entry = resolveModule(tmp_var);
+  sprintf(tmp_var, "\tsub rsp, %d\n", entry->activation_record_size);
+  strcat(data_list, tmp_var);
+
+  strcat(data_list, "\n");
   
   /* write to output file */
   FILE *fptr = fopen(output_file,"w");
   fputs(data_list,fptr);
+  fclose(fptr);
+}
+
+
+void writeExitToOutputFile(char *output_file) {
+  char data_list[400];
+  char tmp_var[50];
+  struct ModuleEntry *entry;
+
+  /* intiliaze variables */
+  strcpy(data_list, "");
+
+  strcpy(tmp_var, "driver");
+  entry = resolveModule(tmp_var);
+  sprintf(tmp_var, "\tadd rsp, %d\n", entry->activation_record_size);
+  strcat(data_list, tmp_var);
+
+  strcat(data_list,"\tadd rsp, 32\n");
+  strcat(data_list,"\tpop rbx\n");
+  strcat(data_list,"\tret\n");
+  
+   /* write to output file */
+  FILE *fptr = fopen(output_file,"a");
+  fputs(data_list, fptr);
   fclose(fptr);
 }
 
@@ -117,7 +164,8 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
       sprintf(addr, "False");
     break;
   case IDENTIFIER:
-    sprintf(addr, "[%s]", (char *)ic_addr->value.symbol);
+    // sprintf(addr, "[%s]", (char *)ic_addr->value.symbol);
+    sprintf(addr, "[rsp + %d]", ((struct VariableEntry *)ic_addr->value.symbol)->mem_offset);
     break;
   case ARRAY:
     strcpy(op, "mov");
@@ -676,6 +724,73 @@ void print_var(ICInstr *ic_instr){
 }
 
 
+void cgPrint(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[20];
+
+  /* 
+    load the address of the format (i.e. the predefined message
+    with a format specifier for the second argument of printf)
+  */
+  strcat(instr_list, "\tmov rdi, format_o\n");
+
+	/*
+    load the address of the second argument for printf
+    (i.e. what is to be printed)
+  */
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+  strcat(instr_list, "\tmov si, ");
+  strcat(instr_list, addr);
+  strcat(instr_list, "\n");
+	
+  /*
+    call printf function
+    Note: stack should be aligned before calling the function
+  */
+  strcat(instr_list, "\txor rax, rax\n");
+  strcat(instr_list, "\tcall printf\n");
+
+  writeInstructionToOutput(instr_list);
+}
+
+
+void cgInput(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char offset[10];
+  char op[10];
+
+  /* 
+    load the address of the format (i.e. the predefined message
+    with a format specifier for the second argument of printf)
+  */
+  strcat(instr_list, "\tmov rdi, format_i\n");
+
+	/*
+    load the address of the second argument for printf
+    (i.e. what is to be printed)
+  */
+  strcpy(op, "mov");
+  instrTwoOperand(instr_list, op, reg_rax, reg_rsp);
+  
+  strcat(instr_list, "\tadd rax, ");
+  sprintf(offset, "%d",
+    ((struct VariableEntry *)ic_instr->addr1.value.symbol)->mem_offset);
+  strcat(instr_list, offset);
+  strcat(instr_list, "\n");
+  
+  strcat(instr_list, "\tmov rsi, rax\n");
+	
+  /*
+    call printf function
+    Note: stack should be aligned before calling the function
+  */
+  strcat(instr_list, "\txor rax, rax\n");
+  strcat(instr_list, "\tcall scanf\n");
+
+  writeInstructionToOutput(instr_list);
+}
+
+
 void cgLabel(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
   char *label;
@@ -751,6 +866,14 @@ void generateASMInstruction(ICInstr *ic_instr){
     case icMOV:
       cgMoveFromMemToMem(ic_instr);
       break;
+    
+    case icPRINT:
+      cgPrint(ic_instr);
+      break;
+    
+    case icGET:
+      cgInput(ic_instr);
+      break;
 
     /* unconditional jump */
     case icJUMP:
@@ -774,7 +897,6 @@ void generateASMInstruction(ICInstr *ic_instr){
     default:
       break;
   }
-  // printf("\n");
 }
 
 
@@ -786,10 +908,13 @@ void generateASMCode(ICInstr *ic_instr){
     iterate through intermediate code instructions to
     generate corresponding asm instructions
   */
+  ic_instr = ic_instr->next; /* ignore first instruction */
   while (ic_instr != NULL) {
     generateASMInstruction(ic_instr);
     ic_instr = ic_instr->next;
   }
+
+  writeExitToOutputFile(output_file);
 }
 
 /* -- end -- */

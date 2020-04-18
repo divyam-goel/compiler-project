@@ -369,8 +369,8 @@ int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char source_file[] = "./test/fixtures/stage 2/semantic/t9.txt";
-    char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
-    // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_2.erplag";
+    // char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
+    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_cg_1.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
