@@ -5,6 +5,9 @@ extern struct parseTree PT;
 struct ProgramNode AST;
 extern char terminalStringRepresentations[NUM_TERMINALS][16];
 
+int AST_node_number = 0;
+int AST_size_bytes = 0;
+
 int module_start_line_no, module_end_line_no;
 
 /* BEGIN : Function Declarations */
@@ -14,6 +17,14 @@ struct treeNode *nextNonTerminalNode(struct treeNode *curr_node);
 struct LeafNode *newLeafNode(int type, void *data, int line_num);
 struct Attribute *newAttribute(struct Attribute attr);
 /* END : Function Declarations */
+
+int return_AST_node_number(){
+  return AST_node_number;
+}
+
+int return_AST_node_size(){
+  return AST_size_bytes;
+}
 
 void createAST() {
   extern int line_no;
@@ -472,6 +483,8 @@ void case_1(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   pro->ptr4 = child_node->syn.node.oth_mod;
 
+  AST_node_number += 4;
+  AST_size_bytes += sizeof(pro->ptr1) + sizeof(pro->ptr2) + sizeof(pro->ptr3) + sizeof(pro->ptr4);
   /* <program>.syn = new ProgramNode(<moduleDeclarations>.syn, <otherModules>.syn, <driverModule>.syn, <otherModules>1.syn) */
   curr_node->syn.node.pro = pro;
   curr_node->syn.type = PROGRAM_NODE;
@@ -488,6 +501,9 @@ void case_2(struct treeNode *curr_node) {
   child_node = nextNonTerminalNode(child_node);
   mod_dec_node->ptr2 = child_node->syn.node.mod_dec;
 
+  AST_node_number += 4;
+  AST_size_bytes += sizeof(AST.ptr1) + sizeof(AST.ptr2) + sizeof(AST.ptr3) + sizeof(AST.ptr4);
+  
   /* <moduleDeclarations>.syn = new ModuleDeclarationNode(<moduleDeclaration>.syn, <moduleDeclarations>1.syn) */
   curr_node->syn.node.mod_dec = mod_dec_node;
   curr_node->syn.type = MODULE_DECLARATION_NODE;

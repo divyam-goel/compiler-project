@@ -9,6 +9,8 @@ void printLeaf(struct LeafNode *leaf);
 void printStatement(struct StatementNode *stmt_node);
 void printStatementList(struct StatementNode *statement_node);
 void printAST();
+int return_AST_node_number();
+int return_AST_node_size();
 
 /* All of the case functions used in traverseParseTree. */
 void case_1(struct treeNode *curr_node);

@@ -10,8 +10,10 @@ OBJ_CFLAGS = $(CFLAGS) -c
 # memtest: build-test
 # 	valgrind build/tests
 
-# driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o
-# 	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o -o build/driver
+driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
+	semanticCheck.o intCode.o codeGen.o
+	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
+	lib/stCore.o lib/st.o lib/semanticCheck.o lib/intCode.o lib/codeGen.o -o build/driver $(CFLAGS)
 
 build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
 	semanticCheck.o intCode.o codeGen.o

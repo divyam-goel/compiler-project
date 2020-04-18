@@ -837,23 +837,15 @@ struct treeNode *recursiveInOrderPrint(struct treeNode *ptr, struct treeNode *p_
 /* PRINT PARSE TREE Helper Code - END */
 
 
-void printParseTree(char *outfile) {
-    FILE * fp = fopen(outfile, "w");
-
-    if(fp == NULL) {
-        printf("Error in opening the file!\n");
-        return;
-    }
+void printParseTree() {
 
 	struct treeNode *ptr = PT.head;
 
-	fprintf(fp, "%-25s %-15s %-15s %-15s %-35s %-15s %s\n\n",
+	fprintf(stdout, "%-25s %-15s %-15s %-15s %-35s %-15s %s\n\n",
 		   "LEXEME", "LINE #", "TOKEN", "NUM VALUE",
 		   "PARENT NODE", "IS LEAF?", "NODE SYMBOL");
 
-	recursiveInOrderPrint(ptr, NULL, fp);
+	recursiveInOrderPrint(ptr, NULL, stdout);
 
-	printf("\nPrinted the PARSE TREE to file: %s.\n\n", outfile);
-
-	fclose(fp);
+	// printf("\nPrinted the PARSE TREE to file: %s.\n\n", outfile);
 }
