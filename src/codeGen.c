@@ -3,20 +3,36 @@
 char *output_file = "output/code.asm";
 
 char reg_rax[] = "rax";
+char reg_rbx[] = "rbx";
+char reg_rcx[] = "rcx";
+char reg_rdx[] = "rdx";
 char reg_rsp[] = "rsp";
+char reg_rbp[] = "rbp";
+char reg_rsi[] = "rsi";
+char reg_rdi[] = "rdi";
 
+char instr_mov[] = "mov";
+char instr_add[] = "add";
+char instr_sub[] = "sub";
+char instr_mul[] = "imul";
+char instr_div[] = "idiv";
+char instr_jmp[] = "jmp";
+char instr_je[] = "je";
+char instr_jne[] = "jne";
+char instr_cmp[] = "cmp";
+char instr_push[] = "push";
+char instr_pop[] = "pop";
 
-char reg_eax[] = "EAX";
-char reg_ebx[] = "EBX";
-char reg_ecx[] = "ECX";
-char reg_edx[] = "EDX";
+char const_0[] = "0";
+char const_true[] = "true";
+char const_false[] = "false";
 
 char reg_ax[] = "rax";
 char reg_bx[] = "rbx";
 char reg_cx[] = "rcx";
 char reg_dx[] = "rdx";
-char reg_r8w[] = "R8W";
-char reg_r9w[] = "R9W";
+char reg_r8w[] = "r8";
+char reg_r9w[] = "r9";
 
 char reg_xmm0[] = "xmm0";
 char reg_xmm1[] = "xmm1";
@@ -81,7 +97,7 @@ void initializeASMOutputFile(char *output_file){
   strcat(data_list, "\n");
   
   /* write to output file */
-  FILE *fptr = fopen(output_file, "w+");
+  FILE *fptr = fopen(output_file, "w");
   if (fptr == NULL) {
     fprintf(stderr, "Line number %d: Failed to open output file.\n", __LINE__ - 2);
     exit(-1);
@@ -108,11 +124,11 @@ void writeDataSectionToOutputFile(char *output_file) {
 
   /* message & format for printing integer */
   strcat(data_list, "output_int_msg:\n");
-  strcat(data_list, "\tdb \"Output: %2ld\", 10, 0\n");
+  strcat(data_list, "\tdb \"Output: %ld\", 10, 0\n");
 
-  /* message & format for printing real */
-  strcat(data_list, "output_real_msg:\n");
-  strcat(data_list, "\tdb \"Output: %2f\", 10, 0\n");
+  // /* message & format for printing real */
+  // strcat(data_list, "output_real_msg:\n");
+  // strcat(data_list, "\tdb \"Output: %2f\", 10, 0\n");
 
   /* message & format for printing boolean */
   strcat(data_list, "output_bool_msg:\n");
@@ -123,21 +139,53 @@ void writeDataSectionToOutputFile(char *output_file) {
   strcat(data_list, "\tdb \"Input: Enter an integer value:\", 10, 0\n");
   /* format for taking input numbers */
   strcat(data_list, "input_int_format:\n");
-  strcat(data_list, "\tdb \"%2ld\", 0\n");
+  strcat(data_list, "\tdb \"%ld\", 0\n");
 
-  /* message for taking input real */
-  strcat(data_list, "input_real_msg:\n");
-  strcat(data_list, "\tdb \"Input: Enter a real value:\", 10, 0\n");
-  /* format for taking input real */
-  strcat(data_list, "input_real_format:\n");
-  strcat(data_list, "\tdb \"%2f\", 0\n");
+  // /* message for taking input real */
+  // strcat(data_list, "input_real_msg:\n");
+  // strcat(data_list, "\tdb \"Input: Enter a real value:\", 10, 0\n");
+  // /* format for taking input real */
+  // strcat(data_list, "input_real_format:\n");
+  // strcat(data_list, "\tdb \"%2f\", 0\n");
 
   /* message for taking input boolean */
   strcat(data_list, "input_bool_msg:\n");
   strcat(data_list, "\tdb \"Input: Enter a boolean value:\", 10, 0\n");
   /* format for taking input booleans */
   strcat(data_list, "input_bool_format:\n");
-  strcat(data_list, "\tdb \"%2ld\", 0\n");
+  strcat(data_list, "\tdb \"%ld\", 0\n");
+
+  /* message & format for printing array */
+  strcat(data_list, "output_array_msg_1:\n");
+  strcat(data_list, "\tdb \"Output: \", 0\n");
+  strcat(data_list, "output_array_msg_2_int:\n");
+  strcat(data_list, "\tdb \"%ld \", 0\n");
+  // strcat(data_list, "output_array_msg_2_real:\n");
+  // strcat(data_list, "\tdb \"%2f \", 0\n");
+  strcat(data_list, "output_array_msg_2_bool:\n");
+  strcat(data_list, "\tdb \"%s \", 0\n");
+
+  /* message for taking input array */
+  strcat(data_list, "input_array_msg_1:\n");
+  strcat(data_list, "\tdb \"Input: Enter %d array elements of \", 0\n");
+
+  strcat(data_list, "input_array_msg_2_int:\n");
+  strcat(data_list, "\tdb \"integer type for range \", 0\n");
+
+  // strcat(data_list, "input_array_msg_2_real:\n");
+  // strcat(data_list, "\tdb \"real type for range \", 0\n");
+
+  strcat(data_list, "input_array_msg_2_bool:\n");
+  strcat(data_list, "\tdb \"boolean type for range \", 0\n");
+
+  strcat(data_list, "input_array_msg_3:\n");
+  strcat(data_list, "\tdb \"%d to \", 0\n");
+
+  strcat(data_list, "input_array_msg_4:\n");
+  strcat(data_list, "\tdb \"%d\", 10, 0\n");
+
+  strcat(data_list, "newline:\n");
+  strcat(data_list, "\tdb 10, 0\n");
 
   /* write to output file */
   FILE *fptr = fopen(output_file,"a");
@@ -183,7 +231,9 @@ void writeInstructionToOutput(char *data){
 
 
 void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
-  char op[10];
+  struct VariableEntry *symbol_entry;
+  char tmp[50];
+  int data_size;
   
   switch (ic_addr->type) {
   case INTEGER:
@@ -199,18 +249,33 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
       sprintf(addr, "false");
     break;
   case IDENTIFIER:
-    sprintf(addr, "[rsp + %d]", ((struct VariableEntry *)ic_addr->value.symbol)->mem_offset);
+    if (ic_addr->is_label) {
+      strcpy(addr, (char *) ic_addr->value.symbol);
+    }
+    else {
+      symbol_entry = (struct VariableEntry *)ic_addr->value.symbol;
+      sprintf(addr, "[rsp + %d]", symbol_entry->mem_offset);
+    }
     break;
   case ARRAY:
-    strcpy(op, "mov");
+    symbol_entry = (struct VariableEntry *) ic_addr->value.array.var;
+    
+    instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
+    
+    sprintf(tmp, "%d", symbol_entry->mem_offset);
+    instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
+
+    data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+    sprintf(tmp, "%d", data_size);
+    instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
+
     cgICAddr(instr_list, addr, ic_addr->value.array.idx);
-    instrTwoOperand(instr_list, op, reg_r8w, addr);
+    instrTwoOperand(instr_list, instr_mov, reg_rbx, addr);
+
+    sprintf(tmp, "%d", symbol_entry->lower_bound->value.num);
+    instrTwoOperand(instr_list, instr_sub, reg_rbx, tmp);
     
-    strcpy(op, "mov");
-    strcpy(addr, ic_addr->value.array.var);
-    instrTwoOperand(instr_list, op, reg_r9w, addr);
-    
-    sprintf(addr, "[%s + %s * 2]", reg_r9w, reg_r8w);
+    sprintf(addr, "[%s + %s * %d]", reg_rdx, reg_rbx, data_size);
     break;
   default:
     sprintf(addr, "NULL");
@@ -764,79 +829,260 @@ void print_var(ICInstr *ic_instr){
 }
 
 
-void cgPrint(ICInstr *ic_instr) {
-  char instr_list[MAX_SIZE_INSTR] = "";
-  char addr[10], op[10], label1[10], label2[10];
-  struct VariableEntry *symbol_entry;
-  enum terminal data_type;
-
-  if (ic_instr->addr1.type == IDENTIFIER) {
-    symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
-    data_type = symbol_entry->datatype;
-  }
-  else
-    data_type = ic_instr->addr1.type;
-    
-	/*
-    load the address of the second argument for printf
-    (i.e. what is to be printed)
-  */
-  cgICAddr(instr_list, addr, &(ic_instr->addr1));
-
-  if (ic_instr->addr1.type == IDENTIFIER && data_type == BOOLEAN_) {
-    /* load the value of bool in rax */
-    strcat(instr_list, "\tmov rax, ");
-    strcat(instr_list, addr);
-    strcat(instr_list, "\n");
-    
-    newBoolLabel(label1);
-    newBoolLabel(label2);
-    
-    strcat(instr_list, "\tcmp rax, 0\n");
-    strcpy(op, "je");
-    instrOneOperand(instr_list, op, label1);
-  
-    strcat(instr_list, "\tmov rax, true\n");
-    strcpy(op, "jmp");
-    instrOneOperand(instr_list, op, label2);
-  
-    addLabel(instr_list, label1);
-    strcat(instr_list, "\tmov rax, false\n");
-  
-    addLabel(instr_list, label2);
-    strcat(instr_list, "\n");
-  
-    strcpy(addr, "rax");
-  }
-
+void printUtil(char *instr_list, char *format, char *arg) {
   /* 
     load the address of the format (i.e. the predefined message
     with a format specifier for the second argument of printf)
   */
-  switch (data_type) {
+  instrTwoOperand(instr_list, instr_mov, reg_rdi, format);
+  if (arg != NULL) {
+    instrTwoOperand(instr_list, instr_mov, reg_rsi, arg);
+  }
+  /*
+    call printf function
+    Note: stack should be aligned before calling the function
+  */
+  strcat(instr_list, "\txor rax, rax\n");  
+  strcat(instr_list, "\tcall printf\n");
+  strcat(instr_list, "\n");
+}
+
+
+void printBoolUtil(char *instr_list, char *addr) {
+  char label1[10], label2[10];
+  
+  newBoolLabel(label1);
+  newBoolLabel(label2);
+
+  instrTwoOperand(instr_list, instr_mov, reg_rax, addr);
+
+  instrTwoOperand(instr_list, instr_cmp, reg_rax, const_0);
+  instrOneOperand(instr_list, instr_je, label1);
+
+  instrTwoOperand(instr_list, instr_mov, reg_rax, const_true);
+  instrOneOperand(instr_list, instr_jmp, label2);
+
+  addLabel(instr_list, label1);
+  instrTwoOperand(instr_list, instr_mov, reg_rax, const_false);
+
+  addLabel(instr_list, label2);
+  strcat(instr_list, "\n");
+
+  strcpy(addr, "rax");
+}
+
+
+void mem(char *mem, char *addr) {
+  strcpy(mem, "");
+  sprintf(mem, "[%s]", addr);
+}
+
+
+void printArrayUtil(struct VariableEntry *symbol_entry) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char tmp1[50], tmp2[50], format[50];
+  int base_offset, lower_bound, upper_bound;
+  int data_size;
+  
+  base_offset = symbol_entry->mem_offset;
+  lower_bound = symbol_entry->lower_bound->value.num;
+  upper_bound = symbol_entry->upper_bound->value.num;
+  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+
+  strcpy(format, "output_array_msg_1");
+  printUtil(instr_list, format, NULL);
+  
+  switch(symbol_entry->datatype) {
     case INTEGER:
-      strcat(instr_list, "\tmov rdi, output_int_msg\n");
+      strcpy(format, "output_array_msg_2_int");
       break;
     case REAL:
-      strcat(instr_list, "\tmov rdi, output_real_msg\n");
+      strcpy(format, "output_array_msg_2_real");
       break;
     case BOOLEAN_:
-      strcat(instr_list, "\tmov rdi, output_bool_msg\n");
+      strcpy(format, "output_array_msg_2_bool");
       break;
     default:
       break;
   }
 
-  strcat(instr_list, "\tmov rsi, ");
-  strcat(instr_list, addr);
-  strcat(instr_list, "\n");
+  instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
 
-  /*
-    call printf function
-    Note: stack should be aligned before calling the function
+  sprintf(tmp1, "%d", base_offset);
+  instrTwoOperand(instr_list, instr_add, reg_rdx, tmp1);
+  
+  sprintf(tmp1, "%d", data_size);
+  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp1);
+
+  instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
+
+  mem(tmp1, reg_rdx);
+  mem(tmp2, reg_rbx);
+
+  writeInstructionToOutput(instr_list);
+  strcpy(instr_list, "");
+
+  for (int i = lower_bound; i <= upper_bound; i++) {
+    instrOneOperand(instr_list, instr_push, reg_rdx);
+    instrOneOperand(instr_list, instr_push, reg_rbx);
+
+    printUtil(instr_list, format, tmp1);
+
+    instrOneOperand(instr_list, instr_pop, reg_rbx);
+    instrOneOperand(instr_list, instr_pop, reg_rdx);
+
+    instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
+
+    if (i % 3 == 0) {
+      writeInstructionToOutput(instr_list);
+      strcpy(instr_list, "");
+    }
+  }
+
+  strcpy(format, "newline");
+  printUtil(instr_list, format, NULL);
+
+  writeInstructionToOutput(instr_list);
+}
+
+
+void cgPrint(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[10], format[50];
+  struct VariableEntry *symbol_entry;
+  enum terminal data_type;
+
+  if (ic_instr->addr1.type == IDENTIFIER) {
+    symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
+    if (symbol_entry->isArray) {
+      printArrayUtil(symbol_entry);
+      return;
+    }
+    data_type = symbol_entry->datatype;
+  }
+  else if (ic_instr->addr1.type == ARRAY) {
+    symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.array.var;
+    if (!symbol_entry->isStatic)
+      return;
+    data_type = symbol_entry->datatype;
+  }
+  else
+    data_type = ic_instr->addr1.type;
+    
+  switch (data_type) {
+    case INTEGER:
+      strcpy(format, "output_int_msg");
+      break;
+    case REAL:
+      strcpy(format, "output_real_msg");
+      break;
+    case BOOLEAN_:
+      strcpy(format, "output_bool_msg");
+      break;
+    default:
+      break;
+  }
+
+	/*
+    load the address of the second argument for printf
+    (i.e. what is to be printed)
   */
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+  if (ic_instr->addr1.type == IDENTIFIER && data_type == BOOLEAN_) {
+    printBoolUtil(instr_list, addr);
+  }
+
+  printUtil(instr_list, format, addr);
+
+  writeInstructionToOutput(instr_list);
+}
+
+
+void inputUtil(char *instr_list, char *format, char *arg) {
+  /* 
+    load the address of the format (i.e. the string containing
+    with a format specifier for the input of scanf)
+  */
+  instrTwoOperand(instr_list, instr_mov, reg_rdi, format);
+  if (arg != NULL) {
+    instrTwoOperand(instr_list, instr_mov, reg_rsi, arg);
+  }
   strcat(instr_list, "\txor rax, rax\n");
-  strcat(instr_list, "\tcall printf\n");
+  strcat(instr_list, "\tcall scanf\n");
+  strcat(instr_list, "\n");
+}
+
+
+void inputArrayUtil(struct VariableEntry *symbol_entry) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char tmp[50], format[50];
+  int base_offset, lower_bound, upper_bound;
+  int num_elements, data_size;
+  
+  base_offset = symbol_entry->mem_offset;
+  lower_bound = symbol_entry->lower_bound->value.num;
+  upper_bound = symbol_entry->upper_bound->value.num;
+  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+
+  strcpy(format, "input_array_msg_1");
+  num_elements = upper_bound - lower_bound + 1;
+  sprintf(tmp, "%d", num_elements);
+  printUtil(instr_list, format, tmp);
+  
+  switch(symbol_entry->datatype) {
+    case INTEGER:
+      strcpy(format, "input_array_msg_2_int");
+      break;
+    case REAL:
+      strcpy(format, "input_array_msg_2_real");
+      break;
+    case BOOLEAN_:
+      strcpy(format, "input_array_msg_2_bool");
+      break;
+    default:
+      break;
+  }
+  printUtil(instr_list, format, NULL);
+
+  strcpy(format, "input_array_msg_3");
+  sprintf(tmp, "%d", lower_bound);
+  printUtil(instr_list, format, tmp);
+
+  strcpy(format, "input_array_msg_4");
+  sprintf(tmp, "%d", upper_bound);
+  printUtil(instr_list, format, tmp);
+
+  instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
+
+  sprintf(tmp, "%d", base_offset);
+  instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
+  
+  sprintf(tmp, "%d", data_size);
+  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp);
+
+  instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
+
+  strcpy(format, "input_int_format");
+
+  writeInstructionToOutput(instr_list);
+  strcpy(instr_list, "");
+
+  for (int i = lower_bound; i <= upper_bound; i++) {
+    instrOneOperand(instr_list, instr_push, reg_rdx);
+    instrOneOperand(instr_list, instr_push, reg_rbx);
+
+    inputUtil(instr_list, format, reg_rdx);
+
+    instrOneOperand(instr_list, instr_pop, reg_rbx);
+    instrOneOperand(instr_list, instr_pop, reg_rdx);
+
+    instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
+
+    if (i % 3 == 0) {
+      writeInstructionToOutput(instr_list);
+      strcpy(instr_list, "");
+    }
+  }
 
   writeInstructionToOutput(instr_list);
 }
@@ -845,71 +1091,45 @@ void cgPrint(ICInstr *ic_instr) {
 void cgInput(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   struct VariableEntry *symbol_entry;
-  char offset[10];
-  char op[10];
+  char msg[100], format[100], offset[10];
 
   symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
+  if (symbol_entry->isArray) {
+    inputArrayUtil(symbol_entry);
+    return;
+  }
+
+  switch (symbol_entry->datatype) {
+    case INTEGER:
+      strcpy(msg, "input_int_msg");
+      strcpy(format, "input_int_format");
+      break;
+    case REAL:
+      strcpy(msg, "input_real_msg");
+      strcpy(format, "input_real_format");
+      break;
+    case BOOLEAN_:
+      strcpy(msg, "input_bool_msg");
+      strcpy(format, "input_bool_format");
+      break;
+    default:
+      break;
+  }
 
   /* print appropriate message for taking input from user */
-  switch (symbol_entry->datatype) {
-    case INTEGER:
-      strcat(instr_list, "\tmov rdi, input_int_msg\n");
-      break;
-    case REAL:
-      strcat(instr_list, "\tmov rdi, input_real_msg\n");
-      break;
-    case BOOLEAN_:
-      strcat(instr_list, "\tmov rdi, input_bool_msg\n");
-      break;
-    default:
-      break;
-  }
-  strcat(instr_list, "\txor rax, rax\n");
-  strcat(instr_list, "\tcall printf\n");
-  strcat(instr_list, "\n");
-
-  /* 
-    load the address of the format (i.e. the string containing
-    with a format specifier for the input of scanf)
-  */
-  switch (symbol_entry->datatype) {
-    case INTEGER:
-      strcat(instr_list, "\tmov rdi, input_int_format\n");
-      break;
-    case REAL:
-      strcat(instr_list, "\tmov rdi, input_real_format\n");
-      break;
-    case BOOLEAN_:
-      strcat(instr_list, "\tmov rdi, input_bool_format\n");
-      break;
-    default:
-      break;
-  }
+  printUtil(instr_list, msg, NULL);
 
 	/*
-    load the address of the where the input for scanf will
-    be stored
+    load the address of the where the input for scanf will be stored
       1. load rsp in rax
       2. add the mem offset to value in rax => [rsp + mem offset]
       3. store the value from rax to rsi
   */
-  strcpy(op, "mov");
-  instrTwoOperand(instr_list, op, reg_rax, reg_rsp);
-  
-  strcat(instr_list, "\tadd rax, ");
-  sprintf(offset, "%d",
-    ((struct VariableEntry *)ic_instr->addr1.value.symbol)->mem_offset);
-  strcat(instr_list, offset);
-  strcat(instr_list, "\n");
-  
-  strcat(instr_list, "\tmov rsi, rax\n");
-	
-  /*
-    call printf function
-    Note: stack should be aligned before calling the function
-  */
-  strcat(instr_list, "\txor rax, rax\n");
-  strcat(instr_list, "\tcall scanf\n");
+  instrTwoOperand(instr_list, instr_mov, reg_rax, reg_rsp);
+  sprintf(offset, "%d", symbol_entry->mem_offset);
+  instrTwoOperand(instr_list, instr_add, reg_rax, offset);
+
+  inputUtil(instr_list, format, reg_rax);
 
   writeInstructionToOutput(instr_list);
 }

@@ -272,6 +272,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   module_scope = getModuleLevelScope(scope);
   module = getModuleEntry(module_scope->scope_tag);
   datasize = getMemorySizeofDatatype(basetype, is_array);
+  if (is_array && is_static) {
+    datasize += (upper_bound_leaf_node->value.num - \
+                lower_bound_leaf_node->value.num + 1) * 8;
+  }
 
   union SymbolTableValue new_value;
   memset(&new_value, 0, sizeof(union SymbolTableValue));

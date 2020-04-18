@@ -35,6 +35,7 @@ ICAddr newTemporary() {
 ICAddr newTemporaryV2(struct SymbolTable *scope, enum terminal datatype) {
   ICAddr ic_addr;
   ic_addr.type = IDENTIFIER;
+  ic_addr.is_label = false;
   ic_addr.value.symbol = stNewTemporaryVariable (scope, datatype);
   return ic_addr;
 }
@@ -131,6 +132,7 @@ icLeaf (struct LeafNode *leaf)
       case IDENTIFIER:
         new_ic_representation.value.symbol = resolveVariable(leaf->value.entry, leaf->scope);
         new_ic_representation.type = IDENTIFIER;
+        new_ic_representation.is_label = false;
         break;
 
       default:
@@ -146,16 +148,15 @@ icArray (struct ArrayNode *array)
 {
   ICInstr *ic_instr = NULL;
   ICAddr ic_addr, label_error, label_success;
+  struct VariableEntry *array_symbol_entry;
+  struct SymbolTable *scope;
   
   icLeaf(array->ptr1);  /* Lower bound */
   icLeaf(array->ptr2);  /* Upper bound */
 
   /* check array bounds for dynamic arrays OR variable index */
-  struct SymbolTable *scope = array->ptr1->scope;
-  struct SymbolTableNode *array_symbol_node;
-  struct VariableEntry *array_symbol_entry;
-  array_symbol_node = symbolTableGet(array->ptr1->scope, array->ptr1->value.entry);
-  array_symbol_entry = &(array_symbol_node->value.variable);
+  array_symbol_entry = (struct VariableEntry *) array->ptr1->addr.value.symbol;
+  scope = array->ptr1->scope;
 
   if (!array_symbol_entry->isStatic || array->ptr2->type == IDENTIFIER)  /* Handle dynamic bound(s). */
     {
@@ -483,6 +484,7 @@ void icArrayAssignment(struct LeafNode *lhs, struct LeafNode *rhs) {
 
 void icAssignmentStatement(struct AssignStmtNode *assignment) {
   enum terminal lhs_type, rhs_type;
+  struct ArrayNode array_node;
   
   switch (assignment->ptr2->type) {
     case LVALUE_ID_NODE:
@@ -499,8 +501,12 @@ void icAssignmentStatement(struct AssignStmtNode *assignment) {
       assignment->ptr2->addr = assignment->ptr2->node.lva_id->ptr1->addr;
       break;
     case LVALUE_ARR_NODE:
-      // icLeaf(assignment->ptr1);
-      // icExpression(assignment->ptr2);
+      array_node.ptr1 = assignment->ptr1;
+      array_node.ptr2 = assignment->ptr2->node.lva_arr->ptr1;
+      icArray(&array_node);
+      assignment->ptr1->addr = array_node.addr;
+      icExpression(assignment->ptr2->node.lva_arr->ptr2);
+      assignment->ptr2->addr = assignment->ptr2->node.lva_arr->ptr2->addr;
       break;
     default:
       break;
@@ -687,16 +693,12 @@ void icInputStatement(struct InputNode *input) {
   ICInstr *ic_instr;
 
   icLeaf(input->ptr1);
-  if (leafType(input->ptr1) == ARRAY) {
-    // take input for all multiple elements
-  }
-  else {
-    ic_instr = newICInstruction();
-    ic_instr->addr1 = input->ptr1->addr;
-    ic_instr->op = icGET;
-    global_ic_instr->next = ic_instr;
-    global_ic_instr = ic_instr;
-  }
+  
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = input->ptr1->addr;
+  ic_instr->op = icGET;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
 }
 
 
