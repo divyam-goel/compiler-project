@@ -184,6 +184,10 @@ void writeDataSectionToOutputFile(char *output_file) {
   strcat(data_list, "input_array_msg_4:\n");
   strcat(data_list, "\tdb \"%d\", 10, 0\n");
 
+  /* error message: array out of bounds */
+  strcat(data_list, "array_out_of_bounds_error:\n");
+  strcat(data_list, "\tdb \"Array index is out of bounds\", 10, 0\n");
+
   strcat(data_list, "newline:\n");
   strcat(data_list, "\tdb 10, 0\n");
 
@@ -201,6 +205,8 @@ void writeExitToOutputFile(char *output_file) {
 
   /* intiliaze variables */
   strcpy(data_list, "");
+
+  strcat(data_list,"\nend_main:\n");
 
   strcpy(tmp_var, "driver");
   entry = resolveModule(tmp_var);
@@ -220,8 +226,13 @@ void writeExitToOutputFile(char *output_file) {
 }
 
 
+<<<<<<< 415d81b3b659d1b218aa72ecb054efd587d90c17
 void writeInstructionToOutput(char *data){
   FILE *fptr = fopen(output_file, "a+");
+=======
+void writeInstructionToOutput(char *data) {
+  FILE *fptr = fopen(output_file,"a");
+>>>>>>> dynamic bound hecking working for identifier indexed static array
   char instr[MAX_SIZE_INSTR];
   strcpy(instr,data);
   strcat(instr,"\n");
@@ -381,12 +392,10 @@ void cgLoadRealConstIntoTmp(char *instr_list, char *type, char *tmp_var, ICAddr 
 
 
 void cgStoreINT(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char asm_instr[50];
   char addr[50];
   
-  strcpy(asm_instr, "mov");
   cgICAddr(instr_list, addr, ic_addr);
-  instrTwoOperand(instr_list, asm_instr, addr, reg);
+  instrTwoOperand(instr_list, instr_mov, addr, reg);
 }
 
 /* -- end -- */
@@ -428,8 +437,8 @@ void cgArithmeticOpInteger(ICInstr *ic_instr) {
 }
 
 
-void cgMultiplyInteger(ICInstr *ic_instr){ //---> so far only int
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+void cgMultiplyInteger(ICInstr *ic_instr){
+  char instr_list[MAX_SIZE_INSTR] = "";
 
   /* instruction: load from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
@@ -456,7 +465,7 @@ void cgMultiplyInteger(ICInstr *ic_instr){ //---> so far only int
 
 
 void cgDivisionInteger(ICInstr *ic_instr){
-  char instr_list[MAX_SIZE_INSTR] = ""; //final instruction -temporary max length as 100
+  char instr_list[MAX_SIZE_INSTR] = "";
 
   /* instruction: load from mem addr1 to reg AX */
   cgLoadINT(instr_list, reg_ax, &(ic_instr->addr1));
@@ -571,7 +580,7 @@ void cgDecrement(ICInstr *ic_instr) {
 }
 
 
-void cgMoveFromMemToMem(ICInstr *ic_instr){ //---> not fully working- indexed elements of arrays need to be added
+void cgMoveFromMemToMem(ICInstr *ic_instr){
   char instr_list[MAX_SIZE_INSTR] = "";
 
   /* instruction: load from mem addr1 to reg AX */
@@ -584,7 +593,7 @@ void cgMoveFromMemToMem(ICInstr *ic_instr){ //---> not fully working- indexed el
 }
 
 
-void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
+void cgRelationalOp(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char label1[20];
   char label2[20];
@@ -635,7 +644,7 @@ void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
       1. instruction: store value false (0x00) in reg CL
       2. instruction: jump to label2 (end of set of relational instrutions)
   */
-  instrTwoOperand(instr_list, "mov", reg_cl, "0x00"); //false
+  instrTwoOperand(instr_list, "mov", reg_rcx, "0"); //false
   instrOneOperand(instr_list, "jmp", label2); //jump to label2
 
   /*
@@ -646,19 +655,19 @@ void cgRelationalOp(ICInstr *ic_instr) {  //----> for LT,GT,E,NE,LE,GE
       2. instruction: store value true (0x11) in reg CL
   */
   addLabel(instr_list, label1);
-  instrTwoOperand(instr_list, "mov", reg_cl, "0x11");
+  instrTwoOperand(instr_list, "mov", reg_rcx, "1");
 
   /* instruction: set label for value of label2*/
   addLabel(instr_list,label2);
   
   /* instruction: store value from reg CL to mem addr3 */
-  cgStoreINT(instr_list, reg_cl, &(ic_instr->addr3));
+  cgStoreINT(instr_list, reg_rcx, &(ic_instr->addr3));
   
   writeInstructionToOutput(instr_list);
 }
 
 
-void cgLogicalOp(ICInstr *ic_instr) {   //-----> for AND,OR
+void cgLogicalOp(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char op[10] = "";
 
@@ -760,6 +769,7 @@ void cgJumpConditional(ICInstr *ic_instr){
   writeInstructionToOutput(instr_list);
 }
 
+
 void print_output_type(char *instr_list, enum terminal type,ICAddr *ic_addr, int is_identifier){
   int num;
   char rhs[20];
@@ -809,6 +819,7 @@ void print_output_type(char *instr_list, enum terminal type,ICAddr *ic_addr, int
       break;
   }
 }
+
 
 void print_var(ICInstr *ic_instr){
   //assuming the convention of intcode is PRINT *VAR* -> VAR can be NUM,RNUM,BOOLEAN, or IDENTIFIER
@@ -1148,6 +1159,20 @@ void cgLabel(ICInstr *ic_instr){
   writeInstructionToOutput(instr_list);
 }
 
+
+void cgArrayOutOfBoundsError(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char tmp[50];
+
+  strcpy(tmp, "array_out_of_bounds_error");
+  printUtil(instr_list, tmp, NULL);
+
+  strcpy(tmp, "end_main");
+  instrOneOperand(instr_list, instr_jmp, tmp);
+
+  writeInstructionToOutput(instr_list);
+}
+
 /* -- end -- */
 
 
@@ -1236,8 +1261,12 @@ void generateASMInstruction(ICInstr *ic_instr){
 
     case icLABEL:
       cgLabel(ic_instr);
-
       break;
+
+    case icErrARRAY:
+      cgArrayOutOfBoundsError(ic_instr);
+      break;
+
     default:
       break;
   }

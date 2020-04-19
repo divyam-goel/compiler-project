@@ -169,8 +169,8 @@ icArray (struct ArrayNode *array)
       ic_addr = newTemporaryV2(scope, BOOLEAN_);
       ic_instr->addr1 = array->ptr2->addr;
       ic_instr->addr2.is_label = false;
-      ic_instr->addr2.type = IDENTIFIER;
-      ic_instr->addr2.value.symbol = array_symbol_entry;
+      ic_instr->addr2.type = INTEGER;
+      ic_instr->addr2.value.num = array_symbol_entry->lower_bound->value.num;
       ic_instr->addr3 = ic_addr;
       ic_instr->op = icGE;
       global_ic_instr->next = ic_instr;
@@ -190,8 +190,8 @@ icArray (struct ArrayNode *array)
       ic_addr = newTemporaryV2(scope, BOOLEAN_);
       ic_instr->addr1 = array->ptr2->addr;
       ic_instr->addr2.is_label = false;
-      ic_instr->addr2.type = IDENTIFIER;
-      ic_instr->addr2.value.symbol = array_symbol_entry;
+      ic_instr->addr2.type = INTEGER;
+      ic_instr->addr2.value.num = array_symbol_entry->upper_bound->value.num;
       ic_instr->addr3 = ic_addr;
       ic_instr->op = icLE;
       global_ic_instr->next = ic_instr;
@@ -214,7 +214,7 @@ icArray (struct ArrayNode *array)
 
       /* Error interrupt */
       ic_instr = newICInstruction();
-      ic_instr->op = icERR;
+      ic_instr->op = icErrARRAY;
       global_ic_instr->next = ic_instr;
       global_ic_instr = ic_instr;
 
