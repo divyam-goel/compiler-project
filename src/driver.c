@@ -203,7 +203,22 @@ void printModuleActivationRecordsSize(){
 	runSyntaxAnalyzer(0);
 	createAST();
 	generateSymbolTables();
-	// to be implemented
+	char *key;
+	int num_keys = global_symbol_table->keys->filled;
+	struct SymbolTableNode *data;
+
+	if (num_keys == 0){
+		printf("{}\n");
+		return;
+	}
+	for (int i = 0; i < num_keys - 1; ++i){
+		key = strl_get(global_symbol_table->keys, i);
+		data = symbolTableGet(global_symbol_table, key);
+		printf("Size of %s module: %d bytes\n", data->key, data->value.module.activation_record_size);
+	}
+	key = strl_get(global_symbol_table->keys, num_keys - 1);
+	data = symbolTableGet(global_symbol_table, key);
+	printf("Size of %s module: %d bytes\n", data->key, data->value.module.activation_record_size);
 }
 
 void printAllErrorsAndTime(){

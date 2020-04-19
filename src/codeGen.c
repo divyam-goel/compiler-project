@@ -1,6 +1,6 @@
 #include "codeGen.h"
 
-char *output_file = "output/code.asm";
+char output_file[50];
 
 char reg_rax[] = "rax";
 char reg_rbx[] = "rbx";
@@ -1129,7 +1129,8 @@ void generateASMInstruction(ICInstr *ic_instr){
 }
 
 
-void generateASMCode(ICInstr *ic_instr){
+void generateASMCode(ICInstr *ic_instr,char *output_asm){
+  strcpy(output_file,output_asm);
   initializeOutputFile();
   
   /* write directives and initialize text section */
