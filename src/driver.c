@@ -69,7 +69,13 @@ int promptUser() {
 	}
 	printf(">>> ");
 	fflush(stdout);
-	scanf("%d", &choice);
+	int fail = 1;
+	fail = scanf("%d", &choice);
+	if(fail == 0){ //chat was input - need to clear the buffer
+		int t;
+		while ((t = getchar()) != '\n' );
+		return 10;
+	}
 	return choice;
 }
 
@@ -264,6 +270,7 @@ int main(int argc, char const *argv[]) {
 	strncpy(outputFilePath, argv[2], 512);
 
 	while ((choice = promptUser())) {
+		// exit(1);
 	    defineBuffer();
 	    extern int line_no; 
 	    line_no = 1;
@@ -306,7 +313,7 @@ int main(int argc, char const *argv[]) {
 				printf("Code generation complete!! Generated code written into %s\n",outputFilePath);
 				break;
 			default:
-				printf("\nWrong option! Enter option again[0,1,2,3,4,5,6,7]\n");
+				printf("\nWrong option! Enter option again[0,1,2,3,4,5,6,7,8,9]\n");
 				// exit(0);
 		}
 	}
