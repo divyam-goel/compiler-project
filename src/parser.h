@@ -17,13 +17,17 @@ int extractRules(char *line, int ruleNumber);
 void loadGrammar(const char* filename);
 void printGrammar();
 
+int return_PT_node_number();
+long return_PT_node_size();
+void set_PT_node_num();
+
 void initializeFirstAndFollow();
 void computeFirstAndFollowSets();
 
 void intializeParseTable();
 void createParseTable();
 
-void parseInputSourceCode(char *testcaseFile);
+void parseInputSourceCode(char *testcaseFile, int print_check);
 void printParseTree();
 void printErrorMessage(struct symbol symbol);
 

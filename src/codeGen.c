@@ -1244,9 +1244,9 @@ void generateASMInstruction(ICInstr *ic_instr){
 }
 
 
-void generateASMCode(ICInstr *ic_instr){
+void generateASMCode(ICInstr *ic_instr,char *output_asm){
   /* write boiler-plate ASM code to output file */
-  initializeASMOutputFile(output_file);
+  initializeASMOutputFile(output_asm);
   
   /*
     iterate through intermediate code instructions to

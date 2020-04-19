@@ -23,4 +23,4 @@ void cgRelationalOp(ICInstr *ic_instr);
 void cgLogicalOp(ICInstr *ic_instr);
 void cgUnaryOp(ICInstr *ic_instr);
 void generateASMInstruction(ICInstr *ic_instr);
-void generateASMCode(ICInstr *ic_instr);
+void generateASMCode(ICInstr *ic_instr,char *output_asm);

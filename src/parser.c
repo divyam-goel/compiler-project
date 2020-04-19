@@ -14,6 +14,8 @@ struct hashMap *terminalLiteralMap;
 
 extern struct stack *stack;
 extern int line_no;
+int PT_num_nodes = 0;
+long PT_size_bytes = 0;
 
 char nonTerminalStringRepresentations[NUM_NON_TERMINALS][32] = {
 	"<program>", "<moduleDeclarations>", "<moduleDeclaration>", "<otherModules>",
@@ -98,6 +100,21 @@ struct hashMap *getNonTerminalMap() {
 
 /* HASH MAP Helper Code - END */
 
+/* Node functions - START*/
+
+int return_PT_node_number(){
+	return PT_num_nodes;
+}
+
+long return_PT_node_size(){
+	return PT_size_bytes;
+}
+
+void set_PT_node_num(){
+	PT_num_nodes = 0;
+	PT_size_bytes = 0;
+}
+/* Node functions - END*/
 
 /* GRAMMAR Helper Code - START */
 
@@ -507,6 +524,9 @@ struct treeNode * addTreeNode(struct rhsNode *rhs_node_ptr) {
 	tree_node_ptr->child = NULL;
 	tree_node_ptr->next = NULL;
 
+	PT_num_nodes += 1;
+	PT_size_bytes += sizeof(struct treeNode *);
+
 	return tree_node_ptr;
 }
 
@@ -654,7 +674,7 @@ void populateTreeNodeWithSymbol(struct treeNode *tree_node_ptr, struct symbol sy
 /* PARSE SOURCE CODE Helper Code - END */
 
 
-void parseInputSourceCode(char *testcaseFile) {
+void parseInputSourceCode(char *testcaseFile,int print_check) {
 	FILE *fp = fopen(testcaseFile, "r");
 
 	if (fp == NULL) {
@@ -671,6 +691,8 @@ void parseInputSourceCode(char *testcaseFile) {
 	tree_node_ptr->next = NULL;
 
 	PT.head = tree_node_ptr;
+	PT_num_nodes += 1;
+	PT_size_bytes += sizeof(struct treeNode);
 
     initialiseStack();
 
@@ -745,7 +767,8 @@ void parseInputSourceCode(char *testcaseFile) {
 
     fclose(fp);
     if(no_errors == 1){
-    	printf("Syntax Analysis completed successfully! No errors found.\n");
+		if(print_check)
+    		printf("Syntax Analysis completed successfully! No errors found.\n");
     }
 	else{
 		exit(EXIT_FAILURE);

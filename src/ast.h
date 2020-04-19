@@ -10,7 +10,8 @@ void printStatement(struct StatementNode *stmt_node);
 void printStatementList(struct StatementNode *statement_node);
 void printAST();
 int return_AST_node_number();
-int return_AST_node_size();
+long return_AST_node_size();
+void set_AST_node_num();
 
 /* All of the case functions used in traverseParseTree. */
 void case_1(struct treeNode *curr_node);

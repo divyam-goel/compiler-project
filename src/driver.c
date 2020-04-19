@@ -14,7 +14,8 @@ int init_everything__done = 0;
 
 extern grammar G;
 extern struct firstAndFollow F;
-// extern struct parseTree PT;
+extern struct ProgramNode AST;
+extern ICInstr *start_global_ic_instr;
 extern struct SymbolTable *global_symbol_table;
 extern struct hashMap *terminalMap;
 extern struct hashMap *terminalMap;
@@ -127,7 +128,7 @@ void runSyntaxAnalyzer(int out) {
     extern int line_no;
     line_no = 1;
     defineBuffer();
-	parseInputSourceCode(sourceFilePath);
+	parseInputSourceCode(sourceFilePath,out);
 	if(out == 1)
 		printParseTree();
 }
@@ -165,12 +166,21 @@ void generateAndPrintAST(){
 }
 
 void printPTandASTMem(){
+	float percent;
+	set_AST_node_num();
+	set_PT_node_num();
 	demonstrateLexicalAnalysis(0);
 	runSyntaxAnalyzer(0);
 	createAST();
 	// to be implemented
+	printf("PT Node Number:%d\n", return_PT_node_number());
+	printf("PT Memory Allocated:%ld Bytes\n", return_PT_node_size());
 	printf("AST Node Number:%d\n",return_AST_node_number());
-	printf("AST Memory Allocated:%d Bytes\n",return_AST_node_size());
+	printf("AST Memory Allocated:%ld Bytes\n",return_AST_node_size());
+	percent = (float)(return_PT_node_size() - return_AST_node_size());
+	percent /= (float)return_PT_node_size();
+	percent *= 100;
+	printf("Percentage compression: %f%%\n", percent);
 }
 
 void generateAndPrintSymbolTable(){
@@ -188,6 +198,36 @@ void printModuleActivationRecordsSize(){
 	createAST();
 	generateSymbolTables();
 	// to be implemented
+}
+
+void printAllErrorsAndTime(){
+
+	clock_t start_time, end_time;
+	double CPU_time, CPU_time_seconds;
+	start_time = clock();
+
+	demonstrateLexicalAnalysis(0);
+	runSyntaxAnalyzer(0);
+	createAST();
+	generateSymbolTables();
+	semanticChecker(&AST);
+	printf("No errors detected!!!\n");
+
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Total clocks taken:%lf\n", CPU_time);
+	printf("Total time taken:%lf seconds\n", CPU_time_seconds);
+}
+
+void doCodeGen(){
+	demonstrateLexicalAnalysis(0);
+	runSyntaxAnalyzer(0);
+	createAST();
+	generateSymbolTables();
+	semanticChecker(&AST);
+	generateIntermediateCode(&AST);
+	generateASMCode(start_global_ic_instr,outputFilePath);
 }
 
 void printFollowSetHumanFriendly() {
@@ -222,9 +262,6 @@ int main(int argc, char const *argv[]) {
 
 	strncpy(sourceFilePath, argv[1], 512);
 	strncpy(outputFilePath, argv[2], 512);
-
-	clock_t start_time, end_time;
-	double CPU_time, CPU_time_seconds;
 
 	while ((choice = promptUser())) {
 	    defineBuffer();
@@ -262,8 +299,11 @@ int main(int argc, char const *argv[]) {
 			case 7:// print static and dynamic array stuff
 				break;
 			case 8: //print all errors, and print time taken for compilation
+				printAllErrorsAndTime();
 				break;
 			case 9: //code gen
+				doCodeGen();
+				printf("Code generation complete!! Generated code written into %s\n",outputFilePath);
 				break;
 			default:
 				printf("\nWrong option! Enter option again[0,1,2,3,4,5,6,7]\n");

@@ -191,7 +191,7 @@ void test_parseInputSourceCode(char *grammar_file, char *source_file) {
     terminalLiteralMap = getTerminalLiteralMap();
 
     printf("Creating Parse Tree from input source code...\n");
-    parseInputSourceCode(source_file);
+    parseInputSourceCode(source_file,1);
 
     // printParseTree("test/test_result_parse_tree_output.txt");
 }
@@ -359,7 +359,7 @@ void test_CodeGeneration(char *grammar_file, char *source_file) {
     test_intermediateCodeGeneration(grammar_file, source_file);
     
     printf("Generating Intermediate Code ...\n\n");    
-    generateASMCode(start_global_ic_instr);
+    generateASMCode(start_global_ic_instr,"output/code.asm");
 }
 
 
@@ -369,8 +369,8 @@ int main() {
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
     // char source_file[] = "./test/fixtures/stage 2/semantic/t9.txt";
-    // char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
-    char source_file[] = "./test/fixtures/stage 2/basic_tests/test_cg_1.erplag";
+    char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
+    // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_cg_1.erplag";
     // test_removeComments();
     // test_getStream(source_file);
     // test_getNextToken(source_file);
