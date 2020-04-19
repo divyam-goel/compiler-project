@@ -49,6 +49,10 @@ struct SymbolTable *newSymbolTable(struct SymbolTable *parent,
   }
 
   st->is_module_scope = false; /* If needed set this to true afterwards. */
+  if (parent)
+    st->nesting_level = st->parent->nesting_level + 1;
+  else
+    st->nesting_level = 0;
 
   return st;
 }

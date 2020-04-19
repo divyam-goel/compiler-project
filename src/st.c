@@ -5,6 +5,8 @@ bool st_debug_mode = false;
 int semantic_error_count = 0;
 extern struct ProgramNode AST;
 struct SymbolTable *global_symbol_table = NULL;
+struct SymbolTableLinkedList symbol_table_ll;
+extern char terminalStringRepresentations[NUM_TERMINALS][16];  // in parser.c
 
 char *module_redecleration_error_message = "Line %d: (Semantic Error) Redeclaration of module \"%s\" on line number %d \
 (originally declared on line number %d)\n";
@@ -22,7 +24,33 @@ char *module_undeclared_error_message = "Line %d: (Semantic Error) Module \"%s\"
 declared or defined.\n";
 char *semantic_errors_detected_message = "Detected %d semantic error(s) while populating the symbol table (more \
 may be detected after resolving the above).\n";
-char *invalid_datatype_error_message = "%d is not a valid datatype and does not have a memory requirement value.\n";
+char *invalid_datatype_error_message = "%s is not a valid datatype and does not have a memory requirement value.\n";
+
+
+/**
+ * A simple wrapper around the method newSymbolTable (from stDef.c) which also adds
+ * the newly created symbol table to symbol_table_ll so what we can later print all
+ * of the symbol tables in order of creation for the driver module.
+ */
+struct SymbolTable *
+newTrackedSymbolTable (struct SymbolTable *parent, const char *scope_tag, SymbolTableHashFunction hash_fn)
+{
+  struct SymbolTable *new_symbol_table = newSymbolTable(parent, scope_tag, hash_fn);
+  if (symbol_table_ll.head == NULL)
+    {
+      symbol_table_ll.head = (struct SymbolTableLinkedListNode *) malloc(sizeof(struct SymbolTableLinkedListNode));
+      symbol_table_ll.tail = symbol_table_ll.head;
+    }
+  else
+    {
+      symbol_table_ll.tail->next = (struct SymbolTableLinkedListNode *) malloc(sizeof(struct SymbolTableLinkedListNode));
+      symbol_table_ll.tail = symbol_table_ll.tail->next;
+    }
+  symbol_table_ll.tail->symbol_table = new_symbol_table;
+  symbol_table_ll.tail->next = NULL;
+  symbol_table_ll.count += 1;
+  return new_symbol_table;
+}
 
 
 /**
@@ -34,7 +62,10 @@ char *invalid_datatype_error_message = "%d is not a valid datatype and does not 
 void
 generateSymbolTables ()
 {
-  global_symbol_table = newSymbolTable(NULL, "Global", NULL);
+  symbol_table_ll.count = 0;
+  symbol_table_ll.head = NULL;
+  symbol_table_ll.tail = NULL;
+  global_symbol_table = newTrackedSymbolTable(NULL, "Global", NULL);
   stAddModuleDeclerations(AST.ptr1);
   stAddModuleDefinitions(AST.ptr2);
   stAddDriverModuleDefinition(AST.ptr3);
@@ -149,7 +180,7 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
       symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, false);
 
       /* Even if there's a semantic error, parse it. No harm. */
-      module_scope = newSymbolTable(global_symbol_table, module_name, NULL);
+      module_scope = newTrackedSymbolTable(global_symbol_table, module_name, NULL);
       module_scope->is_module_scope = true;
       module_scope->opening_line_no = module->starting_line_number;
       module_scope->closing_line_no = module->ending_line_number;
@@ -241,8 +272,13 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       lower_bound = stNewTemporaryVariable(scope, INTEGER);
       upper_bound_leaf_node = dtnode->node.arr_typ->ptr2->ptr2;
       upper_bound = stNewTemporaryVariable(scope, INTEGER);
-      if (lower_bound_leaf_node->type == IDENTIFIER || upper_bound_leaf_node->type == IDENTIFIER)
+      if (lower_bound_leaf_node->type == IDENTIFIER || upper_bound_leaf_node->type == IDENTIFIER) {
+        if (lower_bound_leaf_node->type == IDENTIFIER) // We shouldn't need to do this check twice...
+          strcpy(lower_bound->value.str, lower_bound_leaf_node->value.entry);
+        if (upper_bound_leaf_node->type == IDENTIFIER) // We shouldn't need to do this check twice...
+          strcpy(upper_bound->value.str, upper_bound_leaf_node->value.entry);
         is_static = false;
+      }
       else {
         is_static = true;
         /* Populate the lower bound and upper bound here itself instead of in the intermediate code.
@@ -378,7 +414,7 @@ stAddDriverModuleDefinition (struct StatementNode *statements_ll)
 {
   char *module_name = "driver";
   union SymbolTableValue new_value;
-  struct SymbolTable *driver_scope = newSymbolTable(global_symbol_table, module_name, NULL);
+  struct SymbolTable *driver_scope = newTrackedSymbolTable(global_symbol_table, module_name, NULL);
 
   driver_scope->is_module_scope = true;
   new_value = stCreateSymbolTableValueForModule("driver", -1, -1, NULL, NULL);
@@ -435,15 +471,15 @@ stWalkThroughStatements (struct StatementNode *statement_ll, struct SymbolTable 
             stHandleDeclareStatement(statement.dec_stm, scope);
             break;
           case CONDITIONAL_STMT_NODE:
-            inner_scope = newSymbolTable(scope, "Conditional Stmt", NULL);
+            inner_scope = newTrackedSymbolTable(scope, "Conditional Stmt", NULL);
             stHandleConditionalStatement(statement.con_stm, inner_scope);
             break;
           case FOR_ITERATIVE_STMT_NODE:
-            inner_scope = newSymbolTable(scope, "For Loop", NULL);
+            inner_scope = newTrackedSymbolTable(scope, "For Loop", NULL);
             stHandleForLoop(statement.for_ite_stm, inner_scope);
             break;
           case WHILE_ITERATIVE_STMT_NODE:
-            inner_scope = newSymbolTable(scope, "While Loop", NULL);
+            inner_scope = newTrackedSymbolTable(scope, "While Loop", NULL);
             stHandleWhileLoop(statement.whi_ite_stm, inner_scope);
             break;
           default:
@@ -737,7 +773,7 @@ stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scop
 {
   struct LeafNode *loop_variable = for_loop->ptr1;
   struct StatementNode *loop_body = for_loop->ptr3;
-  struct SymbolTable *loop_scope = newSymbolTable(scope, "for loop", NULL);
+  struct SymbolTable *loop_scope = newTrackedSymbolTable(scope, "for loop", NULL);
 
   for_loop->ptr2->ptr1->scope = scope;
   for_loop->ptr2->ptr2->scope = scope;
@@ -772,7 +808,7 @@ stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable
 {
   struct Attribute *conditional_expression = while_loop->ptr1;
   struct StatementNode *loop_body = while_loop->ptr2;
-  struct SymbolTable *loop_scope = newSymbolTable(scope, "while loop", NULL);
+  struct SymbolTable *loop_scope = newTrackedSymbolTable(scope, "while loop", NULL);
   stWalkThroughExpression(conditional_expression, scope);
   stWalkThroughStatements(loop_body, loop_scope);
   if (st_debug_mode)
@@ -953,16 +989,124 @@ getMemorySizeofDatatype (enum terminal datatype, bool is_array)
 
   switch (datatype)
     {
+      case (NUM):
       case (INTEGER):
-        return DT_INTEGER_SIZE;
+        // return DT_INTEGER_SIZE;
+        return 2;
+      case (RNUM):
       case (REAL):
-        return DT_REAL_SIZE;
+        // return DT_REAL_SIZE;
+        return 4;
       case (TRUE_):
       case (FALSE_):
       case (BOOLEAN_):
-        return DT_BOOL_SIZE;
+        // return DT_BOOL_SIZE;
+        return 1;
       default:
-        fprintf(stderr, invalid_datatype_error_message, datatype);
+        fprintf(stderr, invalid_datatype_error_message, terminalStringRepresentations[datatype]);
         exit(EXIT_FAILURE);
+    }
+}
+
+
+/**
+ * Print out all symbol table in a way that meets the requirements for the driver.
+ */
+void
+printSymbolTablesForDriver ()
+{
+  struct SymbolTableLinkedListNode *cursor = symbol_table_ll.head->next;  // Don't print the global symbol table itself.
+  printf("%-15s %-20s %-25s %-10s %-10s %-20s %-15s %-20s %-10s %s\n",
+    "variable_name", "scope(module_name)", "scope(line_numbers)", "width", "isArray",
+    "static_or_dynamic", "range_lexemes", "type_of_element", "offset", "nesting_level");
+  while (cursor != NULL)
+    {
+      printSymbolTableForDriver(cursor->symbol_table);
+      cursor = cursor->next;
+    }
+}
+
+/**
+ * A quick utility function to get the lowercase string version of a datatype.
+ */
+char *
+getLowerCaseDatatypeString (enum terminal datatype)
+{
+  switch (datatype)
+    {
+      case (NUM):
+      case (INTEGER):
+        return "integer";
+      case (RNUM):
+      case (REAL):
+        return "real";
+      case (TRUE_):
+      case (FALSE_):
+      case (BOOLEAN_):
+        return "boolean";
+      default:
+        return "???";
+    }
+}
+
+/**
+ * Print out a single symbol table in a way that meets the requirements for the driver.
+ */
+void
+printSymbolTableForDriver (struct SymbolTable *st)
+{
+  int data_len;
+  char *current_key;
+  char *is_array, *is_static, *current_datatype;
+  char lower_bound[128], upper_bound[128], range_lexemes[256], scope_range[256];
+  struct SymbolTable *module_scope = getModuleLevelScope(st);
+  struct SymbolTableNode *current_node;
+  struct VariableEntry current_variable;
+  
+  for (int i = 0; i < strl_len(st->keys); ++i)
+    {
+      current_key = strl_get(st->keys, i);
+      current_node = symbolTableGet(st, current_key);
+      current_variable = current_node->value.variable;
+      current_datatype = getLowerCaseDatatypeString(current_variable.datatype);
+      data_len = getMemorySizeofDatatype(current_variable.datatype, current_variable.isArray);
+
+      if (current_variable.isTemporary)
+        continue;
+      
+      if (current_variable.isArray)
+        {
+          is_array = "yes";
+
+          if (current_variable.isStatic)
+            is_static = "static";
+          else
+            is_static = "dynamic";
+
+          if (current_variable.lower_bound->datatype == NUM)
+            sprintf(lower_bound, "%d", current_variable.lower_bound->value.num);
+          else
+            strcpy(lower_bound, current_variable.upper_bound->value.str);
+          if (current_variable.upper_bound->datatype == NUM)
+            sprintf(upper_bound, "%d", current_variable.upper_bound->value.num);
+          else
+            strcpy(upper_bound, current_variable.upper_bound->value.str);
+
+          sprintf(range_lexemes, "[%s, %s]", lower_bound, upper_bound);
+        }
+      else
+        {
+          is_array = "no";
+          is_static = "---";
+          strcpy(lower_bound, "---");
+          strcpy(upper_bound, "---");
+          strcpy(range_lexemes, "---");
+        }
+
+      sprintf(scope_range, "%d-%d", st->opening_line_no, st->closing_line_no);
+
+      printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
+        current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
+        range_lexemes, current_datatype, current_variable.mem_offset, st->nesting_level - 1);
     }
 }

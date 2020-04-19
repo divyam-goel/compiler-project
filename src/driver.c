@@ -195,7 +195,7 @@ void generateAndPrintSymbolTable(){
 	createAST();
 	generateSymbolTables();
 	printf("Symbol table:\n");
-	printSymbolTable(global_symbol_table);
+  printSymbolTablesForDriver();
 }
 
 void printModuleActivationRecordsSize(){

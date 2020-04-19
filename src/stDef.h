@@ -72,6 +72,18 @@ struct SymbolTable {
    * the function name.*/
   int opening_line_no;
   int closing_line_no;
+  int nesting_level;
+};
+
+struct SymbolTableLinkedListNode {
+  struct SymbolTable *symbol_table;
+  struct SymbolTableLinkedListNode *next;
+};
+
+struct SymbolTableLinkedList {
+  int count;
+  struct SymbolTableLinkedListNode *head;
+  struct SymbolTableLinkedListNode *tail;
 };
 
 #endif

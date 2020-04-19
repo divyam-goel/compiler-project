@@ -64,5 +64,7 @@ struct VariableEntry *stNewTemporaryVariable(struct SymbolTable *scope, enum ter
 struct SymbolTable *getModuleLevelScope(struct SymbolTable *scope);
 struct ModuleEntry *getModuleEntry(char *module_name);
 int getMemorySizeofDatatype(enum terminal datatype, bool is_array);
+void printSymbolTablesForDriver();
+void printSymbolTableForDriver(struct SymbolTable *st);
 
 #endif
