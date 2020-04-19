@@ -226,13 +226,8 @@ void writeExitToOutputFile(char *output_file) {
 }
 
 
-<<<<<<< 415d81b3b659d1b218aa72ecb054efd587d90c17
 void writeInstructionToOutput(char *data){
   FILE *fptr = fopen(output_file, "a+");
-=======
-void writeInstructionToOutput(char *data) {
-  FILE *fptr = fopen(output_file,"a");
->>>>>>> dynamic bound hecking working for identifier indexed static array
   char instr[MAX_SIZE_INSTR];
   strcpy(instr,data);
   strcat(instr,"\n");
