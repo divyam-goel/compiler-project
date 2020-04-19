@@ -97,9 +97,9 @@ void initializeASMOutputFile(char *output_file){
   strcat(data_list, "\n");
   
   /* write to output file */
-  FILE *fptr = fopen(output_file, "w");
+  FILE *fptr = fopen(output_file, "w+");
   if (fptr == NULL) {
-    fprintf(stderr, "Line number %d: Failed to open output file.\n", __LINE__ - 2);
+    fprintf(stderr, "(codeGen.c) %d: Failed to open output file (%s).\n", __LINE__ - 2, output_file);
     exit(-1);
   }
   fputs(data_list, fptr);
@@ -188,7 +188,7 @@ void writeDataSectionToOutputFile(char *output_file) {
   strcat(data_list, "\tdb 10, 0\n");
 
   /* write to output file */
-  FILE *fptr = fopen(output_file,"a");
+  FILE *fptr = fopen(output_file, "a+");
   fputs(data_list, fptr);
   fclose(fptr);
 }
@@ -212,7 +212,7 @@ void writeExitToOutputFile(char *output_file) {
   strcat(data_list,"\tret\n");
   
    /* write to output file */
-  FILE *fptr = fopen(output_file, "a");
+  FILE *fptr = fopen(output_file, "a+");
   fputs(data_list, fptr);
   fclose(fptr);
 
@@ -221,7 +221,7 @@ void writeExitToOutputFile(char *output_file) {
 
 
 void writeInstructionToOutput(char *data){
-  FILE *fptr = fopen(output_file,"a");
+  FILE *fptr = fopen(output_file, "a+");
   char instr[MAX_SIZE_INSTR];
   strcpy(instr,data);
   strcat(instr,"\n");

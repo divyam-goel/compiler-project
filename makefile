@@ -79,10 +79,12 @@ semanticCheck.o: src/semanticCheck.c src/semanticCheck.h src/st.h src/stDef.h sr
 intCode.o: src/intCode.c src/intCode.h src/intCodeDef.h src/st.h src/stDef.h src/ast.h src/astDef.h
 	$(CC) src/intCode.c -o lib/intCode.o $(OBJ_CFLAGS)
 
-codeGen.o: intCode.o
+codeGen.o: intCode.o src/codeGen.c src/codeGen.h
+	mkdir -p output
 	$(CC) src/codeGen.c -o lib/codeGen.o $(OBJ_CFLAGS)
 
 clean:
 	find . -type f -name '*.o' -delete
 	find . -type f -name '*.out' -delete
 	rm build/*
+	rm output/*
