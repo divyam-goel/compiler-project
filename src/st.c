@@ -770,28 +770,29 @@ stHandleConditionalStatement (struct ConditionalStmtNode *con_stmt, struct Symbo
  * this new loop. After resolving the loop variable, point it's scope towards the
  * the scope encapsulating the for loop.
  * @param   for_loop    The for loop's statement node.
- * @param   scope       The scope that this statement belongs to.
+ * @param   scope       The scope for the for loop.
  */
 void
 stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scope)
 {
   struct LeafNode *loop_variable = for_loop->ptr1;
   struct StatementNode *loop_body = for_loop->ptr3;
-  struct SymbolTable *loop_scope = newTrackedSymbolTable(scope, "for loop", NULL);
 
-  for_loop->ptr2->ptr1->scope = scope;
-  for_loop->ptr2->ptr2->scope = scope;
+  for_loop->ptr2->ptr1->scope = scope;  /* Loop lower bound. */
+  for_loop->ptr2->ptr2->scope = scope;  /* Loop upper bound. */
   stUpdateLeafNode(loop_variable, scope);
+  /* We do this to say that this variable is being used in this scope, not that it
+   * belongs in this scope (it would have been declared in a parent scope) */
 
   /* Checking the type of the loop variable and making sure that it is an integer type will
    * be left to later stages of semantic checking. */
 
-  stWalkThroughStatements(loop_body, loop_scope);
+  stWalkThroughStatements(loop_body, scope);
 
   if (st_debug_mode)
     {
       fprintf(stdout, "For loop symbol table after generation of symbol tables:\n");
-      printSymbolTable(loop_scope);
+      printSymbolTable(scope);
       printf("\n");
     }
   
@@ -805,20 +806,19 @@ stHandleForLoop (struct ForIterativeStmtNode *for_loop, struct SymbolTable *scop
  * Create a new scope for the body of the while loop and walk through it. Also
  * walk through the body of the whlie loop under the context of a new (inner) scope.
  * @param   while_loop    The while loop node to parse.
- * @param   scope         The scope that this statement belongs to.
+ * @param   scope         The scope for the while loop.
  */
 void
 stHandleWhileLoop (struct WhileIterativeStmtNode *while_loop, struct SymbolTable *scope)
 {
   struct Attribute *conditional_expression = while_loop->ptr1;
   struct StatementNode *loop_body = while_loop->ptr2;
-  struct SymbolTable *loop_scope = newTrackedSymbolTable(scope, "while loop", NULL);
-  stWalkThroughExpression(conditional_expression, scope);
-  stWalkThroughStatements(loop_body, loop_scope);
+  stWalkThroughExpression(conditional_expression, scope->parent);
+  stWalkThroughStatements(loop_body, scope);
   if (st_debug_mode)
     {
       fprintf(stdout, "While loop symbol table after generation of symbol tables:\n");
-      printSymbolTable(loop_scope);
+      printSymbolTable(scope);
       printf("\n");
     }
   
