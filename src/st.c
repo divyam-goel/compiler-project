@@ -1090,7 +1090,7 @@ printSymbolTableForDriver (struct SymbolTable *st)
           if (current_variable.lower_bound->datatype == NUM)
             sprintf(lower_bound, "%d", current_variable.lower_bound->value.num);
           else
-            strcpy(lower_bound, current_variable.upper_bound->value.str);
+            strcpy(lower_bound, current_variable.lower_bound->value.str);
           if (current_variable.upper_bound->datatype == NUM)
             sprintf(upper_bound, "%d", current_variable.upper_bound->value.num);
           else
