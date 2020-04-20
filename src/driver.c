@@ -272,7 +272,8 @@ void printFollowSetHumanFriendly() {
 int main(int argc, char const *argv[]) {
 
 	if (argc < 3) {
-		puts("Missing arguments.\nUsage: ./compiler source_file output_file");
+		puts("Missing arguments.\nExample usage: ./compiler code.erplag code.asm");
+    puts("Then assemble with: nasm -f elf64 code.asm -o code.o && gcc code.o -o code.out");
 		exit(-1);
 	}
 
