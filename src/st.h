@@ -43,7 +43,7 @@ union SymbolTableValue stCreateSymbolTableValueForModule(
   struct InputPlistNode *ipl, struct OutputPlistNode *opl);
 union SymbolTableValue stCreateSymbolTableValueForVariable(
   struct LeafNode *varnode, struct Attribute *dtnode,
-  struct SymbolTable *scope, bool is_input);
+  struct SymbolTable *scope, bool is_input, bool is_io);
 void stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *scope);
 void stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *scope);
 void stAddDriverModuleDefinition(struct StatementNode *statements_ll);

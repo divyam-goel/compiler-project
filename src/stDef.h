@@ -19,6 +19,7 @@ struct ModuleEntry {
   int def_line_number;
   int num_temp_var;
   int activation_record_size;
+  int io_record_size;
   bool called;
   struct InputPlistNode *inputplist;
   struct OutputPlistNode *outputplist;

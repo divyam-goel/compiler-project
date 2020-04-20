@@ -184,8 +184,13 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
       module_scope->is_module_scope = true;
       module_scope->opening_line_no = module->starting_line_number;
       module_scope->closing_line_no = module->ending_line_number;
-      stAddInputPlistToScope(module->ptr2, module_scope);
+
+      /* Because of the negative memory offset hack to make the implementation of function
+       * calls (module reuse statements) easier to implment we have to process the outputplist
+       * first then the inputplist. */
       stAddOutputPlistToScope(module->ptr3, module_scope);
+      stAddInputPlistToScope(module->ptr2, module_scope);
+
       stWalkThroughStatements(module->ptr4, module_scope);
       if (st_debug_mode)
         {
@@ -242,7 +247,7 @@ stCreateSymbolTableValueForModule (char *name, int dec_line_no, int def_line_no,
  */
 union SymbolTableValue
 stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute *dtnode,
-                                     struct SymbolTable *scope, bool is_input)
+                                     struct SymbolTable *scope, bool is_input, bool is_io)
 {
   char *name;
   bool is_array, is_static;
@@ -261,7 +266,15 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
 
   module_scope = getModuleLevelScope(scope);
   module = getModuleEntry(module_scope->scope_tag);
-  memoffset = module->activation_record_size;
+
+  if (is_io)
+    {
+      /* Part of a quick and hack to make implementing function calls easier. */
+      module->io_record_size -= 8;
+      memoffset = module->io_record_size;
+    }
+  else
+    memoffset = module->activation_record_size;
   module->activation_record_size += 8;
 
   if (dtnode->type == ARRAY_TYPE_NODE)
@@ -311,6 +324,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       upper_bound = NULL;
     }
 
+
+  if (is_array && is_io)
+    module->io_record_size -= (8 + 8);
+
   datasize = getMemorySizeofDatatype(basetype, is_array);
   if (is_array && is_static) {
     datasize = (upper_bound_leaf_node->value.num - \
@@ -349,6 +366,18 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
   struct Attribute *variable_datatype;
   union SymbolTableValue new_value;
   struct SymbolTableNode *existing_node;
+  struct InputPlistNode *prev = NULL, *next;
+
+  /* reverse the list order temporarily */
+  while (plist_ll != NULL)
+    {
+      next = plist_ll->ptr3;
+      plist_ll->ptr3 = prev;
+      prev = plist_ll;
+      plist_ll = next;
+    }
+  plist_ll = prev;
+
   while (plist_ll != NULL)
     {
       variable_node = plist_ll->ptr1;
@@ -363,11 +392,24 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
         }
       else
         {
-          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, true);
+          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, true, true);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
         }
       plist_ll = plist_ll->ptr3;
     }
+
+  /* reverse the list order again to put things in the right order.
+   * We do this in a separate loop for modularity. */
+  plist_ll = prev;
+  prev = NULL;
+  while (plist_ll != NULL)
+    {
+      next = plist_ll->ptr3;
+      plist_ll->ptr3 = prev;
+      prev = plist_ll;
+      plist_ll = next;
+    }
+  plist_ll = prev;
 }
 
 
@@ -385,6 +427,18 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
   struct Attribute *variable_datatype;
   union SymbolTableValue new_value;
   struct SymbolTableNode *existing_node;
+  struct OutputPlistNode *prev = NULL, *next;
+
+  /* reverse the list order temporarily */
+  while (plist_ll != NULL)
+    {
+      next = plist_ll->ptr3;
+      plist_ll->ptr3 = prev;
+      prev = plist_ll;
+      plist_ll = next;
+    }
+  plist_ll = prev;
+
   while (plist_ll != NULL)
     {
       variable_node = plist_ll->ptr1;
@@ -399,11 +453,24 @@ stAddOutputPlistToScope (struct OutputPlistNode *plist_ll, struct SymbolTable *s
         }
       else
         {
-          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, false);
+          new_value = stCreateSymbolTableValueForVariable(variable_node, variable_datatype, scope, false, true);
           symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, false);
         }
       plist_ll = plist_ll->ptr3;
     }
+  
+  /* reverse the list order again to put things in the right order.
+   * We do this in a separate loop for modularity. */
+  plist_ll = prev;
+  prev = NULL;
+  while (plist_ll != NULL)
+    {
+      next = plist_ll->ptr3;
+      plist_ll->ptr3 = prev;
+      prev = plist_ll;
+      plist_ll = next;
+    }
+  plist_ll = prev;
 }
 
 
@@ -667,6 +734,8 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
     }
   else
       module->called = true;
+  module->activation_record_size = (8 + 8);
+  module->io_record_size = 0;
   mr_stmt->ptr2->scope = global_symbol_table;
   while (inputs_ll != NULL)
     {
@@ -721,7 +790,7 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
       /* If the variable does not already exist in this scope, add it to
        * the symbol table / scope. This is controlled by overwrite */
         assert(dtnode != NULL);
-        new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope, false);
+        new_value = stCreateSymbolTableValueForVariable(variable_ll->ptr1, dtnode, scope, false, false);
         symbolTableSet(scope, variable_name, new_value, ST_VARIABLE, overwrite);
         variable_ll = variable_ll->ptr2;
     }
