@@ -247,7 +247,7 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   char *name;
   bool is_array, is_static;
   enum terminal basetype;
-  int line_number, datasize;
+  int line_number, datasize, memoffset;
   struct LeafNode *lower_bound_leaf_node, *upper_bound_leaf_node;
   struct VariableEntry *lower_bound, *upper_bound;
   struct ModuleEntry *module;
@@ -259,6 +259,11 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   line_number = varnode->line_number;
   varnode->scope = scope;
 
+  module_scope = getModuleLevelScope(scope);
+  module = getModuleEntry(module_scope->scope_tag);
+  memoffset = module->activation_record_size;
+  module->activation_record_size += 8;
+
   if (dtnode->type == ARRAY_TYPE_NODE)
     {
       assert(dtnode->node.arr_typ->ptr1->nullData == true);
@@ -266,6 +271,7 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
              dtnode->node.arr_typ->ptr2->ptr1->type == IDENTIFIER);
       assert(dtnode->node.arr_typ->ptr2->ptr2->type == NUM ||
              dtnode->node.arr_typ->ptr2->ptr2->type == IDENTIFIER);
+      
       is_array = true;
       basetype = dtnode->node.arr_typ->ptr1->type;
       lower_bound_leaf_node = dtnode->node.arr_typ->ptr2->ptr1;
@@ -305,12 +311,11 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       upper_bound = NULL;
     }
 
-  module_scope = getModuleLevelScope(scope);
-  module = getModuleEntry(module_scope->scope_tag);
   datasize = getMemorySizeofDatatype(basetype, is_array);
   if (is_array && is_static) {
-    datasize += (upper_bound_leaf_node->value.num - \
+    datasize = (upper_bound_leaf_node->value.num - \
                 lower_bound_leaf_node->value.num + 1) * 8;
+    module->activation_record_size += datasize;
   }
 
   union SymbolTableValue new_value;
@@ -324,9 +329,8 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   new_value.variable.line_number = line_number;
   new_value.variable.lower_bound = lower_bound;
   new_value.variable.upper_bound = upper_bound;
-  new_value.variable.mem_offset = module->activation_record_size;
+  new_value.variable.mem_offset = memoffset;
 
-  module->activation_record_size += datasize;
   return new_value;
 }
 

@@ -30,6 +30,9 @@ typedef enum IntermediateCodeOperation {
   /* control */
   icJUMP, icJUMPZ, icJUMPNZ, icCALL,
 
+  /* array */
+  icARRAY,
+
   /* others */
   icLABEL, icErrARRAY
 } ICOp;

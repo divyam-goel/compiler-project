@@ -148,6 +148,7 @@ icArray (struct ArrayNode *array)
 {
   ICInstr *ic_instr = NULL;
   ICAddr ic_addr, label_error, label_success;
+  ICAddr ic_addr_lower, ic_addr_upper;
   struct VariableEntry *array_symbol_entry;
   struct SymbolTable *scope;
   
@@ -158,7 +159,34 @@ icArray (struct ArrayNode *array)
   array_symbol_entry = (struct VariableEntry *) array->ptr1->addr.value.symbol;
   scope = array->ptr1->scope;
 
-  if (!array_symbol_entry->isStatic || array->ptr2->type == IDENTIFIER)  /* Handle dynamic bound(s). */
+  /* populate addresses for lower & upper bound */
+  if (!array_symbol_entry->isStatic) {
+    ic_addr_lower.type = IDENTIFIER;
+    ic_addr_lower.value.symbol = array_symbol_entry->lower_bound;
+
+    ic_addr_upper.type = IDENTIFIER;
+    ic_addr_upper.value.symbol = array_symbol_entry->upper_bound;
+  }
+  else if (array->ptr2->type == IDENTIFIER) {
+    ic_addr_lower.type = INTEGER;
+    ic_addr_lower.value.num = array_symbol_entry->lower_bound->value.num;
+    
+    ic_addr_upper.type = INTEGER;
+    ic_addr_upper.value.num = array_symbol_entry->upper_bound->value.num;
+  }
+  ic_addr_lower.is_label = false;
+  ic_addr_upper.is_label = false;
+
+  /*
+    Dynamically check bounds if any one of the following
+    conditions satisfy:
+      1. array is dynamic
+      2. the array is dynamically indexed
+    checks:
+      1. index is greater than / equal to lower bound
+      2. index is lesser than / equal to upper bound
+  */
+  if (!array_symbol_entry->isStatic || array->ptr2->type == IDENTIFIER)
     {
       label_error = newLabel(NULL);
       label_success = newLabel(NULL);
@@ -168,9 +196,7 @@ icArray (struct ArrayNode *array)
       // ic_addr = newTemporary();
       ic_addr = newTemporaryV2(scope, BOOLEAN_);
       ic_instr->addr1 = array->ptr2->addr;
-      ic_instr->addr2.is_label = false;
-      ic_instr->addr2.type = INTEGER;
-      ic_instr->addr2.value.num = array_symbol_entry->lower_bound->value.num;
+      ic_instr->addr2 = ic_addr_lower;
       ic_instr->addr3 = ic_addr;
       ic_instr->op = icGE;
       global_ic_instr->next = ic_instr;
@@ -189,9 +215,7 @@ icArray (struct ArrayNode *array)
       // ic_addr = newTemporary();
       ic_addr = newTemporaryV2(scope, BOOLEAN_);
       ic_instr->addr1 = array->ptr2->addr;
-      ic_instr->addr2.is_label = false;
-      ic_instr->addr2.type = INTEGER;
-      ic_instr->addr2.value.num = array_symbol_entry->upper_bound->value.num;
+      ic_instr->addr2 = ic_addr_upper;
       ic_instr->addr3 = ic_addr;
       ic_instr->op = icLE;
       global_ic_instr->next = ic_instr;
@@ -553,7 +577,7 @@ void icConditionalStatement(struct ConditionalStmtNode *conditional) {
     ic_instr = newICInstruction();
     ic_instr->addr1 = temporary;
     ic_instr->addr2 = label_test;
-    ic_instr->op = icJUMPZ;
+    ic_instr->op = icJUMPNZ;
     global_ic_instr->next = ic_instr;
     global_ic_instr = ic_instr;
 
@@ -720,6 +744,87 @@ void icPrintStatement(struct PrintNode *print) {
 }
 
 
+void icDeclareStatement(struct DeclareStmtNode *declaration) {
+  struct ArrayTypeNode *array_type;
+  ICInstr *ic_instr;
+  ICAddr ic_addr_lower, ic_addr_upper;
+  struct VariableEntry *symbol_entry;
+  struct IdListNode *id_list_node;
+  
+  /* return if it's not a declaration for an array */
+  if (declaration->ptr2->type != ARRAY_TYPE_NODE)
+    return;
+
+  /* return if the array is static */
+  array_type = declaration->ptr2->node.arr_typ;
+  if (array_type->ptr2->ptr1->type == NUM &&
+      array_type->ptr2->ptr2->type == NUM)
+    return;
+  
+  /* generate ic addresses for actual lower & upper bounds */
+  icLeaf(array_type->ptr2->ptr1);
+  icLeaf(array_type->ptr2->ptr2);
+
+  /* populate fields for dynamic lower bound ic address */
+  ic_addr_lower.type = IDENTIFIER;
+  ic_addr_lower.is_label = false;
+
+  /* populate fields for dynamic upper bound ic address */
+  ic_addr_upper.type = IDENTIFIER;
+  ic_addr_upper.is_label = false;
+
+  /*
+    iterate through the list of identifiers in declaration
+    and add instruction to allocate memory for dynamic arrays
+  */
+  id_list_node = declaration->ptr1;
+  while (id_list_node != NULL) {
+    /* generate ic address for array pointer */
+    icLeaf(id_list_node->ptr1);
+
+    /* populate symbols for dynamic lower & upper bounds ic addresses */
+    symbol_entry = (struct VariableEntry *) 
+                    id_list_node->ptr1->addr.value.symbol;
+    ic_addr_lower.value.symbol = symbol_entry->lower_bound;
+    ic_addr_upper.value.symbol = symbol_entry->upper_bound;
+    
+    /*
+      instruction: store the lower bound dynamically
+      in the allocated memory for lower bound
+    */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = array_type->ptr2->ptr1->addr;
+    ic_instr->addr3 = ic_addr_lower;
+    ic_instr->op = icMOV;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /*
+      instruction: store the upper bound dynamically
+      in the allocated memory for upper bound
+    */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = array_type->ptr2->ptr2->addr;
+    ic_instr->addr3 = ic_addr_upper;
+    ic_instr->op = icMOV;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    /*
+      instruction: store the memory offset of dynamically
+      allocated memory for dynamic arrays
+    */
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = id_list_node->ptr1->addr;
+    ic_instr->op = icARRAY;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+    
+    id_list_node = id_list_node->ptr2;
+  }
+}
+
+
 void icStatement(struct Attribute *attribute_node) {
   switch (attribute_node->type) {
     case ASSIGN_STMT_NODE:
@@ -735,6 +840,7 @@ void icStatement(struct Attribute *attribute_node) {
       return icPrintStatement(attribute_node->node.pri);
       break;
     case DECLARE_STMT_NODE:
+      return icDeclareStatement(attribute_node->node.dec_stm);
       break;
     case CONDITIONAL_STMT_NODE:
       return icConditionalStatement(attribute_node->node.con_stm);
@@ -933,6 +1039,11 @@ void printICInstruction(ICInstr *ic_instr) {
     // case icCALL:
     //   printf("CALL\t\t\t");
     //   break;
+    case icARRAY:
+      printf("ARRAY");
+      printf("\t");
+      printICAddress(ic_instr->addr1);
+      break;
     case icLABEL:
       printf("LABEL\t");
       printICAddress(ic_instr->addr1);

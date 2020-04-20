@@ -1,6 +1,8 @@
 #include "codeGen.h"
 
-char output_file[50];
+#define OFFSET 8
+
+char *output_file = "output/code.asm";
 
 char reg_rax[] = "rax";
 char reg_rbx[] = "rbx";
@@ -10,6 +12,7 @@ char reg_rsp[] = "rsp";
 char reg_rbp[] = "rbp";
 char reg_rsi[] = "rsi";
 char reg_rdi[] = "rdi";
+char reg_r8[] = "r8";
 
 char instr_mov[] = "mov";
 char instr_add[] = "add";
@@ -22,6 +25,8 @@ char instr_jne[] = "jne";
 char instr_cmp[] = "cmp";
 char instr_push[] = "push";
 char instr_pop[] = "pop";
+char instr_inc[] = "inc";
+char instr_dec[] = "dec";
 
 char const_0[] = "0";
 char const_true[] = "true";
@@ -31,6 +36,7 @@ char const_false[] = "false";
 /* Global number for labels used */
 int rel_op_label_no = 0;
 int bool_label_no = 0;
+int loop_label_no = 0;
 
 
 /* functions declarations */
@@ -43,7 +49,9 @@ void errorData(char *data_list);
 /* Utility functions */
 
 
-void initializeOutputFile() {
+void initializeOutputFile(char *target_output_file) {
+  output_file = target_output_file;
+
   FILE *fptr = fopen(output_file, "w");
   if (fptr == NULL) {
     fprintf(stderr, "Error!! Failed to open output file.\n");
@@ -83,7 +91,7 @@ void initializeDirectives() {
 }
 
 
-void initializeTextSection(){
+void initializeTextSection() {
   char data_list[400];
   char tmp_arr[50];
   struct ModuleEntry *entry;
@@ -100,11 +108,13 @@ void initializeTextSection(){
 
   /* instructions for stack alignment */
   strcat(data_list,"\tpush rbx\n");
-  strcat(data_list,"\tsub rsp, 32\n");
+  strcat(data_list,"\tmov rbp, rsp\n");
+  // strcat(data_list,"\tsub rsp, 128\n");
   
   /* push activation record for driver on stack */
   strcpy(tmp_arr, "driver");
   entry = resolveModule(tmp_arr);
+  // sprintf(tmp_arr, "\tmov QWORD [rbp + 8], %d\n", entry->activation_record_size - 8);
   sprintf(tmp_arr, "\tsub rsp, %d\n", entry->activation_record_size);
   strcat(data_list, tmp_arr);
   
@@ -235,8 +245,8 @@ void errorData(char *data_list) {
 
 void exitCodeTextSection() {
   char data_list[400];
-  char tmp_var[50];
-  struct ModuleEntry *entry;
+  // char tmp_var[50];
+  // struct ModuleEntry *entry;
 
   /* intiliaze variables */
   strcpy(data_list, "");
@@ -245,13 +255,14 @@ void exitCodeTextSection() {
   strcat(data_list,"\nexit:\n");
 
   /* pop the activation record of driver from stack */
-  strcpy(tmp_var, "driver");
-  entry = resolveModule(tmp_var);
-  sprintf(tmp_var, "\tadd rsp, %d\n", entry->activation_record_size);
-  strcat(data_list, tmp_var);
+  // strcpy(tmp_var, "driver");
+  // entry = resolveModule(tmp_var);
+  // sprintf(tmp_var, "\tadd rbp, %d\n", entry->activation_record_size);
+  // strcat(data_list, tmp_var);
 
   /* reverse instructions for stack alignment */
-  strcat(data_list,"\tadd rsp, 32\n");
+  // strcat(data_list,"\tadd rbp, 32\n");
+  strcat(data_list,"\tmov rsp, rbp\n");
   strcat(data_list,"\tpop rbx\n");
   
   /* return from main */
@@ -264,15 +275,21 @@ void exitCodeTextSection() {
 /* Utility functions for Code Generation */
 
 
-void getLabelRelationalOp(char *label){
+void getLabelRelationalOp(char *label) {
   sprintf(label, "RelOpL%d", rel_op_label_no);
   rel_op_label_no += 1;
 }
 
 
-void getLabelBoolean(char *label){
+void getLabelBoolean(char *label) {
   sprintf(label, "BoolL%d", bool_label_no);
   bool_label_no += 1;
+}
+
+
+void getLabelLoop(char *label) {
+  sprintf(label, "LoopL%d", loop_label_no);
+  loop_label_no += 1;
 }
 
 
@@ -321,6 +338,11 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
   char tmp[50];
   int data_size;
   
+  /* for static arrays */
+  char lower_bound_str[50];
+  int base_offset, num_elements;
+  int lower_bound, upper_bound;
+  
   switch (ic_addr->type) {
   case INTEGER:
     sprintf(addr, "%d", ic_addr->value.num);
@@ -330,9 +352,9 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
     break;
   case BOOLEAN_:
     if (ic_addr->value.boolean == true)
-      sprintf(addr, "true");
+      sprintf(addr, "1");
     else
-      sprintf(addr, "false");
+      sprintf(addr, "0");
     break;
   case IDENTIFIER:
     if (ic_addr->is_label) {
@@ -340,26 +362,47 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
     }
     else {
       symbol_entry = (struct VariableEntry *)ic_addr->value.symbol;
-      sprintf(addr, "[rsp + %d]", symbol_entry->mem_offset);
+      sprintf(addr, "[rbp - %d]", symbol_entry->mem_offset + OFFSET);
     }
     break;
   case ARRAY:
     symbol_entry = (struct VariableEntry *) ic_addr->value.array.var;
     
-    instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
-    
-    sprintf(tmp, "%d", symbol_entry->mem_offset);
-    instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
+      base_offset = symbol_entry->mem_offset;
+      data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
 
-    data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
-    sprintf(tmp, "%d", data_size);
-    instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
+    if (symbol_entry->isStatic) {
+      lower_bound = symbol_entry->lower_bound->value.num;
+      upper_bound = symbol_entry->upper_bound->value.num;
 
+      num_elements = upper_bound - lower_bound + 1;
+      base_offset = base_offset + OFFSET * 3 + num_elements * data_size;
+
+      instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rbp);
+      
+      sprintf(tmp, "%d", base_offset);
+      instrTwoOperand(instr_list, instr_sub, reg_rdx, tmp);
+
+      sprintf(lower_bound_str, "%d", symbol_entry->lower_bound->value.num);
+    }
+    else {
+      /*
+        load the base address of array from memory location
+        of array pointer
+      */
+      sprintf(tmp, "[rbp - %d]", base_offset + OFFSET);
+      instrTwoOperand(instr_list, instr_mov, reg_rdx, tmp);
+      
+      sprintf(lower_bound_str, "[rbp - %d]",
+        symbol_entry->lower_bound->mem_offset + OFFSET);
+    }
+
+    /* load the index of array access in register RBX */
     cgICAddr(instr_list, addr, ic_addr->value.array.idx);
     instrTwoOperand(instr_list, instr_mov, reg_rbx, addr);
 
-    sprintf(tmp, "%d", symbol_entry->lower_bound->value.num);
-    instrTwoOperand(instr_list, instr_sub, reg_rbx, tmp);
+    /* subtract the lower bound from the index in register RBX */
+    instrTwoOperand(instr_list, instr_sub, reg_rbx, lower_bound_str);
     
     sprintf(addr, "[%s + %s * %d]", reg_rdx, reg_rbx, data_size);
     break;
@@ -388,7 +431,7 @@ void cgMoveFromRegToMem(char *instr_list, char *reg, ICAddr *ic_addr) {
 }
 
 
-/* Functions for Generation ASM Code from Intermediate Code */
+/* Functions for generating ASM Code from Intermediate Code */
 
 
 void cgUnaryOp(ICInstr *ic_instr) {
@@ -559,7 +602,7 @@ void cgArithmeticOpInteger(ICInstr *ic_instr) {
 }
 
 
-void cgMultiplyInteger(ICInstr *ic_instr){
+void cgMultiplyInteger(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
 
   /* instruction: load from mem addr1 to reg AX */
@@ -586,7 +629,7 @@ void cgMultiplyInteger(ICInstr *ic_instr){
 }
 
 
-void cgDivisionInteger(ICInstr *ic_instr){
+void cgDivisionInteger(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
 
   /* instruction: load from mem addr1 to reg AX */
@@ -610,7 +653,7 @@ void cgDivisionInteger(ICInstr *ic_instr){
 }
 
 
-void cgJumpUnconditional(ICInstr *ic_instr){
+void cgJumpUnconditional(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char label[50];
   
@@ -624,7 +667,7 @@ void cgJumpUnconditional(ICInstr *ic_instr){
 }
 
 
-void cgJumpConditional(ICInstr *ic_instr){
+void cgJumpConditional(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char instr[10];
   char label[20];
@@ -747,19 +790,111 @@ void mem(char *mem, char *addr) {
 }
 
 
-void printArrayUtil(struct VariableEntry *symbol_entry) {
-  char instr_list[MAX_SIZE_INSTR] = "";
-  char tmp1[50], tmp2[50], format[50];
-  int base_offset, lower_bound, upper_bound;
-  int data_size;
-  
+void staticArrayUtil(char *instr_list, struct VariableEntry *symbol_entry) {
+  char tmp[50];
+  int base_offset, data_size;
+  int lower_bound, upper_bound;
+  int num_elements;
+
   base_offset = symbol_entry->mem_offset;
   lower_bound = symbol_entry->lower_bound->value.num;
   upper_bound = symbol_entry->upper_bound->value.num;
   data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
 
+  num_elements = upper_bound - lower_bound + 1;
+  base_offset = base_offset + OFFSET * 3 + num_elements * data_size;
+  
+  /* compute base of array */
+  instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rbp);
+
+  /* compute base of array */
+  sprintf(tmp, "%d", base_offset);
+  instrTwoOperand(instr_list, instr_sub, reg_rdx, tmp);
+  
+  /* load the lower bound in rcx for loop */
+  sprintf(tmp, "%d", lower_bound);
+  instrTwoOperand(instr_list, instr_mov, reg_rcx, tmp);
+
+  /* load the upper bound in rax for loop */
+  sprintf(tmp, "%d", upper_bound);
+  instrTwoOperand(instr_list, instr_mov, reg_rax, tmp);
+
+  /* load the size of a data element */
+  sprintf(tmp, "%d", data_size);
+  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp);
+
+  /* calculate number of elements in array */
+  sprintf(tmp, "%d", num_elements);
+  instrTwoOperand(instr_list, instr_mov, reg_r8, tmp);
+}
+
+
+void dynamicArrayUtil(char *instr_list, struct VariableEntry *symbol_entry) {
+  char tmp[50];
+  int base_offset, data_size;
+  int lower_bound_offset, upper_bound_offset;
+
+  base_offset = symbol_entry->mem_offset;
+  lower_bound_offset = symbol_entry->lower_bound->mem_offset;
+  upper_bound_offset = symbol_entry->upper_bound->mem_offset;
+  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+
+  /* load base address of array from array pointer */
+  sprintf(tmp, "[rbp - %d]", base_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_mov, reg_rdx, tmp);
+
+  /* load the lower bound in rcx for loop */
+  sprintf(tmp, "[rbp - %d]", lower_bound_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_mov, reg_rcx, tmp);
+
+  /* load the upper bound in rax for loop */
+  sprintf(tmp, "[rbp - %d]", upper_bound_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_mov, reg_rax, tmp);
+
+  /* load the size of a data element */
+  sprintf(tmp, "%d", data_size);
+  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp);
+
+  /* calculate number of elements in array */
+  instrTwoOperand(instr_list, instr_mov, reg_r8, reg_rax);
+  instrTwoOperand(instr_list, instr_sub, reg_r8, reg_rcx);
+  strcpy(tmp, "1");
+  instrTwoOperand(instr_list, instr_add, reg_r8, tmp);
+}
+
+
+void pushRegUtil(char *instr_list) {
+  instrOneOperand(instr_list, instr_push, reg_rdx);
+  instrOneOperand(instr_list, instr_push, reg_rcx);
+  instrOneOperand(instr_list, instr_push, reg_rbx);
+  instrOneOperand(instr_list, instr_push, reg_rax);
+  strcat(instr_list, "\n");
+}
+
+
+void popRegUtil(char *instr_list) {
+  instrOneOperand(instr_list, instr_pop, reg_rax);
+  instrOneOperand(instr_list, instr_pop, reg_rbx);
+  instrOneOperand(instr_list, instr_pop, reg_rcx);
+  instrOneOperand(instr_list, instr_pop, reg_rdx);
+  strcat(instr_list, "\n");
+}
+
+
+void printArrayUtil(struct VariableEntry *symbol_entry) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char tmp[50], format[50], label[50];  
+
+  if (symbol_entry->isStatic)
+    staticArrayUtil(instr_list, symbol_entry);
+  else
+    dynamicArrayUtil(instr_list, symbol_entry);
+  strcat(instr_list, "\n");
+
+  pushRegUtil(instr_list);
   strcpy(format, "output_array_msg_1");
   printUtil(instr_list, format, NULL);
+  popRegUtil(instr_list);
   
   switch(symbol_entry->datatype) {
     case INTEGER:
@@ -775,38 +910,29 @@ void printArrayUtil(struct VariableEntry *symbol_entry) {
       break;
   }
 
-  instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
+  strcpy(tmp, "1");
+  instrTwoOperand(instr_list, instr_add, reg_rax, tmp);
 
-  sprintf(tmp1, "%d", base_offset);
-  instrTwoOperand(instr_list, instr_add, reg_rdx, tmp1);
-  
-  sprintf(tmp1, "%d", data_size);
-  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp1);
+  /* set up loop label */
+  getLabelLoop(label);
+  labelUtil(instr_list, label);
+
+  mem(tmp, reg_rdx);
+
+  pushRegUtil(instr_list);
+  printUtil(instr_list, format, tmp);
+  popRegUtil(instr_list);
 
   instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
 
-  mem(tmp1, reg_rdx);
-  mem(tmp2, reg_rbx);
-
-  writeToOutputFile(instr_list);
-  strcpy(instr_list, "");
-
-  for (int i = lower_bound; i <= upper_bound; i++) {
-    instrOneOperand(instr_list, instr_push, reg_rdx);
-    instrOneOperand(instr_list, instr_push, reg_rbx);
-
-    printUtil(instr_list, format, tmp1);
-
-    instrOneOperand(instr_list, instr_pop, reg_rbx);
-    instrOneOperand(instr_list, instr_pop, reg_rdx);
-
-    instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
-
-    if (i % 3 == 0) {
-      writeToOutputFile(instr_list);
-      strcpy(instr_list, "");
-    }
-  }
+  /*
+    1. increment counter
+    2. cmp with upper bound
+    3. jmp if not equal
+  */
+  instrOneOperand(instr_list, instr_inc, reg_rcx);
+  instrTwoOperand(instr_list, instr_cmp, reg_rcx, reg_rax);
+  instrOneOperand(instr_list, instr_jne, label);
 
   strcpy(format, "newline");
   printUtil(instr_list, format, NULL);
@@ -831,8 +957,8 @@ void cgPrint(ICInstr *ic_instr) {
   }
   else if (ic_instr->addr1.type == ARRAY) {
     symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.array.var;
-    if (!symbol_entry->isStatic)
-      return;
+    // if (!symbol_entry->isStatic)
+    //   return;
     data_type = symbol_entry->datatype;
   }
   else
@@ -884,20 +1010,21 @@ void inputUtil(char *instr_list, char *format, char *arg) {
 
 void inputArrayUtil(struct VariableEntry *symbol_entry) {
   char instr_list[MAX_SIZE_INSTR] = "";
-  char tmp[50], format[50];
-  int base_offset, lower_bound, upper_bound;
-  int num_elements, data_size;
-  
-  base_offset = symbol_entry->mem_offset;
-  lower_bound = symbol_entry->lower_bound->value.num;
-  upper_bound = symbol_entry->upper_bound->value.num;
-  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+  char tmp[50], format[50], label[50];
 
+  if (symbol_entry->isStatic)
+    staticArrayUtil(instr_list, symbol_entry);
+  else
+    dynamicArrayUtil(instr_list, symbol_entry);
+  strcat(instr_list, "\n");
+
+  /* print number of elements in the array */
+  pushRegUtil(instr_list);
   strcpy(format, "input_array_msg_1");
-  num_elements = upper_bound - lower_bound + 1;
-  sprintf(tmp, "%d", num_elements);
-  printUtil(instr_list, format, tmp);
+  printUtil(instr_list, format, reg_r8);
+  popRegUtil(instr_list);
   
+  /* print data type of the array */
   switch(symbol_entry->datatype) {
     case INTEGER:
       strcpy(format, "input_array_msg_2_int");
@@ -911,47 +1038,47 @@ void inputArrayUtil(struct VariableEntry *symbol_entry) {
     default:
       break;
   }
+  pushRegUtil(instr_list);
   printUtil(instr_list, format, NULL);
+  popRegUtil(instr_list);
 
+  /* print lower bound of the array */
+  pushRegUtil(instr_list);
   strcpy(format, "input_array_msg_3");
-  sprintf(tmp, "%d", lower_bound);
-  printUtil(instr_list, format, tmp);
+  printUtil(instr_list, format, reg_rcx);
+  popRegUtil(instr_list);
 
+  /* print upper bound of the array */
+  pushRegUtil(instr_list);
   strcpy(format, "input_array_msg_4");
-  sprintf(tmp, "%d", upper_bound);
-  printUtil(instr_list, format, tmp);
+  printUtil(instr_list, format, reg_rax);
+  popRegUtil(instr_list);
 
-  instrTwoOperand(instr_list, instr_mov, reg_rdx, reg_rsp);
+  strcpy(tmp, "1");
+  instrTwoOperand(instr_list, instr_add, reg_rax, tmp);
 
-  sprintf(tmp, "%d", base_offset);
-  instrTwoOperand(instr_list, instr_add, reg_rdx, tmp);
-  
-  sprintf(tmp, "%d", data_size);
-  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp);
-
-  instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
+  /* set up loop label */
+  getLabelLoop(label);
+  labelUtil(instr_list, label);
 
   strcpy(format, "input_int_format");
 
-  writeToOutputFile(instr_list);
-  strcpy(instr_list, "");
+  /* accept input for an array element */
+  pushRegUtil(instr_list);
+  inputUtil(instr_list, format, reg_rdx);
+  popRegUtil(instr_list);
 
-  for (int i = lower_bound; i <= upper_bound; i++) {
-    instrOneOperand(instr_list, instr_push, reg_rdx);
-    instrOneOperand(instr_list, instr_push, reg_rbx);
+  /* compute the location of next element */
+  instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
 
-    inputUtil(instr_list, format, reg_rdx);
-
-    instrOneOperand(instr_list, instr_pop, reg_rbx);
-    instrOneOperand(instr_list, instr_pop, reg_rdx);
-
-    instrTwoOperand(instr_list, instr_add, reg_rdx, reg_rbx);
-
-    if (i % 3 == 0) {
-      writeToOutputFile(instr_list);
-      strcpy(instr_list, "");
-    }
-  }
+  /*
+    1. increment counter
+    2. cmp with upper bound
+    3. jmp if not equal
+  */
+  instrOneOperand(instr_list, instr_inc, reg_rcx);
+  instrTwoOperand(instr_list, instr_cmp, reg_rcx, reg_rax);
+  instrOneOperand(instr_list, instr_jne, label);
 
   writeToOutputFile(instr_list);
 }
@@ -960,7 +1087,7 @@ void inputArrayUtil(struct VariableEntry *symbol_entry) {
 void cgInput(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   struct VariableEntry *symbol_entry;
-  char msg[100], format[100], offset[10];
+  char msg[100], format[100], offset[50];
 
   symbol_entry = (struct VariableEntry *)ic_instr->addr1.value.symbol;
   if (symbol_entry->isArray) {
@@ -989,14 +1116,14 @@ void cgInput(ICInstr *ic_instr) {
   printUtil(instr_list, msg, NULL);
 
 	/*
-    load the address of the where the input for scanf will be stored
-      1. load rsp in rax
-      2. add the mem offset to value in rax => [rsp + mem offset]
+    load the address of where the scanf input  will be stored
+      1. load rbp in rax
+      2. subtract the mem offset to value in rax => [rbp - mem offset]
       3. store the value from rax to rsi
   */
-  instrTwoOperand(instr_list, instr_mov, reg_rax, reg_rsp);
-  sprintf(offset, "%d", symbol_entry->mem_offset);
-  instrTwoOperand(instr_list, instr_add, reg_rax, offset);
+  instrTwoOperand(instr_list, instr_mov, reg_rax, reg_rbp);
+  sprintf(offset, "%d", symbol_entry->mem_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_sub, reg_rax, offset);
 
   inputUtil(instr_list, format, reg_rax);
 
@@ -1004,7 +1131,55 @@ void cgInput(ICInstr *ic_instr) {
 }
 
 
-void cgLabel(ICInstr *ic_instr){
+void cgDynamicArrayAllocation(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char tmp[50];
+  struct VariableEntry *symbol_entry;
+  int lower_bound_offset, upper_bound_offset, data_size;
+
+  symbol_entry = (struct VariableEntry *) ic_instr->addr1.value.symbol;
+  lower_bound_offset = symbol_entry->lower_bound->mem_offset;
+  upper_bound_offset = symbol_entry->upper_bound->mem_offset;
+  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+
+  /*
+    Compute total size of the array:
+    1. load the upper bound in register RBX
+    2. subtract lower bound from this
+    3. add 1 to get the total count
+    4. multiply with data size to get the total size
+  */
+  sprintf(tmp, "[rbp - %d]", upper_bound_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_mov, reg_rbx, tmp);
+
+  sprintf(tmp, "[rbp - %d]", lower_bound_offset + OFFSET);
+  instrTwoOperand(instr_list, instr_sub, reg_rbx, tmp);
+
+  strcpy(tmp, "1");
+  instrTwoOperand(instr_list, instr_add, reg_rbx, tmp);
+
+  sprintf(tmp, "%d", data_size);
+  instrTwoOperand(instr_list, instr_mul, reg_rbx, tmp);
+
+  /*
+    Compute the offset for base of array by subtracting
+    the total size of the array (in register RBX) from 
+    end of current activation record (in register RSP)
+  */
+  instrTwoOperand(instr_list, instr_sub, reg_rsp, reg_rbx);
+
+  /*
+    store the calculated base addres in memory
+    location of the array pointer
+  */
+  cgICAddr(instr_list, tmp, &(ic_instr->addr1));
+  instrTwoOperand(instr_list, instr_mov, tmp, reg_rsp);
+  
+  writeToOutputFile(instr_list);
+}
+
+
+void cgLabel(ICInstr *ic_instr) {
   char instr_list[MAX_SIZE_INSTR] = "";
   char *label;
 
@@ -1034,7 +1209,7 @@ void cgArrayOutOfBoundsError(ICInstr *ic_instr) {
 
 /* Functions for interfacing with ASM Code Generation */
 
-void generateASMInstruction(ICInstr *ic_instr){
+void generateASMInstruction(ICInstr *ic_instr) {
   switch (ic_instr->op){
     /* unary op */
     case icPLUS:
@@ -1115,6 +1290,10 @@ void generateASMInstruction(ICInstr *ic_instr){
     //   printf("CALL\t\t\t");
     //   break;
 
+    case icARRAY:
+      cgDynamicArrayAllocation(ic_instr);
+      break;
+
     case icLABEL:
       cgLabel(ic_instr);
       break;
@@ -1129,9 +1308,8 @@ void generateASMInstruction(ICInstr *ic_instr){
 }
 
 
-void generateASMCode(ICInstr *ic_instr,char *output_asm){
-  strcpy(output_file,output_asm);
-  initializeOutputFile();
+void generateASMCode(ICInstr *ic_instr, char *output_file) {
+  initializeOutputFile(output_file);
   
   /* write directives and initialize text section */
   initializeDirectives();
