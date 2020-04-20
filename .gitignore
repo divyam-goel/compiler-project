@@ -10,3 +10,5 @@ src/.*
 *.gdb*
 .vscode/*
 output/*
+./compiler
+./tests

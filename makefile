@@ -18,19 +18,15 @@ CFILES = ./src/ast.c \
 ./src/st.c \
 ./src/stCore.c \
 ./src/utils.c
-DRIVER_OUTPUT_FILE = "build/driver"
-TESTS_OUTPUT_FILE = "build/tests"
+DRIVER_OUTPUT_FILE = "compiler"
+TESTS_OUTPUT_FILE = "tests"
 
 default: driver
-
-run: driver
-	./$(DRIVER_OUTPUT_FILE)
 
 test: tests
 	./$(TESTS_OUTPUT_FILE)
 
 folders:
-	mkdir -p build/
 	mkdir -p output/
 
 driver: folders
@@ -40,5 +36,8 @@ tests: folders
 	$(CC) test/tests.c $(CFILES) $(CFLAGS) -o $(TESTS_OUTPUT_FILE)
 
 clean:
-	rm -rdf build/
 	rm -rdf output/
+	find -wholename "./$(DRIVER_OUTPUT_FILE)" -delete
+	find -wholename "./$(TESTS_OUTPUT_FILE)" -delete
+	find -name "./*.asm" -delete
+	find -name "./*.out" -delete

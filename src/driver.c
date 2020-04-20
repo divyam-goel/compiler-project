@@ -272,7 +272,7 @@ void printFollowSetHumanFriendly() {
 int main(int argc, char const *argv[]) {
 
 	if (argc < 3) {
-		puts("Missing arguments.\nUsage: build/driver source_file output_file");
+		puts("Missing arguments.\nUsage: ./compiler source_file output_file");
 		exit(-1);
 	}
 
