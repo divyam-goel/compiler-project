@@ -1,90 +1,44 @@
+# A super simple makefile. Because we want to keep things simple and 
+# short, we are going to ignore the slight inefficiency.
+
+.SILENT:
+
 CC = gcc
 CFLAGS = -Wall -g -lm
-OBJ_CFLAGS = $(CFLAGS) -c
+CFILES = ./src/ast.c \
+./src/codeGen.c \
+./src/codeGenArchive.c \
+./src/data_structures/hashMap_str_int.c \
+./src/data_structures/stack.c \
+./src/data_structures/str_list.c \
+./src/intCode.c \
+./src/lexer.c \
+./src/parser.c \
+./src/semanticCheck.c \
+./src/st.c \
+./src/stCore.c \
+./src/utils.c
+DRIVER_OUTPUT_FILE = "build/driver"
+TESTS_OUTPUT_FILE = "build/tests"
 
-# TODO: Fix and cleanup this makefile.
+default: driver
 
-# test: build-test
-# 	build/tests
+run: driver
+	./$(DRIVER_OUTPUT_FILE)
 
-# memtest: build-test
-# 	valgrind build/tests
+test: tests
+	./$(TESTS_OUTPUT_FILE)
 
-driver: driver.o  utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
-	semanticCheck.o intCode.o codeGen.o
-	$(CC) lib/driver.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
-	lib/stCore.o lib/st.o lib/semanticCheck.o lib/intCode.o lib/codeGen.o -o build/driver $(CFLAGS)
+folders:
+	mkdir -p build/
+	mkdir -p output/
 
-build-test: test.o utils.o lexer.o parser.o hashMap_str_int.o str_list.o stack.o ast.o stCore.o st.o \
-	semanticCheck.o intCode.o codeGen.o
-	$(CC) lib/tests.o lib/utils.o lib/lexer.o lib/parser.o lib/hashMap_str_int.o lib/stack.o lib/str_list.o lib/ast.o \
-	lib/stCore.o lib/st.o lib/semanticCheck.o lib/intCode.o lib/codeGen.o -o build/tests $(CFLAGS)
+driver: folders
+	$(CC) src/driver.c $(CFILES) $(CFLAGS) -o $(DRIVER_OUTPUT_FILE)
 
-test.o: test/tests.c \
-		src/utils.h \
-		src/lexer.h src/lexerDef.h \
-		src/parser.h src/parserDef.h \
-		src/data_structures/str_list.h \
-		src/data_structures/hashMap_str_int.h \
-		src/data_structures/stack.h
-	$(CC) test/tests.c -o lib/tests.o $(OBJ_CFLAGS)
-
-driver.o: src/driver.c src/utils.h \
-		src/lexer.h src/lexerDef.h \
-		src/parser.h src/parserDef.h \
-		src/data_structures/str_list.h \
-		src/data_structures/hashMap_str_int.h \
-		src/data_structures/stack.h
-	$(CC) src/driver.c -o lib/driver.o $(OBJ_CFLAGS)
-
-utils.o: src/utils.c src/utils.h
-	$(CC) src/utils.c -o lib/utils.o $(OBJ_CFLAGS)
-
-lexer.o: src/lexer.c src/lexer.h src/lexerDef.h src/utils.h src/data_structures/hashMap_str_int.h
-	$(CC) src/lexer.c -o lib/lexer.o $(OBJ_CFLAGS)
-
-parser.o: src/parser.c src/parser.h src/parserDef.h src/data_structures/stack.h\
-			src/lexer.h src/lexerDef.h src/utils.h src/data_structures/hashMap_str_int.h \
-			src/astDef.h
-	$(CC) src/parser.c -o lib/parser.o $(OBJ_CFLAGS)
-
-hashMap_str_int.o: src/data_structures/hashMap_str_int.c src/data_structures/hashMap_str_int.h \
-					src/utils.h src/data_structures/str_list.h
-	$(CC) src/data_structures/hashMap_str_int.c -o lib/hashMap_str_int.o $(OBJ_CFLAGS)
-
-str_list.o: src/data_structures/str_list.c src/data_structures/str_list.h src/utils.h
-	$(CC) src/data_structures/str_list.c -o lib/str_list.o $(OBJ_CFLAGS)
-
-stack.o: src/data_structures/stack.c src/data_structures/stack.h src/parserDef.h src/lexer.h src/lexerDef.h src/utils.h \
-			src/data_structures/hashMap_str_int.h
-	$(CC) src/data_structures/stack.c -o lib/stack.o $(OBJ_CFLAGS)
-
-# This actually depends on more header files:
-ast.o: src/ast.c src/ast.h src/astDef.h
-	$(CC) src/ast.c -o lib/ast.o $(OBJ_CFLAGS)
-
-# This actually depends on more header files:
-stCore.o: src/stCore.c src/st.h src/stDef.h
-	$(CC) src/stCore.c -o lib/stCore.o $(OBJ_CFLAGS)
-
-# This actually depends on more header files:
-st.o: src/st.c src/st.h src/stDef.h
-	$(CC) src/st.c -o lib/st.o $(OBJ_CFLAGS)
-
-# This actually depends on more header files:
-semanticCheck.o: src/semanticCheck.c src/semanticCheck.h src/st.h src/stDef.h src/ast.h src/astDef.h
-	$(CC) src/semanticCheck.c -o lib/semanticCheck.o $(OBJ_CFLAGS)
-
-# This actually depends on more header files:
-intCode.o: src/intCode.c src/intCode.h src/intCodeDef.h src/st.h src/stDef.h src/ast.h src/astDef.h
-	$(CC) src/intCode.c -o lib/intCode.o $(OBJ_CFLAGS)
-
-codeGen.o: intCode.o src/codeGen.c src/codeGen.h
-	mkdir -p output
-	$(CC) src/codeGen.c -o lib/codeGen.o $(OBJ_CFLAGS)
+tests: folders
+	$(CC) test/tests.c $(CFILES) $(CFLAGS) -o $(TESTS_OUTPUT_FILE)
 
 clean:
-	find . -type f -name '*.o' -delete
-	find . -type f -name '*.out' -delete
-	rm build/*
-	rm output/*
+	rm -rdf build/
+	rm -rdf output/
