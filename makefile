@@ -39,5 +39,5 @@ clean:
 	rm -rdf output/
 	find -wholename "./$(DRIVER_OUTPUT_FILE)" -delete
 	find -wholename "./$(TESTS_OUTPUT_FILE)" -delete
-	find -name "./*.asm" -delete
-	find -name "./*.out" -delete
+	find -wholename "./*.asm" -delete
+	find -wholename "./*.out" -delete
