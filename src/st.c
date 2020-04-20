@@ -234,6 +234,8 @@ stCreateSymbolTableValueForModule (char *name, int dec_line_no, int def_line_no,
   new_value.module.called = false;
   new_value.module.inputplist = ipl;
   new_value.module.outputplist = opl;
+  new_value.module.activation_record_size = (8 + 8);
+  new_value.module.io_record_size = 0;
   return new_value;
 }
 
@@ -281,9 +283,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       module->io_record_size -= 8;
       memoffset = module->io_record_size;
     }
-  else
+  else {
     memoffset = module->activation_record_size;
-  module->activation_record_size += 8;
+    module->activation_record_size += 8;
+  }
 
   if (dtnode->type == ARRAY_TYPE_NODE)
     {
@@ -766,9 +769,8 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
   else
     {
       module->called = true;
-      module->activation_record_size = (8 + 8);
-      module->io_record_size = 0;
-    }
+  // module->activation_record_size = (8 + 8);
+  // module->io_record_size = 0;
   mr_stmt->ptr2->scope = global_symbol_table;
   while (inputs_ll != NULL)
     {
@@ -1092,17 +1094,17 @@ getDatatypeSize (enum terminal datatype)
     {
       case (NUM):
       case (INTEGER):
-        // return DT_INTEGER_SIZE;
-        return 2;
+        return DT_INTEGER_SIZE;
+        // return 2;
       case (RNUM):
       case (REAL):
-        // return DT_REAL_SIZE;
-        return 4;
+        return DT_REAL_SIZE;
+        // return 4;
       case (TRUE_):
       case (FALSE_):
       case (BOOLEAN_):
-        // return DT_BOOL_SIZE;
-        return 1;
+        return DT_BOOL_SIZE;
+        // return 1;
       default:
         fprintf(stderr, invalid_datatype_error_message, terminalStringRepresentations[datatype]);
         exit(EXIT_FAILURE);

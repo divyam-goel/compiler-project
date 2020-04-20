@@ -1,4 +1,5 @@
 #include "codeGen.h"
+#include <math.h>
 
 #define OFFSET 8
 
@@ -23,6 +24,8 @@ char instr_jmp[] = "jmp";
 char instr_je[] = "je";
 char instr_jne[] = "jne";
 char instr_cmp[] = "cmp";
+char instr_call[] = "call";
+char instr_ret[] = "ret";
 char instr_push[] = "push";
 char instr_pop[] = "pop";
 char instr_inc[] = "inc";
@@ -362,7 +365,10 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
     }
     else {
       symbol_entry = (struct VariableEntry *)ic_addr->value.symbol;
-      sprintf(addr, "[rbp - %d]", symbol_entry->mem_offset + OFFSET);
+      if (symbol_entry->mem_offset >= 0)
+        sprintf(addr, "[rbp - %d]", symbol_entry->mem_offset + OFFSET);
+      else
+        sprintf(addr, "[rbp + %d]", abs(symbol_entry->mem_offset) + OFFSET);
     }
     break;
   case ARRAY:
@@ -406,6 +412,7 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
     
     sprintf(addr, "[%s + %s * %d]", reg_rdx, reg_rbx, data_size);
     break;
+
   default:
     sprintf(addr, "NULL");
     break;
@@ -414,12 +421,10 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
 
 
 void cgMoveFromMemToReg(char *instr_list, char *reg, ICAddr *ic_addr) { 
-  char op[50];
   char addr[50];
   
-  strcpy(op, "mov");
   cgICAddr(instr_list, addr, ic_addr);  
-  instrTwoOperand(instr_list, op, reg, addr);
+  instrTwoOperand(instr_list, instr_mov, reg, addr);
 }
 
 
@@ -1207,6 +1212,123 @@ void cgArrayOutOfBoundsError(ICInstr *ic_instr) {
 }
 
 
+void cgCallFunction(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[50];
+
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+  instrOneOperand(instr_list, instr_call, addr);
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgEnterFunction(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[50];
+  
+  /*
+    push the current value of base register to preserve
+    the base address of activation record of caller
+  */
+  instrOneOperand(instr_list, instr_push, reg_rbp);
+
+  /* update the base register with base address of callee */
+  instrTwoOperand(instr_list, instr_mov, reg_rbp, reg_rsp);
+  
+  /*
+    push the activation record of the callee by subtracting
+    the size of the activation record from base pointer
+  */
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+  instrTwoOperand(instr_list, instr_sub, reg_rsp, addr);
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgReturnFromFunction(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+
+  /*
+    discard the activation record of callee, and
+    all the dynamic arrays (if any)
+  */
+  instrTwoOperand(instr_list, instr_mov, reg_rsp, reg_rbp);
+
+  /*
+    restore old value of base register i.e.
+    base of activation record of caller
+  */
+  instrOneOperand(instr_list, instr_pop, reg_rbp);
+
+  /* return to the caller function */
+  strcat(instr_list, "ret\n");
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgPushToStack(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  
+  /* load the value to be pushed in register RAX from memory */
+  cgMoveFromMemToReg(instr_list, reg_rax, &(ic_instr->addr1));
+  
+  /* push the value in register RAX on the stack */
+  instrOneOperand(instr_list, instr_push, reg_rax);
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgPopFromStack(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  
+  /* pop the value from top of stack and store in register RAX */
+  instrOneOperand(instr_list, instr_pop, reg_rax);
+
+  /* store the value in register RAX in memory */
+  cgMoveFromRegToMem(instr_list, reg_rax, &(ic_instr->addr1));
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgShadowPushStack(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[50];
+
+  /* get the value in address */
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+
+  /*
+    add the above value from stack pointer to
+    increase space on stack
+  */
+  instrTwoOperand(instr_list, instr_sub, reg_rsp, addr);
+
+  writeToOutputFile(instr_list);
+}
+
+
+void cgShadowPopStack(ICInstr *ic_instr) {
+  char instr_list[MAX_SIZE_INSTR] = "";
+  char addr[50];
+
+  /* get the value in address */
+  cgICAddr(instr_list, addr, &(ic_instr->addr1));
+
+  /*
+    add the above value from stack pointer to
+    decrease space on stack
+  */
+  instrTwoOperand(instr_list, instr_add, reg_rsp, addr);
+
+  writeToOutputFile(instr_list);
+}
+
+
 /* Functions for interfacing with ASM Code Generation */
 
 void generateASMInstruction(ICInstr *ic_instr) {
@@ -1247,14 +1369,6 @@ void generateASMInstruction(ICInstr *ic_instr) {
       cgDivisionInteger(ic_instr);
       break;
 
-    /* arithmetic & term op - real */
-    // case icADD_REAL:
-    // case icSUB_REAL:
-    // case icMUL_REAL:
-    // case icDIV_REAL:
-    //   cgArithmeticOpReal(ic_instr);
-    //   break;
-
     /* increment & decrement */
     case icINC:
       cgIncrement(ic_instr);
@@ -1286,9 +1400,33 @@ void generateASMInstruction(ICInstr *ic_instr) {
       cgJumpConditional(ic_instr);
       break;
 
-    // case icCALL:
-    //   printf("CALL\t\t\t");
-    //   break;
+    case icCALL:
+      cgCallFunction(ic_instr);
+      break;
+    
+    case icENTER:
+      cgEnterFunction(ic_instr);
+      break;
+    
+    case icRET:
+      cgReturnFromFunction(ic_instr);
+      break;
+    
+    case icPUSH:
+      cgPushToStack(ic_instr);
+      break;
+    
+    case icPOP:
+      cgPopFromStack(ic_instr);
+      break;
+    
+    case icPUSH_SHADOW:
+      cgShadowPushStack(ic_instr);
+      break;
+    
+    case icPOP_SHADOW:
+      cgShadowPopStack(ic_instr);
+      break;
 
     case icARRAY:
       cgDynamicArrayAllocation(ic_instr);

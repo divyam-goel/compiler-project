@@ -547,6 +547,114 @@ void icAssignmentStatement(struct AssignStmtNode *assignment) {
 }
 
 
+void icModuleReuseStatement(struct ModuleReuseStmtNode *module_reuse) {
+  ICInstr *ic_instr;
+  ICAddr ic_addr;
+  struct IdListNode *id_list_node;
+  struct IdListNode *id_list_node_prev, *id_list_node_curr;
+  int size;
+
+  /* push the input parameters on the stack */
+  id_list_node = module_reuse->ptr3;
+  while (id_list_node != NULL) {
+    icLeaf(id_list_node->ptr1);
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = id_list_node->ptr1->addr;
+    ic_instr->op = icPUSH;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    id_list_node = id_list_node->ptr2;
+  }
+
+  /*
+    calculate the total size of output parameters and
+    make space for them on the stack using shadow instruction
+  */
+  size = 0;
+  id_list_node = module_reuse->ptr1;
+  while (id_list_node != NULL) {
+    size += 8;
+
+    id_list_node = id_list_node->ptr2;
+  }
+
+  ic_addr.type = INTEGER;
+  ic_addr.value.num = size;
+  ic_addr.is_label = false;
+
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icPUSH_SHADOW;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+
+  /* populate address for function label */
+  ic_addr.type = IDENTIFIER;
+  ic_addr.value.symbol = module_reuse->ptr2->value.entry;
+  ic_addr.is_label = true;
+
+  /* call the function using above address */
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icCALL;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+
+  /* reverse the output parameter list to pop from stack */
+  id_list_node_prev = NULL;
+  id_list_node_curr = module_reuse->ptr1;
+  while (id_list_node_curr != NULL) {
+    id_list_node = id_list_node_curr->ptr2;
+    id_list_node_curr->ptr2 = id_list_node_prev;
+    id_list_node_prev = id_list_node_curr;
+    id_list_node_curr = id_list_node;
+  }
+
+  /* pop the output parameters from the stack */
+  id_list_node = id_list_node_prev;
+  while (id_list_node != NULL) {
+    icLeaf(id_list_node->ptr1);
+    ic_instr = newICInstruction();
+    ic_instr->addr1 = id_list_node->ptr1->addr;
+    ic_instr->op = icPOP;
+    global_ic_instr->next = ic_instr;
+    global_ic_instr = ic_instr;
+
+    id_list_node = id_list_node->ptr2;
+  }
+
+  /* reverse the output parameter list to restore original order */
+  id_list_node_curr = id_list_node_prev;
+  id_list_node_prev = NULL;
+  while (id_list_node_curr != NULL) {
+    id_list_node = id_list_node_curr->ptr2;
+    id_list_node_curr->ptr2 = id_list_node_prev;
+    id_list_node_prev = id_list_node_curr;
+    id_list_node_curr = id_list_node;
+  }
+
+  /* pop the input parameters from the the stack */
+  size = 0;
+  id_list_node = module_reuse->ptr3;
+  while (id_list_node != NULL) {
+    size += 8;
+    id_list_node = id_list_node->ptr2;
+
+  }
+  
+  ic_addr.type = INTEGER;
+  ic_addr.value.num = size;
+  ic_addr.is_label = false;
+
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icPOP_SHADOW;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;  
+}
+
+
 void icConditionalStatement(struct ConditionalStmtNode *conditional) {
   ICInstr *ic_instr = NULL;
   struct CaseStmtNode *case_statement = NULL;
@@ -831,7 +939,7 @@ void icStatement(struct Attribute *attribute_node) {
       return icAssignmentStatement(attribute_node->node.agn_stm);
       break;
     case MODULE_REUSE_STMT_NODE:
-      // return icModuleReuseStatement(attribute_node->node.mod_reu_stm);
+      return icModuleReuseStatement(attribute_node->node.mod_reu_stm);
       break;
     case INPUT_NODE:
       return icInputStatement(attribute_node->node.inp);
@@ -865,6 +973,55 @@ void icStatementList(struct StatementNode *statement_node) {
 }
 
 
+void icModule(struct ModuleNode *module_node) {
+  ICAddr ic_addr;
+  ICInstr *ic_instr;
+  struct ModuleEntry *symbol_entry;
+
+  /* populate address for the module label */
+  ic_addr.type = IDENTIFIER;
+  ic_addr.value.symbol = module_node->ptr1->value.entry;
+  ic_addr.is_label = true;
+
+  /* instruction: label for calling the module */
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icLABEL;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+
+  /* populate address for the module entry instruction */
+  symbol_entry = resolveModule((char *) module_node->ptr1->value.entry);
+  ic_addr.value.num = symbol_entry->activation_record_size;
+  printf("%s %d", symbol_entry->name, symbol_entry->activation_record_size);
+  ic_addr.type = INTEGER;
+  ic_addr.is_label = false;
+
+  /* instruction: module entry instruction for set up */
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icENTER;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+
+  icStatementList(module_node->ptr4);
+
+  /* instruction: return from module call */
+  ic_instr = newICInstruction();
+  ic_instr->op = icRET;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+}
+
+
+void icModuleList(struct OtherModuleNode *other_module_node) {
+  while (other_module_node != NULL) {
+    icModule(other_module_node->ptr1);
+    other_module_node = other_module_node->ptr2;
+  }
+}
+
+
 /**
  * This function is the entrypoint into generating intermediate code
  * for the source program. It can be called once the global AST and
@@ -873,22 +1030,38 @@ void icStatementList(struct StatementNode *statement_node) {
  * IntermediateCodeInstruction).
  */
 void generateIntermediateCode() {
+  ICAddr ic_addr;
+  ICInstr *ic_instr;
+
   global_ic_instr = newICInstruction();
   global_ic_instr->addr1 = newLabel(NULL);
   global_ic_instr->op = icLABEL;
   start_global_ic_instr = global_ic_instr;
+
   icStatementList(AST.ptr3);
-  // icModuleList(AST.ptr2);
-  // icModuleList(AST.ptr4);
+
+  ic_addr.value.symbol = (char *) malloc(sizeof(char) * 5);
+  strcpy((char *) ic_addr.value.symbol, "exit");
+  ic_addr.type = IDENTIFIER;
+  ic_addr.is_label = true;
+  
+  ic_instr = newICInstruction();
+  ic_instr->addr1 = ic_addr;
+  ic_instr->op = icJUMP;
+  global_ic_instr->next = ic_instr;
+  global_ic_instr = ic_instr;
+
+  icModuleList(AST.ptr2);
+  icModuleList(AST.ptr4);
 }
 
 
 void printICAddress(ICAddr ic_addr) {
   switch (ic_addr.type) {
-    case NUM:
+    case INTEGER:
       printf("%d\t", ic_addr.value.num);
       break;
-    case RNUM:
+    case REAL:
       printf("%f\t", ic_addr.value.rnum);
       break;
     case BOOLEAN_:
@@ -1036,9 +1209,33 @@ void printICInstruction(ICInstr *ic_instr) {
       printICAddress(ic_instr->addr1);
       printICAddress(ic_instr->addr2);
       break;
-    // case icCALL:
-    //   printf("CALL\t\t\t");
-    //   break;
+    case icCALL:
+      printf("CALL\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icENTER:
+      printf("ENTER\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icRET:
+      printf("RET\t");
+      break;
+    case icPUSH:
+      printf("PUSH\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icPOP:
+      printf("POP\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icPUSH_SHADOW:
+      printf("PUSH SHADOW\t");
+      printICAddress(ic_instr->addr1);
+      break;
+    case icPOP_SHADOW:
+      printf("POP SHADOW\t");
+      printICAddress(ic_instr->addr1);
+      break;
     case icARRAY:
       printf("ARRAY");
       printf("\t");
@@ -1049,6 +1246,7 @@ void printICInstruction(ICInstr *ic_instr) {
       printICAddress(ic_instr->addr1);
       break;
     default:
+      printf("%d", ic_instr->op);
       break;
   }
   printf("\n");

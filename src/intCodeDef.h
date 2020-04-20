@@ -16,22 +16,26 @@ typedef enum IntermediateCodeOperation {
   icINC, icDEC,
 
   /* logic */
-  icAND, icOR,
+  icAND, icOR, //12
 
   /* comparison */
-  icEQ, icNE, icLT, icGT, icLE, icGE,
+  icEQ, icNE, icLT, icGT, icLE, icGE, //18
 
   /* unary */
-  icPLUS, icMINUS,
+  icPLUS, icMINUS, //20
 
   /* data */
-  icMOV, icPRINT, icGET,
+  icMOV, icPRINT, icGET, //23
 
   /* control */
-  icJUMP, icJUMPZ, icJUMPNZ, icCALL,
+  icJUMP, icJUMPZ, icJUMPNZ, //26
 
   /* array */
-  icARRAY,
+  icARRAY, //27
+
+  /* module resuse */
+  icCALL, icENTER, icRET, // 30
+  icPUSH, icPOP, icPUSH_SHADOW, icPOP_SHADOW,
 
   /* others */
   icLABEL, icErrARRAY
