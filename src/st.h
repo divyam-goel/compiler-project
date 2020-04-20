@@ -19,6 +19,8 @@
 #define DT_ARRAY_POINTER_SIZE 8
 #define ST_TEMP_VAR_FORMAT "@%.5d"
 
+void set_semantic_num();
+
 /* Functions from stCore.c */
 int polynomialRollingHashFunction(char key[ST_KEY_BUFFER_MAX_LEN],
   int lower_bound, int upper_bound);

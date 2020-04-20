@@ -26,6 +26,9 @@ char *semantic_errors_detected_message = "Detected %d semantic error(s) while po
 may be detected after resolving the above).\n";
 char *invalid_datatype_error_message = "%s is not a valid datatype and does not have a memory requirement value.\n";
 
+void set_semantic_num(){
+  semantic_error_count = 0;
+}
 
 /**
  * A simple wrapper around the method newSymbolTable (from stDef.c) which also adds

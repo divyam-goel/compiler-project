@@ -239,6 +239,7 @@ void printAllErrorsAndTime(){
 	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
 	printf("Total clocks taken:%lf\n", CPU_time);
 	printf("Total time taken:%lf seconds\n", CPU_time_seconds);
+	set_semantic_num();
 }
 
 void doCodeGen(){
