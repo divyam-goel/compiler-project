@@ -13,6 +13,7 @@ enum terminal relationalExpressionType(struct N8Node *relational_expression);
 enum terminal ArithmeticExpressionType(struct ArithmeticExprNode *arithmetic_expression);
 enum terminal TermExpressionType(struct TermNode *term_expression);
 enum terminal expressionType(struct Attribute *expression);
+bool checkInExpression(char *entry, struct Attribute *loop_expression);
 void assignmentTypeChecker(struct AssignStmtNode *assignment_node);
 void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node);
 void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node);

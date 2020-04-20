@@ -58,6 +58,7 @@ be assigned a value inside the loop body\n";
 /* error messages: while iteration */
 char *while_incorrect_expression_type_error_message = "Line %d: (Type Error) Construct 'while' excepts type BOOLEAN \
 for loop expression, found %s\n";
+char *while_loop_variables_not_updated = "Line %d: (Semantic Error) While loop variable not being updated: Infinite Loop Possible\n";
 
 /* error message: module definition */
 char *module_output_variable_unassigned = "Line %d: (Semantic Error) Parameter in output list is never assigned a \
@@ -1106,12 +1107,80 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
   statementListSemanticChecker(while_iter_node->ptr2);
 
   /*
-    check: at least one variable in the loop expression
-    should be assigned a value inside the loop
+    check: at least one variable in the loop expression should be assigned a value inside the loop
   */
+  int found_var_change = 0;
+  struct StatementNode *loop_body = while_iter_node->ptr2;
+  struct LeafNode *leaf = NULL;
+  while(loop_body != NULL){
+    if(loop_body->ptr1->type == ASSIGN_STMT_NODE){
+      leaf = loop_body->ptr1->node.agn_stm->ptr1;
+      if (checkInExpression(leaf->value.entry, while_iter_node->ptr1)){ // checks if identifier in assignment statement is in loop expr
+        found_var_change = 1;
+        break;
+      }
+    }
+    loop_body = loop_body->ptr2;
+  }
+  if(found_var_change == 0){
+    fprintf(stderr, while_loop_variables_not_updated, while_iter_node->starting_line_number);
+    semantic_error_count += 1;
+  }  
+
 
 }
 
+//function to check if given expression attribute contains the given leaf node
+bool checkInExpression(char *entry, struct Attribute *expr){
+  
+  bool res1 = false;
+  bool res2 = false; 
+  bool res3 = false;
+  // printf("IN function:");
+  switch (expr->type){
+    case U_NODE:
+      return checkInExpression(entry, expr->node.u->ptr1);
+      break;
+    case N7_NODE:
+      res1 = checkInExpression(entry,expr->node.n7->ptr1);
+      res2 = checkInExpression(entry,expr->node.n7->ptr2);
+      return (res1 || res2);
+      break;
+    case N8_NODE:
+      res1 = checkInExpression(entry, expr->node.n8->ptr1);
+      res2 = checkInExpression(entry, expr->node.n8->ptr2);
+      return (res1 || res2);
+      break;
+    case ARITHMETIC_EXPR_NODE:
+      if (expr->node.ari_exp->is_first)
+        res1 = checkInExpression(entry, expr->node.ari_exp->ptr1);
+      res2 = checkInExpression(entry, expr->node.ari_exp->ptr2);
+      res3 = checkInExpression(entry, expr->node.ari_exp->ptr3);
+      return (res1 || res2 ||res3);
+      break;
+    case TERM_NODE:
+      if (expr->node.ter->is_first)
+        res1 = checkInExpression(entry, expr->node.ter->ptr1);
+      res2 = checkInExpression(entry, expr->node.ter->ptr2);
+      res3 = checkInExpression(entry, expr->node.ter->ptr3);
+      return (res1 || res2 || res3);
+      break;
+    case ARRAY_NODE:
+      /* code */
+      break;
+    case LEAF_NODE:
+      if (expr->node.lea->type != IDENTIFIER)
+        return false;
+      if(strcmp(expr->node.lea->value.entry,entry) == 0)
+        return true;
+      break;
+
+    default:
+      return false;
+      break;
+  }
+  return false;
+}
 
 void statementSemanticChecker(struct StatementNode *statement_node) {
   if (statement_node == NULL)
