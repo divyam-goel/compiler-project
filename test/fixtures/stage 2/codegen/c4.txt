@@ -68,23 +68,23 @@ Output: 23
 Input: Enter an integer value
 3
 Output: 10
-Output: 43
+Output: 54
 Input: Enter an integer value
 6
 Output: 13
-Output: 47
+Output: 92
 Input: Enter an integer value
 9
 Output: 16
-Output: 54
+Output: 137
 Input: Enter an integer value
 -8
 Output: -1
-Output: 21
+Output: 149
 Input: Enter an integer value
 10
 Output: 17
-Output: 58
+Output: 198
 Output: 9
 Output: true
 Input: Enter 6 array elements of integer type for range 10 to 15
