@@ -40,6 +40,7 @@ struct VariableEntry {
   struct VariableEntry *lower_bound;  /* Only valid when isArray == true */
   struct VariableEntry *upper_bound;  /* Only valid when isArray == true */
   int mem_offset;
+  int visible_offset;
 };
 
 
@@ -76,6 +77,7 @@ struct SymbolTable {
   int opening_line_no;
   int closing_line_no;
   int nesting_level;
+  int visible_consumed;
 };
 
 struct SymbolTableLinkedListNode {

@@ -69,5 +69,6 @@ struct ModuleEntry *getModuleEntry(char *module_name);
 int getDatatypeSize(enum terminal datatype);
 void printSymbolTablesForDriver();
 void printSymbolTableForDriver(struct SymbolTable *st);
+int getWidth (struct VariableEntry variable);
 
 #endif

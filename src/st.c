@@ -52,6 +52,7 @@ newTrackedSymbolTable (struct SymbolTable *parent, const char *scope_tag, Symbol
   symbol_table_ll.tail->symbol_table = new_symbol_table;
   symbol_table_ll.tail->next = NULL;
   symbol_table_ll.count += 1;
+  new_symbol_table->visible_consumed = 0;
   return new_symbol_table;
 }
 
@@ -283,10 +284,11 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
       module->io_record_size -= 8;
       memoffset = module->io_record_size;
     }
-  else {
-    memoffset = module->activation_record_size;
-    module->activation_record_size += 8;
-  }
+  else
+    {
+      memoffset = module->activation_record_size;
+      module->activation_record_size += 8;
+    }
 
   if (dtnode->type == ARRAY_TYPE_NODE)
     {
@@ -339,11 +341,12 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   if (is_array && is_io)
     module->io_record_size -= (8 + 8);
 
-  if (is_array && is_static) {
-    datasize = (upper_bound_leaf_node->value.num - \
-                lower_bound_leaf_node->value.num + 1) * 8;
-    module->activation_record_size += datasize;
-  }
+  if (is_array && is_static)
+    {
+      datasize = (upper_bound_leaf_node->value.num - \
+                  lower_bound_leaf_node->value.num + 1) * 8;
+      module->activation_record_size += datasize;
+    }
 
   union SymbolTableValue new_value;
   memset(&new_value, 0, sizeof(union SymbolTableValue));
@@ -358,6 +361,10 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   new_value.variable.lower_bound = lower_bound;
   new_value.variable.upper_bound = upper_bound;
   new_value.variable.mem_offset = memoffset;
+
+  int voff = getWidth(new_value.variable);
+  new_value.variable.visible_offset = scope->visible_consumed + voff;
+  scope->visible_consumed += voff;
 
   return new_value;
 }
@@ -1054,6 +1061,8 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   new_variable.variable.upper_bound = NULL;
   new_variable.variable.mem_offset = module->activation_record_size;
 
+  // No voff stuff should happen here.
+
   symbolTableSet(scope, temp_var_name, new_variable, ST_VARIABLE, false);
   
   module->num_temp_var += 1;
@@ -1271,6 +1280,6 @@ printSymbolTableForDriver (struct SymbolTable *st)
 
       printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
         current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
-        range_lexemes, current_datatype, current_variable.mem_offset, nesting_level);
+        range_lexemes, current_datatype, current_variable.visible_offset, nesting_level);
     }
 }
