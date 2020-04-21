@@ -1294,7 +1294,7 @@ printSymbolTableOrArraysForDriver (struct SymbolTable *st, int print_arr)
       if(print_arr == 0){
         printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
           current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
-          range_lexemes, current_datatype, current_variable.mem_offset, nesting_level);
+          range_lexemes, current_datatype, current_variable.visible_offset, nesting_level);
       }
       else{
         if (current_variable.isArray)
