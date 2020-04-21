@@ -139,6 +139,7 @@ void
 stAddModuleDefinitions (struct OtherModuleNode *module_ll)
 {
   char *module_name;
+  bool overwrite;
   int current_line_no, original_line_no;
   struct ModuleNode *module;
   struct SymbolTableNode *existing_node;
@@ -149,6 +150,7 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
     {
       module = module_ll->ptr1;
       module_name = module->ptr1->value.entry;
+      overwrite = false;
       current_line_no = module->ptr1->line_number;
       original_line_no = current_line_no;
       module->ptr1->scope = global_symbol_table;
@@ -176,12 +178,14 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
                       current_line_no, module_name);
               semantic_error_count += 1;
             }
+          else
+            overwrite = true;
         }
       /* We can directly add this module to the symbol table. The false in the symbol table
        * set call will prevent overwriting of an existing definition in the symbol table. */
       new_value = stCreateSymbolTableValueForModule(module_name,
         original_line_no, current_line_no, module->ptr2, module->ptr3);
-      symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, true);
+      symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, overwrite);
 
       /* Even if there's a semantic error, parse it. No harm. */
       module_scope = newTrackedSymbolTable(global_symbol_table, module_name, NULL);
