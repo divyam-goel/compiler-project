@@ -734,9 +734,11 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
       semantic_error_count += 1;
     }
   else
+    {
       module->called = true;
-  module->activation_record_size = (8 + 8);
-  module->io_record_size = 0;
+      module->activation_record_size = (8 + 8);
+      module->io_record_size = 0;
+    }
   mr_stmt->ptr2->scope = global_symbol_table;
   while (inputs_ll != NULL)
     {
