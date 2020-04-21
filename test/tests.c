@@ -395,8 +395,8 @@ int main() {
     // test_parseInputSourceCode(grammar_file, source_file);
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    test_createSymbolTables(grammar_file, source_file);
-    // test_semanticCheck(grammar_file, source_file);
+    // test_createSymbolTables(grammar_file, source_file);
+    test_semanticCheck(grammar_file, source_file);
     // test_intermediateCodeGeneration(grammar_file, source_file);
     // test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");

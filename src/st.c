@@ -374,13 +374,19 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
   struct InputPlistNode *prev = NULL, *next;
 
   /* reverse the list order temporarily */
+  if (st_debug_mode)
+    printf("Before reversal:\n");
   while (plist_ll != NULL)
     {
+      if (st_debug_mode)
+        printf("%s -> ", plist_ll->ptr1->value.entry);
       next = plist_ll->ptr3;
       plist_ll->ptr3 = prev;
       prev = plist_ll;
       plist_ll = next;
     }
+  if (st_debug_mode)
+    printf("NULL\n");
   plist_ll = prev;
 
   while (plist_ll != NULL)
@@ -405,16 +411,33 @@ stAddInputPlistToScope (struct InputPlistNode *plist_ll, struct SymbolTable *sco
 
   /* reverse the list order again to put things in the right order.
    * We do this in a separate loop for modularity. */
+  if (st_debug_mode)
+    printf("After Reversal:\n");
   plist_ll = prev;
   prev = NULL;
   while (plist_ll != NULL)
     {
+      if (st_debug_mode)
+        printf("%s -> ", plist_ll->ptr1->value.entry);
       next = plist_ll->ptr3;
       plist_ll->ptr3 = prev;
       prev = plist_ll;
       plist_ll = next;
     }
+  if (st_debug_mode)
+    printf("NULL\n");
   plist_ll = prev;
+
+  if (st_debug_mode)
+    printf("After putting everything back to normal:\n");
+  while (plist_ll != NULL)
+    {
+      if (st_debug_mode)
+        printf("%s -> ", plist_ll->ptr1->value.entry);
+      plist_ll = plist_ll->ptr3;
+    }
+  if (st_debug_mode)
+    printf("NULL\n");
 }
 
 
