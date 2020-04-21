@@ -1118,6 +1118,7 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
   int found_var_change = 0;
   struct StatementNode *loop_body = while_iter_node->ptr2;
   struct LeafNode *leaf = NULL;
+  struct IdListNode *id_lis_node = NULL;
   while(loop_body != NULL){
     if(loop_body->ptr1->type == ASSIGN_STMT_NODE){
       leaf = loop_body->ptr1->node.agn_stm->ptr1;
@@ -1126,12 +1127,23 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
         break;
       }
     }
-    loop_body = loop_body->ptr2;
+    else if (loop_body->ptr1->type == MODULE_REUSE_STMT_NODE){
+      id_lis_node = loop_body->ptr1->node.mod_reu_stm->ptr1;
+      while(id_lis_node != NULL){
+        leaf = id_lis_node->ptr1;
+        if (checkInExpression(leaf->value.entry, while_iter_node->ptr1)){ // checks if identifier in output var is in loop expr
+          found_var_change = 1;
+          break;
+        }
+        id_lis_node = id_lis_node->ptr2;
+      }
+    }
+      loop_body = loop_body->ptr2;
   }
   if(found_var_change == 0){
     // for now
-    // fprintf(stderr, while_loop_variables_not_updated, while_iter_node->starting_line_number);
-    // semantic_error_count += 1;
+    fprintf(stderr, while_loop_variables_not_updated, while_iter_node->starting_line_number);
+    semantic_error_count += 1;
   }
 }
 
