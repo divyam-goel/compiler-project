@@ -651,6 +651,12 @@ void inputModuleReuseTypeCheck(
   enum terminal formal_input_type, actual_input_type;
   
   line_number = actual_input->ptr1->line_number;
+  
+  //test code
+  if(formal_input == NULL && actual_input != NULL){
+    printf("Formal input is empty when it shouldn't\n");
+    return;
+  }
 
   while (formal_input != NULL && actual_input != NULL) {
     /*
@@ -703,7 +709,11 @@ void outputModuleReuseTypeCheck(
   int line_number) {
   
   enum terminal formal_output_type, actual_output_type;
-
+  //test code
+  if (formal_output == NULL && actual_output != NULL){
+    printf("Formal output is empty when it shouldn't\n");
+    return;
+  }
   while (formal_output != NULL && actual_output != NULL) {
     /* determine formal and actual output parameter types */
     formal_output_type = leafType(formal_output->ptr2->node.lea);
