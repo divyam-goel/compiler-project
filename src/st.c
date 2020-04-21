@@ -1053,7 +1053,7 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   module = getModuleEntry(scope->scope_tag);
   sprintf(temp_var_name, ST_TEMP_VAR_FORMAT, module->num_temp_var);
 
-  datasize = getDatatypeSize(datatype);
+  datasize = 8;
 
   strcpy(new_variable.variable.name, temp_var_name);
   new_variable.variable.line_number = -1;
