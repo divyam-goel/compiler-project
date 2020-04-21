@@ -1138,6 +1138,13 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
         id_lis_node = id_lis_node->ptr2;
       }
     }
+    else if (loop_body->ptr1->type == INPUT_NODE){
+      leaf = loop_body->ptr1->node.inp->ptr1;
+      if (checkInExpression(leaf->value.entry, while_iter_node->ptr1)){ // checks if identifier in output var is in loop expr
+        found_var_change = 1;
+        break;
+      }
+    }
       loop_body = loop_body->ptr2;
   }
   if(found_var_change == 0){
@@ -1184,7 +1191,7 @@ bool checkInExpression(char *entry, struct Attribute *expr){
       break;
     case ARRAY_NODE:
       /* code */
-      
+
       break;
     case LEAF_NODE:
       if (expr->node.lea->type != IDENTIFIER)
