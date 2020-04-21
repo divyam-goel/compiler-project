@@ -1178,15 +1178,23 @@ getWidth (struct VariableEntry variable)
  * Print out all symbol table in a way that meets the requirements for the driver.
  */
 void
-printSymbolTablesForDriver ()
+printSymbolTablesForDriver (int print_arr)
 {
   struct SymbolTableLinkedListNode *cursor = symbol_table_ll.head->next;  // Don't print the global symbol table itself.
-  printf("%-15s %-20s %-25s %-10s %-10s %-20s %-15s %-20s %-10s %s\n",
-    "variable_name", "scope(module_name)", "scope(line_numbers)", "width", "isArray",
-    "static_or_dynamic", "range_lexemes", "type_of_element", "offset", "nesting_level");
+  if(print_arr == 0){
+    printf("%-15s %-20s %-25s %-10s %-10s %-20s %-15s %-20s %-10s %s\n",
+      "variable_name", "scope(module_name)", "scope(line_numbers)", "width", "isArray",
+      "static_or_dynamic", "range_lexemes", "type_of_element", "offset", "nesting_level"); 
+  }
+  else{
+    printf("%-20s %-25s %-15s %-20s %-15s %-20s\n",
+      "scope(module_name)", "scope(line_numbers)", "variable_name","static_or_dynamic", 
+      "range_lexemes", "type_of_element"); 
+  }
+  
   while (cursor != NULL)
     {
-      printSymbolTableForDriver(cursor->symbol_table);
+      printSymbolTableOrArraysForDriver(cursor->symbol_table,print_arr);
       cursor = cursor->next;
     }
 }
@@ -1219,7 +1227,7 @@ getLowerCaseDatatypeString (enum terminal datatype)
  * Print out a single symbol table in a way that meets the requirements for the driver.
  */
 void
-printSymbolTableForDriver (struct SymbolTable *st)
+printSymbolTableOrArraysForDriver (struct SymbolTable *st, int print_arr)
 {
   int data_len, nesting_level = 0;
   char *current_key, *is_array, *is_static, *current_datatype;
@@ -1276,10 +1284,17 @@ printSymbolTableForDriver (struct SymbolTable *st)
         nesting_level = st->nesting_level;
 
       if (current_variable.isShadow)
-        current_key += 1;  /* Offset the $ when printing. */      
-
-      printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
-        current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
-        range_lexemes, current_datatype, current_variable.visible_offset, nesting_level);
+        current_key += 1;  /* Offset the $ when printing. */ 
+      
+      if(print_arr == 0){
+        printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
+          current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
+          range_lexemes, current_datatype, current_variable.mem_offset, nesting_level);
+      }
+      else{
+        if (current_variable.isArray)
+          printf("%-20s %-25s %-15s %-20s %-15s %-20s\n",
+                 module_scope->scope_tag, scope_range, current_key, is_static, range_lexemes, current_datatype);
+      }
     }
 }

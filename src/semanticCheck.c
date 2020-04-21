@@ -1184,6 +1184,7 @@ bool checkInExpression(char *entry, struct Attribute *expr){
       break;
     case ARRAY_NODE:
       /* code */
+      
       break;
     case LEAF_NODE:
       if (expr->node.lea->type != IDENTIFIER)

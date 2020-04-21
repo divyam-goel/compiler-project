@@ -179,23 +179,26 @@ void printPTandASTMem(){
 	runSyntaxAnalyzer(0);
 	createAST();
 	// to be implemented
-	printf("PT Node Number:%d\n", return_PT_node_number());
-	printf("PT Memory Allocated:%ld Bytes\n", return_PT_node_size());
-	printf("AST Node Number:%d\n",return_AST_node_number());
-	printf("AST Memory Allocated:%ld Bytes\n",return_AST_node_size());
+	printf("Number of nodes in Parse Tree: %d\n", return_PT_node_number());
+	printf("Memory allocated for Parse Tree: %ld Bytes\n", return_PT_node_size());
+	printf("Number of nodes in AST: %d\n", return_AST_node_number());
+	printf("Memory allocated for AST: %ld Bytes\n", return_AST_node_size());
 	percent = (float)(return_PT_node_size() - return_AST_node_size());
 	percent /= (float)return_PT_node_size();
 	percent *= 100;
 	printf("Percentage compression: %f%%\n", percent);
 }
 
-void generateAndPrintSymbolTable(){
+void PrintSymbolTableOrArrays(int print_arr){
 	demonstrateLexicalAnalysis(0);
 	runSyntaxAnalyzer(0);
 	createAST();
 	generateSymbolTables();
-	printf("Symbol table:\n");
-  printSymbolTablesForDriver();
+	if(print_arr == 0)
+		printf("\nSymbol table:\n");
+	else 
+		printf("\nPrinting all arrays used in program:\n");
+  	printSymbolTablesForDriver(print_arr);
 }
 
 void printModuleActivationRecordsSize(){
@@ -313,7 +316,7 @@ int main(int argc, char const *argv[]) {
 				break;
 
 			case 5: // print symbol table 
-				generateAndPrintSymbolTable();
+				PrintSymbolTableOrArrays(0);
 				break;
 
 			case 6: // print size of each module activation record
@@ -321,6 +324,7 @@ int main(int argc, char const *argv[]) {
 				break;
 
 			case 7:// print static and dynamic array stuff
+				PrintSymbolTableOrArrays(1);
 				break;
 			case 8: //print all errors, and print time taken for compilation
 				printAllErrorsAndTime();

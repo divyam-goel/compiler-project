@@ -67,8 +67,7 @@ struct VariableEntry *stNewTemporaryVariable(struct SymbolTable *scope, enum ter
 struct SymbolTable *getModuleLevelScope(struct SymbolTable *scope);
 struct ModuleEntry *getModuleEntry(char *module_name);
 int getDatatypeSize(enum terminal datatype);
-void printSymbolTablesForDriver();
-void printSymbolTableForDriver(struct SymbolTable *st);
-int getWidth (struct VariableEntry variable);
-
+void printSymbolTablesForDriver(int print_arr);
+void printSymbolTableOrArraysForDriver(struct SymbolTable *st, int print_arr);
+int getWidth(struct VariableEntry variable);
 #endif
