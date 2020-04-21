@@ -37,15 +37,8 @@ void initializeEverything() {
 
 void printProgressInfo() {
 	printf("Welcome to Group #17's ERPLAG compiler. Here is our progress:\n");
-	int num_msg = 3;
-	char *messages[] = {
-		"Lexical analysis module implemented and works on all test cases.",
-		"Syntax analysis module implemented and works on all test cases.",
-		"FIRST and FOLLOW set generation automated.",
-	};
-	for (int i = 0; i < num_msg; ++i) {
-		printf("\t %d. %s\n", i, messages[i]);
-	}
+	char *messages ="Level 4: AST/ Symbol table/type Checking/ Semantic rules/handled static and dynamic arrays in type checking/ code generation";
+	printf("\t%s\n",messages);
 	printf("\n");
 }
 
@@ -164,6 +157,7 @@ void printFirstSetHumanFriendly() {
 // }
 
 void generateAndPrintAST(){
+	printf("Post Order Traversal:\n");
 	demonstrateLexicalAnalysis(0);
 	runSyntaxAnalyzer(0);
 	createAST();
