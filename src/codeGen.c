@@ -369,7 +369,7 @@ void cgICAddr(char *instr_list, char *addr, ICAddr *ic_addr) {
     symbol_entry = (struct VariableEntry *) ic_addr->value.array.var;
     
       base_offset = symbol_entry->mem_offset;
-      data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+      data_size = getDatatypeSize(symbol_entry->datatype);
 
     if (symbol_entry->isStatic) {
       lower_bound = symbol_entry->lower_bound->value.num;
@@ -799,7 +799,7 @@ void staticArrayUtil(char *instr_list, struct VariableEntry *symbol_entry) {
   base_offset = symbol_entry->mem_offset;
   lower_bound = symbol_entry->lower_bound->value.num;
   upper_bound = symbol_entry->upper_bound->value.num;
-  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+  data_size = getDatatypeSize(symbol_entry->datatype);
 
   num_elements = upper_bound - lower_bound + 1;
   base_offset = base_offset + OFFSET * 3 + num_elements * data_size;
@@ -837,7 +837,7 @@ void dynamicArrayUtil(char *instr_list, struct VariableEntry *symbol_entry) {
   base_offset = symbol_entry->mem_offset;
   lower_bound_offset = symbol_entry->lower_bound->mem_offset;
   upper_bound_offset = symbol_entry->upper_bound->mem_offset;
-  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+  data_size = getDatatypeSize(symbol_entry->datatype);
 
   /* load base address of array from array pointer */
   sprintf(tmp, "[rbp - %d]", base_offset + OFFSET);
@@ -1140,7 +1140,7 @@ void cgDynamicArrayAllocation(ICInstr *ic_instr) {
   symbol_entry = (struct VariableEntry *) ic_instr->addr1.value.symbol;
   lower_bound_offset = symbol_entry->lower_bound->mem_offset;
   upper_bound_offset = symbol_entry->upper_bound->mem_offset;
-  data_size = getMemorySizeofDatatype(symbol_entry->datatype, false);
+  data_size = getDatatypeSize(symbol_entry->datatype);
 
   /*
     Compute total size of the array:

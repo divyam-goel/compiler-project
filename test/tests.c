@@ -324,24 +324,22 @@ void test_createSymbolTables(char *grammar_file, char *source_file) {
   test_createAST(grammar_file, source_file);
   printf("Generating symbol tables... \n");
   generateSymbolTables();
-  // printSymbolTablesForDriver();
+  printSymbolTablesForDriver();
 
-  puts("");
-
-  char *key;
-  struct ModuleEntry *module;
-  extern struct SymbolTable *global_symbol_table;
-  for (int i = 0; i < global_symbol_table->keys->filled; ++i)
-    {
-      key = strl_get(global_symbol_table->keys, i);
-      if (strcmp(key, "driver") == 0)
-        continue;
-      module = resolveModule(key);
-      if (module->inputplist == NULL)
-        printf("%s has an empty inputplist.\n", key);
-      if (module->outputplist == NULL)
-        printf("%s has an empty outputplist.\n", key);
-    }
+  // char *key;
+  // struct ModuleEntry *module;
+  // extern struct SymbolTable *global_symbol_table;
+  // for (int i = 0; i < global_symbol_table->keys->filled; ++i)
+  //   {
+  //     key = strl_get(global_symbol_table->keys, i);
+  //     if (strcmp(key, "driver") == 0)
+  //       continue;
+  //     module = resolveModule(key);
+  //     if (module->inputplist == NULL)
+  //       printf("%s has an empty inputplist.\n", key);
+  //     if (module->outputplist == NULL)
+  //       printf("%s has an empty outputplist.\n", key);
+  //   }
 }
 
 
@@ -384,7 +382,7 @@ int main() {
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/semantic/t8.txt";
+    char source_file[] = "./test/fixtures/stage 2/semantic/symbol_table_sample.txt";
     // char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
     // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_cg_1.erplag";
     // test_removeComments();
@@ -395,8 +393,8 @@ int main() {
     // test_parseInputSourceCode(grammar_file, source_file);
     // test_createAST(grammar_file, source_file);
     // symbolTableCoreTests();
-    // test_createSymbolTables(grammar_file, source_file);
-    test_semanticCheck(grammar_file, source_file);
+    test_createSymbolTables(grammar_file, source_file);
+    // test_semanticCheck(grammar_file, source_file);
     // test_intermediateCodeGeneration(grammar_file, source_file);
     // test_CodeGeneration(grammar_file, source_file);
     printf("\nTests complete!!!\n");

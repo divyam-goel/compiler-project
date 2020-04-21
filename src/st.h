@@ -65,7 +65,7 @@ void stUpdateLeafNode(struct LeafNode *lea, struct SymbolTable *scope);
 struct VariableEntry *stNewTemporaryVariable(struct SymbolTable *scope, enum terminal datatype);
 struct SymbolTable *getModuleLevelScope(struct SymbolTable *scope);
 struct ModuleEntry *getModuleEntry(char *module_name);
-int getMemorySizeofDatatype(enum terminal datatype, bool is_array);
+int getDatatypeSize(enum terminal datatype);
 void printSymbolTablesForDriver();
 void printSymbolTableForDriver(struct SymbolTable *st);
 

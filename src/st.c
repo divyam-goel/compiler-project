@@ -336,7 +336,6 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   if (is_array && is_io)
     module->io_record_size -= (8 + 8);
 
-  datasize = getMemorySizeofDatatype(basetype, is_array);
   if (is_array && is_static) {
     datasize = (upper_bound_leaf_node->value.num - \
                 lower_bound_leaf_node->value.num + 1) * 8;
@@ -1021,7 +1020,7 @@ stNewTemporaryVariable (struct SymbolTable *scope, enum terminal datatype)
   module = getModuleEntry(scope->scope_tag);
   sprintf(temp_var_name, ST_TEMP_VAR_FORMAT, module->num_temp_var);
 
-  datasize = getMemorySizeofDatatype(datatype, false);
+  datasize = getDatatypeSize(datatype);
 
   strcpy(new_variable.variable.name, temp_var_name);
   new_variable.variable.line_number = -1;
@@ -1082,18 +1081,13 @@ getModuleEntry (char *module_name)
 
 
 /**
- * Basically a static map in the form of a callable function. Maps datatypes
- * to how much memory they require (in bytes).
- * @param     datatype      The datatype itself.
- * @param     is_array      Set to true it's an array, then datatype will be ignored.
- * @returns                 The number of bytes required to store that datatype.
+ * Given a base datatype, resolve it's size.
+ * @param     datatype      The datatype to resolve
+ * @returns                 The size in words.
  */
 int
-getMemorySizeofDatatype (enum terminal datatype, bool is_array)
+getDatatypeSize (enum terminal datatype)
 {
-  if (is_array)
-    return DT_ARRAY_POINTER_SIZE;
-
   switch (datatype)
     {
       case (NUM):
@@ -1113,6 +1107,43 @@ getMemorySizeofDatatype (enum terminal datatype, bool is_array)
         fprintf(stderr, invalid_datatype_error_message, terminalStringRepresentations[datatype]);
         exit(EXIT_FAILURE);
     }
+}
+
+
+/**
+ * Calculate the width according to the following requirements:
+ * Width of input parameter of array type - static or dynamic: 1(base address)+ 2*sizeof(int)
+ * Width of local variable of array type - static: 1(base address) + (high-low +1) * sizeof(array element) 
+ * Width of local variable of array type- dynamic: 1(base address)
+ * [Note: we allow the elements to be populated after all fixed sized variables. Assumption: any array to be
+ * passed as a parameter to the callee should have been populated before the call]
+ * @param       variable    The variable we want to calculate the width for.
+ * @returns                 The number of bytes required to store that datatype.
+ */
+int
+getWidth (struct VariableEntry variable)
+{
+  if (variable.isArray)
+    {
+      if (variable.isInput)
+        return 5;
+      if (variable.isStatic)
+        {
+          int temp;
+          int low = variable.lower_bound->value.num;
+          int high = variable.upper_bound->value.num;
+          if (high < low)
+          {
+            temp = low;
+            low = high;
+            high = temp;
+          } 
+          return 1 + (high - low + 1) * getDatatypeSize(variable.datatype);
+        }
+      return 1;
+    }
+
+  return getDatatypeSize(variable.datatype);
 }
 
 
@@ -1156,6 +1187,7 @@ getLowerCaseDatatypeString (enum terminal datatype)
     }
 }
 
+
 /**
  * Print out a single symbol table in a way that meets the requirements for the driver.
  */
@@ -1175,7 +1207,7 @@ printSymbolTableForDriver (struct SymbolTable *st)
       current_node = symbolTableGet(st, current_key);
       current_variable = current_node->value.variable;
       current_datatype = getLowerCaseDatatypeString(current_variable.datatype);
-      data_len = getMemorySizeofDatatype(current_variable.datatype, current_variable.isArray);
+      data_len = getWidth(current_variable);
 
       if (current_variable.isTemporary)
         continue;
