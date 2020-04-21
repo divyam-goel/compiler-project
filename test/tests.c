@@ -369,7 +369,7 @@ int main() {
     setvbuf(stderr, NULL, _IONBF, 0);
     puts("\nRunning tests...");
     char grammar_file[] = "./docs/grammar/text/grammar.txt";
-    char source_file[] = "./test/fixtures/stage 2/semantic/t9.txt";
+    char source_file[] = "./test/fixtures/stage 2/semantic/t8.txt";
     // char source_file[] = "./test/fixtures/stage 2/codegen/c1.txt";
     // char source_file[] = "./test/fixtures/stage 2/basic_tests/test_cg_1.erplag";
     // test_removeComments();

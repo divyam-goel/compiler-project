@@ -147,17 +147,18 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
       module = module_ll->ptr1;
       module_name = module->ptr1->value.entry;
       current_line_no = module->ptr1->line_number;
+      original_line_no = current_line_no;
       module->ptr1->scope = global_symbol_table;
       existing_node = symbolTableGet(global_symbol_table, module_name);
       if (existing_node)
         {
           existing_module = existing_node->value.module;
+          original_line_no = existing_module.def_line_number;
           /* If there was this is a re-definition then print an error message
            * and continue processing but don't add this to the symbol table.
            * We consider the first definition to be the true definition. */
           if (existing_module.def_line_number != -1)
             {
-              original_line_no = existing_module.def_line_number;
               fprintf(stderr, module_redefinition_error_message, current_line_no,
                       module_name, current_line_no, original_line_no);
               semantic_error_count += 1;
@@ -176,8 +177,8 @@ stAddModuleDefinitions (struct OtherModuleNode *module_ll)
       /* We can directly add this module to the symbol table. The false in the symbol table
        * set call will prevent overwriting of an existing definition in the symbol table. */
       new_value = stCreateSymbolTableValueForModule(module_name,
-        current_line_no, current_line_no, module->ptr2, module->ptr3);
-      symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, false);
+        original_line_no, current_line_no, module->ptr2, module->ptr3);
+      symbolTableSet(global_symbol_table, module_name, new_value, ST_MODULE, true);
 
       /* Even if there's a semantic error, parse it. No harm. */
       module_scope = newTrackedSymbolTable(global_symbol_table, module_name, NULL);
