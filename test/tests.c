@@ -319,14 +319,29 @@ void symbolTableCoreTests() {
 
 
 void test_createSymbolTables(char *grammar_file, char *source_file) {
-    extern bool st_debug_mode;
-    st_debug_mode = false;
+  extern bool st_debug_mode;
+  st_debug_mode = false;
+  test_createAST(grammar_file, source_file);
+  printf("Generating symbol tables... \n");
+  generateSymbolTables();
+  // printSymbolTablesForDriver();
 
-    test_createAST(grammar_file, source_file);
+  puts("");
 
-    printf("Generating symbol tables... \n");
-    generateSymbolTables();
-    printSymbolTablesForDriver();
+  char *key;
+  struct ModuleEntry *module;
+  extern struct SymbolTable *global_symbol_table;
+  for (int i = 0; i < global_symbol_table->keys->filled; ++i)
+    {
+      key = strl_get(global_symbol_table->keys, i);
+      if (strcmp(key, "driver") == 0)
+        continue;
+      module = resolveModule(key);
+      if (module->inputplist == NULL)
+        printf("%s has an empty inputplist.\n", key);
+      if (module->outputplist == NULL)
+        printf("%s has an empty outputplist.\n", key);
+    }
 }
 
 
