@@ -979,7 +979,7 @@ void forIterationVariableUpdateCheck(
       
       case MODULE_REUSE_STMT_NODE:
         /* iterate through list of actual output parameters */
-        id_list_node = statement_node->ptr1->node.mod_reu_stm->ptr3;
+        id_list_node = statement_node->ptr1->node.mod_reu_stm->ptr1;
         while (id_list_node != NULL) {
           /* check: compare loop var with output parameter list */
           is_same = cmpIdentifier(loop_var, id_list_node->ptr1);
@@ -1382,6 +1382,9 @@ void moduleSemanticChecker(struct ModuleNode *module_node) {
     output_list_node = output_list_node->ptr3;
   }
   is_updated = (bool *) malloc(sizeof(bool) * count_param);
+  for (int i = 0; i < count_param; i++) {
+    is_updated[i] = false;
+  }
 
   /*
     check: ALL output parameters are assigned a value inside
