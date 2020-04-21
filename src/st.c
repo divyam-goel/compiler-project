@@ -1113,17 +1113,14 @@ getDatatypeSize (enum terminal datatype)
     {
       case (NUM):
       case (INTEGER):
-        return DT_INTEGER_SIZE;
-        // return 2;
+        return 2;
       case (RNUM):
       case (REAL):
-        return DT_REAL_SIZE;
-        // return 4;
+        return 4;
       case (TRUE_):
       case (FALSE_):
       case (BOOLEAN_):
-        return DT_BOOL_SIZE;
-        // return 1;
+        return 1;
       default:
         fprintf(stderr, invalid_datatype_error_message, terminalStringRepresentations[datatype]);
         exit(EXIT_FAILURE);
