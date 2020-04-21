@@ -35,6 +35,7 @@ struct VariableEntry {
   bool isStatic;
   bool isTemporary;
   bool isInput;
+  bool isOutput;
   struct VariableEntry *lower_bound;  /* Only valid when isArray == true */
   struct VariableEntry *upper_bound;  /* Only valid when isArray == true */
   int mem_offset;

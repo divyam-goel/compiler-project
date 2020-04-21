@@ -342,6 +342,7 @@ stCreateSymbolTableValueForVariable (struct LeafNode *varnode, struct Attribute 
   new_value.variable.isArray = is_array;
   new_value.variable.isStatic = is_static;
   new_value.variable.isInput = is_input;
+  new_value.variable.isOutput = !is_input && is_io;
   new_value.variable.datatype = basetype;
   new_value.variable.line_number = line_number;
   new_value.variable.lower_bound = lower_bound;
@@ -1128,9 +1129,8 @@ getLowerCaseDatatypeString (enum terminal datatype)
 void
 printSymbolTableForDriver (struct SymbolTable *st)
 {
-  int data_len;
-  char *current_key;
-  char *is_array, *is_static, *current_datatype;
+  int data_len, nesting_level = 0;
+  char *current_key, *is_array, *is_static, *current_datatype;
   char lower_bound[128], upper_bound[128], range_lexemes[256], scope_range[256];
   struct SymbolTable *module_scope = getModuleLevelScope(st);
   struct SymbolTableNode *current_node;
@@ -1178,8 +1178,14 @@ printSymbolTableForDriver (struct SymbolTable *st)
 
       sprintf(scope_range, "%d-%d", st->opening_line_no, st->closing_line_no);
 
+      if (current_variable.isInput || current_variable.isOutput)
+        nesting_level = 0;
+      else
+        nesting_level = st->nesting_level;
+      
+
       printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
         current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,
-        range_lexemes, current_datatype, current_variable.mem_offset, st->nesting_level - 1);
+        range_lexemes, current_datatype, current_variable.mem_offset, nesting_level);
     }
 }
