@@ -719,11 +719,13 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
   assert(variable_instance->type == IDENTIFIER);
   char *variable_name = variable_instance->value.entry;
   resolved_variable = resolveVariable(variable_name, scope);
+  bool is_error_reported = false;
   if (resolved_variable == NULL)
     {
       fprintf(stderr, variable_undeclared_error_message, variable_instance->line_number,
               variable_name, variable_instance->line_number);
       semantic_error_count += 1;
+      is_error_reported = true;
     }
   assert(agn_stmt->ptr2->type == LVALUE_ARR_NODE || agn_stmt->ptr2->type == LVALUE_ID_NODE);
   if (agn_stmt->ptr2->type == LVALUE_ARR_NODE)
@@ -740,7 +742,10 @@ stHandleAssignmentStatement (struct AssignStmtNode *agn_stmt, struct SymbolTable
     }
   else
     stWalkThroughExpression(agn_stmt->ptr2->node.lva_id->ptr1, scope);
-  stUpdateLeafNode(variable_instance, scope);
+  if (!is_error_reported)
+    stUpdateLeafNode(variable_instance, scope);
+  else
+    variable_instance->scope = scope;
 }
 
 
