@@ -786,6 +786,23 @@ stHandleModuleReuseStatement (struct ModuleReuseStmtNode *mr_stmt, struct Symbol
 }
 
 
+/* No time to add documentation :( */
+void
+stMakeShadowVariable (char *variable_name, struct SymbolTable *scope)
+{
+  union SymbolTableValue shadow_value;
+  struct VariableEntry *existing_variable;
+
+  existing_variable = resolveVariable(variable_name, scope);
+  assert(existing_variable != NULL);
+  memcpy(&shadow_value.variable, existing_variable, sizeof(union SymbolTableValue));
+  shadow_value.variable.isShadow = true;
+  int truncated_len = snprintf(shadow_value.variable.name, IDENTIFIER_NAME_MAX_LEN + 1, ST_SHADOW_VAR_FORMAT, existing_variable->name);
+  if (truncated_len);  // To supress unecessary warnings.
+
+  symbolTableSet(scope, shadow_value.variable.name, shadow_value, ST_VARIABLE, false);
+}
+
 
 /**
  * Handle a new variable declerations. In a single declare statement, multiple
@@ -816,6 +833,7 @@ stHandleDeclareStatement (struct DeclareStmtNode *dec_stmt, struct SymbolTable *
         {
           if (existing_node->value.variable.isInput) {
             overwrite = true;
+            stMakeShadowVariable(variable_name, scope);
           } else {
             fprintf(stderr, variable_redecleration_error_message, variable_ll->ptr1->line_number,
                     variable_name, variable_ll->ptr1->line_number, existing_node->value.variable.line_number);
@@ -1250,7 +1268,9 @@ printSymbolTableForDriver (struct SymbolTable *st)
         nesting_level = 0;
       else
         nesting_level = st->nesting_level;
-      
+
+      if (current_variable.isShadow)
+        current_key += 1;  /* Offset the $ when printing. */      
 
       printf("%-15s %-20s %-25s %-10d %-10s %-20s %-15s %-20s %-10d %d\n",
         current_key, module_scope->scope_tag, scope_range, data_len, is_array, is_static,

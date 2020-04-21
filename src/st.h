@@ -18,6 +18,7 @@
 #define DT_REAL_SIZE 8
 #define DT_ARRAY_POINTER_SIZE 8
 #define ST_TEMP_VAR_FORMAT "@%.5d"
+#define ST_SHADOW_VAR_FORMAT "$%s"
 
 void set_semantic_num();
 
