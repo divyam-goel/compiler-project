@@ -226,22 +226,59 @@ void printModuleActivationRecordsSize(){
 
 void printAllErrorsAndTime(){
 
-	clock_t start_time, end_time;
+	clock_t start_time, end_time, compiler_start_time, compiler_end_time;
 	double CPU_time, CPU_time_seconds;
-	start_time = clock();
+	compiler_start_time = clock();
 
+	start_time = compiler_start_time;
 	demonstrateLexicalAnalysis(0);
-	runSyntaxAnalyzer(0);
-	createAST();
-	generateSymbolTables();
-	semanticChecker(&AST);
-	printf("No errors detected!!!\n");
-
 	end_time = clock();
 	CPU_time = (double)(end_time - start_time);
 	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
-	printf("Total clocks taken:%lf\n", CPU_time);
-	printf("Total time taken:%lf seconds\n", CPU_time_seconds);
+	printf("Lexical Analysis: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	start_time = clock();
+	runSyntaxAnalyzer(0);
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Syntax Analysis: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	start_time = clock();
+	createAST();
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Creation of AST: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	start_time = clock();
+	generateSymbolTables();
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Symbol Table Creation: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	start_time = clock();
+	semanticChecker(&AST);
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Semantic Analysis: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	start_time = clock();
+	generateIntermediateCode(&AST);
+	generateASMCode(start_global_ic_instr, outputFilePath);
+	end_time = clock();
+	CPU_time = (double)(end_time - start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Code Generation: Time taken: %lf seconds\n", CPU_time_seconds);
+
+	printf("\nIn total:\n");
+	compiler_end_time = clock();
+	CPU_time = (double)(compiler_end_time - compiler_start_time);
+	CPU_time_seconds = CPU_time / CLOCKS_PER_SEC;
+	printf("Compiler: Total clocks cycles taken:%lf\n", CPU_time);
+	printf("Compiler: Total time taken:%lf seconds\n", CPU_time_seconds);
 	set_semantic_num();
 }
 
