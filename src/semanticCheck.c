@@ -34,6 +34,7 @@ char *module_output_list_missing_args = "Line %d: (Semantic Error) Insufficient 
 in output list for module reuse\n";
 char *module_output_list_too_many_args = "Line %d: (Semantic Error) Too many arguments were provided in output list \
 for module reuse\n";
+char *module_reuse_recursive = "Line %d: (Semantic Error) Function %s cannot call itself\n";
 
 /* error messages: conditionals */
 char *conditional_incorrect_switch_type_error_message = "Line %d: (Type Error) Construct 'switch' expects type \
@@ -651,19 +652,13 @@ void inputModuleReuseTypeCheck(
   enum terminal formal_input_type, actual_input_type;
   
   line_number = actual_input->ptr1->line_number;
-  
-  //test code
-  if(formal_input == NULL && actual_input != NULL){
-    printf("Formal input is empty when it shouldn't\n");
-    return;
-  }
-
   while (formal_input != NULL && actual_input != NULL) {
     /*
       perform semantic checks based on whether the expected
       input parameter is an array or not
     */
-    if (formal_input->ptr2->type == ARRAY_TYPE_NODE) {
+        if (formal_input->ptr2->type == ARRAY_TYPE_NODE)
+    {
       /* check: formal and actual inputs should have the same array types */
       arrayModuleReuseTypeCheck(
         formal_input->ptr2->node.arr_typ,
@@ -709,11 +704,7 @@ void outputModuleReuseTypeCheck(
   int line_number) {
   
   enum terminal formal_output_type, actual_output_type;
-  //test code
-  if (formal_output == NULL && actual_output != NULL){
-    printf("Formal output is empty when it shouldn't\n");
-    return;
-  }
+
   while (formal_output != NULL && actual_output != NULL) {
     /* determine formal and actual output parameter types */
     formal_output_type = leafType(formal_output->ptr2->node.lea);
@@ -748,7 +739,7 @@ void outputModuleReuseTypeCheck(
 }
 
 
-void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
+void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node, char *curr_module) {
   struct ModuleEntry *symbol_table_entry;
   int line_number;
   
@@ -758,12 +749,16 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
     return;
 
   line_number = module_reuse_node->ptr2->line_number;
+  /* Semantic check to see if function calls itself */
+  if(strcmp(curr_module,module_reuse_node->ptr2->value.entry) == 0){
+    fprintf(stderr, module_reuse_recursive, line_number,curr_module);
+    semantic_error_count += 1;
+  }
 
   /* semantic checks for formal and actual input parameters */
   inputModuleReuseTypeCheck(
     symbol_table_entry->inputplist,
     module_reuse_node->ptr3, line_number);
-  
   /* semantic checks for formal and actual output parameters */
   outputModuleReuseTypeCheck(
     symbol_table_entry->outputplist,
@@ -771,7 +766,7 @@ void moduleReuseTypeChecker(struct ModuleReuseStmtNode *module_reuse_node) {
 }
 
 
-void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_node) {
+void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_node, char *curr_module) {
   struct CaseStmtNode *case_node;
   enum terminal case_type;
   int line_number;
@@ -801,7 +796,7 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
     }  
     else {
       /* semantic checks for case body */
-      statementListSemanticChecker(case_node->ptr2);
+      statementListSemanticChecker(case_node->ptr2,curr_module);
     }
     
     case_node = case_node->ptr3;
@@ -817,11 +812,11 @@ void integerConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
   }
   
   /* semantic checks for default case body */
-  statementListSemanticChecker(conditional_node->ptr3);
+  statementListSemanticChecker(conditional_node->ptr3,curr_module);
 }
 
 
-void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_node) {
+void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_node,char *curr_module) {
   struct CaseStmtNode *case_node;
   enum terminal case_type;
   int line_number;
@@ -863,7 +858,7 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
       }
 
     /* semantic checks for case body */
-    statementListSemanticChecker(case_node->ptr2);
+    statementListSemanticChecker(case_node->ptr2,curr_module);
     }
     
     case_node = case_node->ptr3;
@@ -892,7 +887,7 @@ void booleanConditionalSemanticCheck(struct ConditionalStmtNode *conditional_nod
 }
 
 
-void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
+void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node, char *curr_module) {
   enum terminal conditional_type;
   int line_number;
   
@@ -906,15 +901,16 @@ void conditionalSemanticChecker(struct ConditionalStmtNode *conditional_node) {
   /* perform semantic checks based on conditional type */
   switch (conditional_type) {    
     case INTEGER:
-      integerConditionalSemanticCheck(conditional_node);
+      integerConditionalSemanticCheck(conditional_node,curr_module);
       break;    
     case BOOLEAN_:
-      booleanConditionalSemanticCheck(conditional_node);
+      booleanConditionalSemanticCheck(conditional_node,curr_module);
       break;
     case REAL:
     case ARRAY:
       fprintf(stderr, conditional_incorrect_switch_type_error_message,
               line_number, terminalStringRepresentations[conditional_type]);
+      semantic_error_count += 1;
       break;
     default:
       printf("ERROR!! Invalid type for switch variable: %d\n", conditional_type);
@@ -1054,7 +1050,7 @@ void forIterationVariableUpdateCheck(
 }
 
 
-void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
+void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node,char *curr_module) {
   enum terminal loop_var_type;
   int lower_bound, upper_bound;
   int line_number;
@@ -1085,7 +1081,7 @@ void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
   }
   
   /* semantic checks for loop body */
-  statementListSemanticChecker(for_iter_node->ptr3);
+  statementListSemanticChecker(for_iter_node->ptr3, curr_module);
 
   /*
     check: for loop variable should NOT be
@@ -1094,8 +1090,8 @@ void forIterationSemanticChecker(struct ForIterativeStmtNode *for_iter_node) {
  forIterationVariableUpdateCheck(for_iter_node->ptr1, for_iter_node->ptr3);
 }
 
-
-void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_node) {
+void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_node, char *curr_module)
+{
   enum terminal loop_expression_type;
   int line_number;
 
@@ -1114,7 +1110,7 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
   }
 
   /* semantic checks for loop body */
-  statementListSemanticChecker(while_iter_node->ptr2);
+  statementListSemanticChecker(while_iter_node->ptr2, curr_module);
 
   /*
     check: at least one variable in the loop expression should be assigned a value inside the loop
@@ -1133,11 +1129,10 @@ void whileIterationSemanticChecker(struct WhileIterativeStmtNode *while_iter_nod
     loop_body = loop_body->ptr2;
   }
   if(found_var_change == 0){
-    fprintf(stderr, while_loop_variables_not_updated, while_iter_node->starting_line_number);
-    semantic_error_count += 1;
-  }  
-
-
+    // for now
+    // fprintf(stderr, while_loop_variables_not_updated, while_iter_node->starting_line_number);
+    // semantic_error_count += 1;
+  }
 }
 
 //function to check if given expression attribute contains the given leaf node
@@ -1192,7 +1187,7 @@ bool checkInExpression(char *entry, struct Attribute *expr){
   return false;
 }
 
-void statementSemanticChecker(struct StatementNode *statement_node) {
+void statementSemanticChecker(struct StatementNode *statement_node, char *curr_module) {
   if (statement_node == NULL)
     return;
   
@@ -1201,16 +1196,16 @@ void statementSemanticChecker(struct StatementNode *statement_node) {
       assignmentTypeChecker(statement_node->ptr1->node.agn_stm);
       break;
     case MODULE_REUSE_STMT_NODE:
-      moduleReuseTypeChecker(statement_node->ptr1->node.mod_reu_stm);
+      moduleReuseTypeChecker(statement_node->ptr1->node.mod_reu_stm, curr_module);
       break;
     case CONDITIONAL_STMT_NODE:
-      conditionalSemanticChecker(statement_node->ptr1->node.con_stm);
+      conditionalSemanticChecker(statement_node->ptr1->node.con_stm, curr_module);
       break;
     case FOR_ITERATIVE_STMT_NODE:
-      forIterationSemanticChecker(statement_node->ptr1->node.for_ite_stm);
+      forIterationSemanticChecker(statement_node->ptr1->node.for_ite_stm, curr_module);
       break;
     case WHILE_ITERATIVE_STMT_NODE:
-      whileIterationSemanticChecker(statement_node->ptr1->node.whi_ite_stm);
+      whileIterationSemanticChecker(statement_node->ptr1->node.whi_ite_stm, curr_module);
       break;
     case INPUT_NODE:
     case PRINT_NODE:
@@ -1223,9 +1218,9 @@ void statementSemanticChecker(struct StatementNode *statement_node) {
 }
 
 
-void statementListSemanticChecker(struct StatementNode *statement_node) {
+void statementListSemanticChecker(struct StatementNode *statement_node, char* curr_module) {
   while (statement_node != NULL) {
-    statementSemanticChecker(statement_node);
+    statementSemanticChecker(statement_node,curr_module);
     statement_node = statement_node->ptr2;
   }
 }
@@ -1354,7 +1349,7 @@ void moduleSemanticChecker(struct ModuleNode *module_node) {
   int count_param, line_number;
   
   /* semantic checks for statements in the module scope */
-  statementListSemanticChecker(module_node->ptr4);
+  statementListSemanticChecker(module_node->ptr4,module_node->ptr1->value.entry);
 
   /*
     determine the number of output parameters and allocate
@@ -1404,7 +1399,7 @@ void semanticChecker(struct ProgramNode *AST) {
   moduleListSemanticChecker(AST->ptr2);
   
   /* semantic checks for statements in the driver scope*/
-  statementListSemanticChecker(AST->ptr3);
+  statementListSemanticChecker(AST->ptr3,"driver");
   
   /* semantic checks for modules defined after the driver */
   moduleListSemanticChecker(AST->ptr4);
